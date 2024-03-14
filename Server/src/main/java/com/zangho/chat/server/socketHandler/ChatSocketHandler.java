@@ -13,7 +13,6 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +31,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         connectedSessions.put(session, new HashSet<>());
+        logBytePackets(Helpers.getByteArrayFromInt(255), "IntToBytes");
         super.afterConnectionEstablished(session);
     }
 
@@ -73,7 +73,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     var room = chatService.createRoom(roomName);
                     room.getSessions().add(session);
 
-                    var bytesRoomId = Helpers.ByteArrayFromUUID(room.getRoomId());
+                    var bytesRoomId = Helpers.getByteArrayFromUUID(room.getRoomId());
                     if (0 == bytesRoomId.length) {
                         sendPacketFlag[1] = ErrorCreateChatRoom.REQUIRED_ROOM_ID.getByte();
                         sendToOne(session, sendPacketFlag);
@@ -84,8 +84,9 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     buffer.put(sendPacketFlag);
                     buffer.put(bytesRoomId);
                     sendToOne(session, buffer.array());
+                    updateChatRoom();
                 } catch (Exception ex) {
-                    logger.error(ex.getMessage());
+                    logger.error(ex.getMessage(), ex);
                 }
                 break;
 
@@ -93,7 +94,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                 try {
                     var sendPacketFlag = new byte[] {type.getByte(), ErrorExitChatRoom.NONE.getByte()};
                     var roomIdBytes = Arrays.copyOfRange(packet, 1, packet.length);
-                    var roomId = Helpers.UUIDFromByteArray(roomIdBytes);
+                    var roomId = Helpers.getUUIDFromByteArray(roomIdBytes);
                     var existsRoom = chatService.findRoomById(roomId);
                     if (existsRoom.isEmpty()) {
                         sendPacketFlag[1] = ErrorExitChatRoom.NO_EXISTS_ROOM.getByte();
@@ -113,9 +114,10 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
+                    updateChatRoom();
                     sendToOne(session, sendPacketFlag);
                 } catch (Exception ex) {
-                    logger.error(ex.getMessage());
+                    logger.error(ex.getMessage(), ex);
                 }
                 break;
 
@@ -124,7 +126,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private byte[] mergeBytePacket(byte[]... packets) {
+    private byte[] mergeBytePacket(byte[]... packets) throws Exception {
         if (1 > packets.length)
             return new byte[0];
 
@@ -139,69 +141,76 @@ public class ChatSocketHandler extends TextWebSocketHandler {
         return buffer.array();
     }
 
-    private void sendToOne(WebSocketSession session, byte[]... packets) {
+    private void sendToOne(WebSocketSession session, byte[] packet) throws Exception {
         try {
-            var mergedPacket = mergeBytePacket(packets);
+            logBytePackets(packet, "sendToOne");
 
-            var packetString = new StringBuilder();
-            packetString.append("sendToOne:");
-            for (byte b : mergedPacket)
-                packetString.append(" ").append((int) b);
-            logger.info(packetString.toString());
-
-            session.sendMessage(new BinaryMessage(mergedPacket));
+            session.sendMessage(new BinaryMessage(packet));
         } catch (Exception ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
         }
     }
 
-    private void sendToEachSession(Set<WebSocketSession> sessions, byte[]... packets) {
-        var mergedPacket = mergeBytePacket(packets);
-
-        var packetString = new StringBuilder();
-        packetString.append("sendToEach:");
-        for (byte b : mergedPacket)
-            packetString.append(" ").append((int) b);
-        logger.info(packetString.toString());
+    private void sendToEachSession(Set<WebSocketSession> sessions, byte[] packet) throws Exception {
+        logBytePackets(packet, "sendToEach");
 
         sessions.parallelStream().forEach(session -> {
             try {
-                session.sendMessage(new BinaryMessage(mergedPacket));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                session.sendMessage(new BinaryMessage(packet));
+            } catch (Exception ex) {
+                logger.error(ex.getMessage(), ex);
             }
         });
     }
 
-    private void sendToAll(byte[]... packets) {
-        var mergedPacket = mergeBytePacket(packets);
-
-        var packetString = new StringBuilder();
-        packetString.append("sendToAll:");
-        for (byte b : mergedPacket)
-            packetString.append(" ").append((int) b);
-        logger.info(packetString.toString());
+    private void sendToAll(byte[] packet) throws Exception {
+        logBytePackets(packet, "sendToAll");
 
         connectedSessions.keySet().parallelStream().forEach(session -> {
             try {
-                session.sendMessage(new BinaryMessage(mergedPacket));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                session.sendMessage(new BinaryMessage(packet));
+            } catch (Exception ex) {
+                logger.error(ex.getMessage(), ex);
             }
         });
     }
 
-    private void updateChatRoom() {
-        var updatePacketFlag = new byte[] {PacketType.UPDATE_CHAT_ROOM.getByte()};
-        var roomCount = chatService.findAllRoom().size();
-
+    private void updateChatRoom() throws Exception {
+        var updatePacketFlagBytes = new byte[] {PacketType.UPDATE_CHAT_ROOM.getByte()};
         // 최대 채팅방 숫자는 int32
-        var roomCountBuffer = ByteBuffer.allocate(4).putInt(chatService.findAllRoom().size(), roomCount);
+        var roomCountBytes = Helpers.getByteArrayFromInt(chatService.findAllRoom().size());
 
-        var roomIdBuffer = ByteBuffer.allocate(roomCount * 16);
-        for (ChatRoom chatRoom : chatService.findAllRoom())
-            roomIdBuffer.put(Helpers.ByteArrayFromUUID(chatRoom.getRoomId()));
+        var roomIdsBytes = new byte[0];
+        var roomNameLengthsBytes = new byte[0];
+        var roomNamesBytes = new byte[0];
 
-        sendToAll(mergeBytePacket(updatePacketFlag, roomCountBuffer.array(), roomIdBuffer.array()));
+        for (ChatRoom chatRoom : chatService.findAllRoom()) {
+            logger.info("roomId: " + chatRoom.getRoomId());
+            roomIdsBytes = mergeBytePacket(roomIdsBytes, Helpers.getByteArrayFromUUID(chatRoom.getRoomId()));
+            var roomNameBytes = chatRoom.getName().getBytes();
+            roomNameLengthsBytes = mergeBytePacket(roomNameLengthsBytes, new byte[] {(byte)roomNameBytes.length});
+            roomNamesBytes = mergeBytePacket(roomNamesBytes, roomNameBytes);
+        }
+
+        logBytePackets(updatePacketFlagBytes, "updatePacketFlagBytes");
+        logBytePackets(roomCountBytes, "roomCountBytes");
+        logBytePackets(roomIdsBytes, "roomIdsBytes");
+        logBytePackets(roomNameLengthsBytes, "roomNameLengthsBytes");
+        logBytePackets(roomNamesBytes, "roomNamesBytes");
+
+        logBytePackets(mergeBytePacket(updatePacketFlagBytes, roomCountBytes, roomIdsBytes, roomNameLengthsBytes, roomNamesBytes), "updateChatRoom");
+        sendToAll(mergeBytePacket(updatePacketFlagBytes, roomCountBytes, roomIdsBytes, roomNameLengthsBytes, roomNamesBytes));
+    }
+
+    private void logBytePackets(byte[] packet, String name) throws Exception {
+        var packetString = new StringBuilder();
+        packetString.append(name).append("[").append(packet.length).append("]").append(":");
+
+        for (var i = 0; i < packet.length; i++) {
+            var b = packet[i];
+            packetString.append(" (").append(i).append(")").append((int) b);
+        }
+
+        logger.info(packetString.toString());
     }
 }

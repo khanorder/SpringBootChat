@@ -1,5 +1,8 @@
+import {number} from "prop-types";
+
 export namespace Helpers {
-    export function uuidFromByteArray (bytes: Uint8Array): string {
+
+    export function getUUIDFromByteArray(bytes: Uint8Array): string {
         if (16 != bytes.length)
             return "";
 
@@ -12,7 +15,7 @@ export namespace Helpers {
         return uuid;
     }
 
-    export function byteArrayFromUUID (uuid: string): Uint8Array {
+    export function getByteArrayFromUUID(uuid: string): Uint8Array {
         if (36 != uuid.length)
             return new Uint8Array();
 
@@ -26,5 +29,25 @@ export namespace Helpers {
             bytes[i/2] = parseInt(hex.substring(i, i+2), 16);
 
         return bytes;
+    }
+
+    export function getByteArrayFromInt(value: number): Uint8Array {
+        if (null == value || 0 > value || 4294967295 < value)
+            return new Uint8Array(4);
+
+        const byteArray = new Uint8Array(4);
+        byteArray[0] = (value >> 24);
+        byteArray[1] = (value >> 16);
+        byteArray[2] = (value >> 8);
+        byteArray[3] = (value);
+
+        return byteArray;
+    }
+
+    export function getIntFromByteArray(bytes: Uint8Array): number {
+        if (null == bytes || 4 != bytes.length)
+            return 0;
+
+        return Buffer.from(bytes).readIntBE(0, 4);
     }
 }

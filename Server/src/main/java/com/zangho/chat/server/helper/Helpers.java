@@ -1,11 +1,23 @@
 package com.zangho.chat.server.helper;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Helpers {
 
-    public static byte[] ByteArrayFromHex(String hex) {
+    public static byte[] getByteArrayFromInt(int value) {
+        byte[] byteArray = new byte[4];
+        byteArray[0] = (byte)(value >> 24);
+        byteArray[1] = (byte)(value >> 16);
+        byteArray[2] = (byte)(value >> 8);
+        byteArray[3] = (byte)(value);
+        return byteArray;
+    }
+
+    public int getIntFromByteArray(byte[] bytes) {
+        return ((((int)bytes[0] & 0xff) << 24) | (((int)bytes[1] & 0xff) << 16) | (((int)bytes[2] & 0xff) << 8) | (((int)bytes[3] & 0xff)));
+    }
+
+    public static byte[] getByteArrayFromHex(String hex) {
         if (0 != hex.length() % 2)
             return new byte[0];
 
@@ -16,7 +28,7 @@ public class Helpers {
         return bytes;
     }
 
-    public static byte[] ByteArrayFromUUID(String uuid) {
+    public static byte[] getByteArrayFromUUID(String uuid) {
         if (36 != uuid.length())
             return new byte[0];
 
@@ -24,10 +36,10 @@ public class Helpers {
         if (32 != hex.length())
             return new byte[0];
 
-        return ByteArrayFromHex(hex);
+        return getByteArrayFromHex(hex);
     }
 
-    public static String HexFromByteArray(byte[] bytes) {
+    public static String getHexFromByteArray(byte[] bytes) {
         if (1 > bytes.length)
             return "";
 
@@ -42,11 +54,11 @@ public class Helpers {
         return new String(hexChars);
     }
 
-    public static String UUIDFromByteArray(byte[] bytes) {
+    public static String getUUIDFromByteArray(byte[] bytes) {
         if (16 != bytes.length)
             return "";
 
-        var hex = HexFromByteArray(bytes);
+        var hex = getHexFromByteArray(bytes);
         if (32 != hex.length())
             return "";
 
