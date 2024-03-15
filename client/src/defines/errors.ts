@@ -12,4 +12,12 @@ export namespace Errors {
         NOT_IN_ROOM,
         FAILED_TO_EXIT,
     }
+
+    export enum EnterChatRoom {
+        NONE,
+        ROOM_REMOVED,
+        NO_EXISTS_ROOM,
+        ALREADY_IN_ROOM,
+        FAILED_TO_ENTER,
+    }
 }

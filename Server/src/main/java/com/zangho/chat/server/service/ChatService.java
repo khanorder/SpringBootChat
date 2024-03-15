@@ -2,20 +2,16 @@ package com.zangho.chat.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.chat.server.domain.ChatRoom;
-import jakarta.annotation.PostConstruct;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class ChatService {
 
-    private final ObjectMapper objectMapper;
     private final Map<String, ChatRoom> chatRooms;
 
     public ChatService() {
-        this.objectMapper = new ObjectMapper();
         this.chatRooms = new ConcurrentHashMap<>();
     }
 
@@ -28,14 +24,14 @@ public class ChatService {
     }
 
     public Optional<ChatRoom> findRoomByName(String name) {
-        return chatRooms.values().stream().filter(chatRoom -> chatRoom.getName().equals(name)).findAny();
+        return chatRooms.values().stream().filter(chatRoom -> chatRoom.getRoomName().equals(name)).findAny();
     }
 
     public ChatRoom createRoom(String name) {
         var randomId = UUID.randomUUID().toString();
         var chatRoom = ChatRoom.builder()
                 .roomId(randomId)
-                .name(name)
+                .roomName(name)
                 .build();
         chatRooms.put(randomId, chatRoom);
         return chatRoom;
@@ -51,18 +47,17 @@ public class ChatService {
             return false;
         }
 
-        var result = existsRoom.get().getSessions().remove(session);
-        if (result && existsRoom.get().getSessions().isEmpty()) {
+        existsRoom.get().getSessions().remove(session);
+
+        if (existsRoom.get().getSessions().isEmpty()) {
             removeRoom(roomId);
         }
 
-        return result;
+        return true;
     }
 
     public void exitAllRooms(WebSocketSession session) {
-        chatRooms.values().forEach(chatRoom -> {
-            exitRoom(chatRoom.getRoomId(), session);
-        });
+        chatRooms.values().forEach(chatRoom -> exitRoom(chatRoom.getRoomId(), session));
     }
 
     public ChatRoom removeRoom(String roomId) {

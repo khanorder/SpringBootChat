@@ -13,7 +13,7 @@ public class Helpers {
         return byteArray;
     }
 
-    public int getIntFromByteArray(byte[] bytes) {
+    public static int getIntFromByteArray(byte[] bytes) {
         return ((((int)bytes[0] & 0xff) << 24) | (((int)bytes[1] & 0xff) << 16) | (((int)bytes[2] & 0xff) << 8) | (((int)bytes[3] & 0xff)));
     }
 

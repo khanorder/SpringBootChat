@@ -4,19 +4,18 @@ import lombok.Builder;
 import lombok.Data;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 public class ChatRoom {
     private String roomId;
-    private String name;
-    private Set<WebSocketSession> sessions = new HashSet<>();
+    private String roomName;
+    private Map<WebSocketSession, String> sessions = new ConcurrentHashMap<>();
 
     @Builder
-    public ChatRoom(String roomId, String name) {
+    public ChatRoom(String roomId, String roomName) {
         this.roomId = roomId;
-        this.name = name;
+        this.roomName = roomName;
     }
 }

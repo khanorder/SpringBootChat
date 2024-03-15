@@ -5,5 +5,9 @@ export namespace Defines {
         UPDATE_CHAT_ROOM,
         ENTER_CHAT_ROOM,
         EXIT_CHAT_ROOM,
+        NOTICE_ENTER_CHAT_ROOM,
+        NOTICE_EXIT_CHAT_ROOM,
+        NOTICE_CHAT_ROOM,
+        TALK_CHAT_ROOM,
     }
 }
