@@ -1,6 +1,6 @@
 'use client';
 import styles from './page.module.css'
-import {ChangeEvent, ReactElement, useCallback, useEffect, useRef, useState} from "react";
+import {ChangeEvent, KeyboardEventHandler, ReactElement, useCallback, useEffect, useRef, useState} from "react";
 import {v4 as uuid} from 'uuid';
 import {Helpers} from "@/helpers";
 import {Defines} from "@/defines";
@@ -17,6 +17,8 @@ export default function Home() {
     const [chatRoomName, setChatRoomName] = useState<string>('');
     const [userName, setUserName] = useState<string>('');
     const [chatRoomList, setChatRoomList] = useState<Domains.ChatRoom[]>([]);
+    const [chatDatas, setChatDatas] = useState<Map<string, Domains.Chat[]>>(new Map());
+    const [message, setMessage] = useState<string>('');
 
     const connect = useCallback(() => {
         setSocketState(WebSocket.CONNECTING);
@@ -145,15 +147,17 @@ export default function Home() {
 
                             case Defines.PacketType.NOTICE_ENTER_CHAT_ROOM:
                                 const noticeEnterChatRoomRes = Domains.NoticeEnterChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
-                                console.log(noticeEnterChatRoomRes)
+                                console.log(noticeEnterChatRoomRes);
                                 break;
 
                             case Defines.PacketType.NOTICE_EXIT_CHAT_ROOM:
                                 const noticeExitChatRoomRes = Domains.NoticeExitChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
-                                console.log(noticeExitChatRoomRes)
+                                console.log(noticeExitChatRoomRes);
                                 break;
 
                             case Defines.PacketType.TALK_CHAT_ROOM:
+                                const chatRes = Domains.Chat.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
+                                console.log(chatRes);
                                 break;
                         }
                     }
@@ -181,14 +185,6 @@ export default function Home() {
     }, [firstRender, socketState, connect]);
     //#endregion
 
-    const changeChatRoomName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        setChatRoomName(e.target.value ?? '');
-    }, [setChatRoomName]);
-
-    const changeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        setUserName(e.target.value ?? '');
-    }, [setUserName]);
-
     const createChatRoom = useCallback(() => {
         if (null == chatSocket) {
             alert('연결 안됨');
@@ -201,8 +197,8 @@ export default function Home() {
         } else {
             const flag = new Uint8Array(1);
             flag[0] = Defines.PacketType.CREATE_CHAT_ROOM;
-            const bytesChatRoomName = new Uint8Array(Buffer.from(chatRoomName, 'utf-8'));
-            const bytesUserName = new Uint8Array(Buffer.from(userName, 'utf-8'));
+            const bytesChatRoomName = new Uint8Array(Buffer.from(chatRoomName.trim(), 'utf-8'));
+            const bytesUserName = new Uint8Array(Buffer.from(userName.trim(), 'utf-8'));
             const bytesChatRoomNameLength = Helpers.getByteArrayFromInt(bytesChatRoomName.byteLength);
             const bytesUserNameLength = Helpers.getByteArrayFromInt(bytesUserName.byteLength);
             const packet = new Uint8Array(flag.byteLength + 8 + bytesChatRoomName.byteLength + bytesUserName.byteLength);
@@ -226,7 +222,7 @@ export default function Home() {
             const flag = new Uint8Array(1);
             flag[0] = Defines.PacketType.ENTER_CHAT_ROOM;
             const bytesChatRoomId = Helpers.getByteArrayFromUUID(enterChatRoomId.trim());
-            const bytesUserName = new Uint8Array(Buffer.from(userName, 'utf8'));
+            const bytesUserName = new Uint8Array(Buffer.from(userName.trim(), 'utf8'));
             const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + bytesUserName.byteLength);
             packet.set(flag);
             packet.set(bytesChatRoomId, flag.byteLength);
@@ -251,13 +247,60 @@ export default function Home() {
         }
     }, [chatSocket, chatRoomId]);
 
-    const sendMsg = useCallback(() => {
-        console.log(chatSocket?.readyState)
+    const sendMessage = useCallback(() => {
         if (null == chatSocket) {
             alert('연결 안됨');
+        } else if ('' == chatRoomId) {
+            alert('메세지를 보낼 채팅방에 입장해주세요.');
+        } else if ('' == userName) {
+            alert('대화명을 입력해 주세요.');
         } else {
+            const flag = new Uint8Array(1);
+            flag[0] = Defines.PacketType.TALK_CHAT_ROOM;
+            const bytesChatRoomId = Helpers.getByteArrayFromUUID(chatRoomId.trim());
+            const bytesUserName = new Uint8Array(Buffer.from(userName.trim(), 'utf8'));
+            const bytesMessage = new Uint8Array(Buffer.from(message.trim(), 'utf8'));
+            const bytesMessageByteLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
+
+            const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + 5 + bytesUserName.byteLength + bytesMessage.byteLength);
+            console.log(packet.byteLength)
+            packet.set(flag);
+            packet.set(bytesChatRoomId, flag.byteLength);
+            packet[17] = bytesUserName.byteLength;
+            packet.set(bytesMessageByteLength, flag.byteLength + 17);
+            packet.set(bytesUserName, flag.byteLength + 21);
+            packet.set(bytesMessage, flag.byteLength + 21 + bytesUserName.byteLength);
+            chatSocket.send(packet);
+            setMessage('');
         }
-    }, [chatSocket]);
+    }, [chatSocket, chatRoomId, userName, message, setMessage]);
+
+    const onKeyUpChatRoomName = useCallback((e: any) => {
+        if (e.key == 'Enter')
+            createChatRoom();
+    }, [createChatRoom]);
+
+    const changeChatRoomName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setChatRoomName(e.target.value ? e.target.value.trim() : '');
+    }, [setChatRoomName]);
+
+    const onKeyUpUserName = useCallback((e: any) => {
+        if (e.key == 'Enter')
+            createChatRoom();
+    }, [createChatRoom]);
+
+    const changeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setUserName(e.target.value ? e.target.value.trim() : '');
+    }, [setUserName]);
+
+    const onKeyUpMessage = useCallback((e: any) => {
+        if (e.key == 'Enter')
+            sendMessage();
+    }, [sendMessage]);
+
+    const changeMessage = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setMessage(e.target.value ? e.target.value.trim() : '');
+    }, [setMessage]);
 
     const chatRooms = useCallback(() => {
         if (null == chatRoomList || 1 > chatRoomList.length) {
@@ -288,9 +331,9 @@ export default function Home() {
                             '' == chatRoomId
                                 ?
                                 <>
-                                    <input value={userName} onChange={e => changeUserName(e)} placeholder={'대화명'} />
+                                    <input value={userName} onKeyUp={e => onKeyUpUserName(e)} onChange={e => changeUserName(e)} placeholder={'대화명'} />
                                     &nbsp;
-                                    <input value={chatRoomName} onChange={e => changeChatRoomName(e)} placeholder={'채팅방 이름'} />
+                                    <input value={chatRoomName} onKeyUp={e => onKeyUpChatRoomName(e)} onChange={e => changeChatRoomName(e)} placeholder={'채팅방 이름'} />
                                     &nbsp;
                                     <button onClick={createChatRoom}>만들기</button>
                                     <div style={{ marginTop: 20 }}>
@@ -299,9 +342,10 @@ export default function Home() {
                                 </>
                                 :
                                 <>
-                                    <button onClick={exitChatRoom}>나가기</button>
+                                    <input value={message} onKeyUp={e => onKeyUpMessage(e)} onChange={e => changeMessage(e)} placeholder={'메세지를 입력해 주세요.'}/>
+                                    <button onClick={sendMessage}>전송</button>
                                     &nbsp;
-                                    <button onClick={sendMsg}>전송</button>
+                                    <button onClick={exitChatRoom}>나가기</button>
                                 </>
                         )
                         :
@@ -309,7 +353,7 @@ export default function Home() {
                 }
             </div>
         );
-    }, [chatSocket, socketState, chatRoomId, chatRoomName, userName, changeChatRoomName, changeUserName, createChatRoom, connect, sendMsg, chatRooms, exitChatRoom]);
+    }, [chatSocket, socketState, chatRoomId, chatRoomName, userName, changeChatRoomName, changeUserName, createChatRoom, connect, message, sendMessage, chatRooms, exitChatRoom, changeMessage]);
 
     return (
         <main className={styles.main}>

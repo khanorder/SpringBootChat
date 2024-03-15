@@ -23,12 +23,54 @@ export namespace Helpers {
         if (32 != hex.length)
             return new Uint8Array();
 
-        const bytes = new Uint8Array(16)
+        const bytes = new Uint8Array(16);
 
         for (let i = 0; i < hex.length; i += 2)
             bytes[i/2] = parseInt(hex.substring(i, i+2), 16);
 
         return bytes;
+    }
+
+    export function getHexFromLong(value: number): string {
+        const hex = value.toString(16);
+        return (0 == hex.length % 2 ? '' : '0') + hex;
+    }
+
+    export function getByteArrayFromLong(value: number): Uint8Array {
+        const hex = getHexFromLong(value);
+        if (16 < hex.length)
+            return new Uint8Array(8);
+        const hexBytes = new Uint8Array(hex.length / 2);
+        const paddingBytes = new Uint8Array(8 - (hex.length / 2));
+        console.log(hexBytes.byteLength)
+        console.log(paddingBytes.byteLength)
+
+        for (let i = 0; i < hex.length; i += 2)
+            hexBytes[i/2] = parseInt(hex.substring(i, i+2), 16);
+
+        const longBytes = new Uint8Array(8);
+        longBytes.set(paddingBytes);
+        longBytes.set(hexBytes, paddingBytes.byteLength);
+        return longBytes;
+    }
+
+    export function getHexLongFromByteArray(value: Uint8Array): string {
+        if (8 != value.byteLength)
+            return '0000000000000000';
+
+        let hex= '';
+
+        for (let i = 0; i < value.byteLength; i++) {
+            let hexByte= value[i].toString(16);
+            hex += (2 == hexByte.length ? '' : '0') + hexByte;
+        }
+
+        return hex;
+    }
+
+    export function getLongFromByteArray(value: Uint8Array): number {
+        const hex = getHexLongFromByteArray(value);
+        return parseInt(hex, 16);
     }
 
     export function getByteArrayFromInt(value: number): Uint8Array {

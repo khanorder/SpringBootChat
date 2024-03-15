@@ -1,8 +1,11 @@
 import {Helpers} from "@/helpers";
 import {Errors} from "@/defines/errors";
 import ExitChatRoom = Errors.ExitChatRoom;
+import {Defines} from "@/defines";
 
 export namespace Domains {
+
+    import ChatType = Defines.ChatType;
 
     export class ChatRoom {
         roomId: string;
@@ -11,6 +14,46 @@ export namespace Domains {
         constructor(roomId: string, roomName: string) {
             this.roomId = roomId;
             this.roomName = roomName;
+        }
+    }
+
+    export class Chat {
+        roomId: string;
+        type: Defines.ChatType;
+        id: string;
+        time: number;
+        userName: string;
+        message: string;
+
+        constructor(roomId: string, type: Defines.ChatType, id: string, time: number, userName: string, message: string) {
+            this.roomId = roomId;
+            this.type = type;
+            this.id = id;
+            this.time = time;
+            this.userName = userName;
+            this.message = message;
+        }
+
+        public static decode(bytes: Uint8Array): Chat|null {
+            console.log('update chatroom: ');
+            console.log(bytes);
+
+            const bytesRoomId= bytes.slice(0, 16);
+            const roomId= Helpers.getUUIDFromByteArray(bytesRoomId);
+            const type = bytes[16];
+            const bytesId = bytes.slice(17, 33);
+            const id = Helpers.getUUIDFromByteArray(bytesId);
+            const bytesTime = bytes.slice(33, 37);
+            const time = Helpers.getIntFromByteArray(bytesTime);
+            const userNameByteLength = bytes[37];
+            const bytesMessageByteLength = bytes.slice(37, 41);
+            const messageByteLength = Helpers.getIntFromByteArray(bytesMessageByteLength);
+            const bytesUserName = bytes.slice(41, 41 + userNameByteLength);
+            const userName = new TextDecoder().decode(bytesUserName);
+            const bytesMessage = bytes.slice(41 + userNameByteLength, 41 + userNameByteLength + messageByteLength);
+            const message = new TextDecoder().decode(bytesMessage);
+
+            return new Chat(roomId, type, id, time, userName, message);
         }
     }
 
@@ -83,19 +126,19 @@ export namespace Domains {
             console.log('update chatroom: ');
             console.log(bytes);
 
-            const roomCountBytes= bytes.slice(0, 4);
-            const roomCount= Helpers.getIntFromByteArray(roomCountBytes);
+            const bytesRoomCount= bytes.slice(0, 4);
+            const roomCount= Helpers.getIntFromByteArray(bytesRoomCount);
             const roomIds: string[] = [];
             const roomNames: string[] = [];
             const roomNameLengths: number[] = [];
             for (let i = 0; i < roomCount; i++) {
                 let roomIdOffset= 4 + (i * 16);
-                let roomIdBytes= bytes.slice(roomIdOffset, roomIdOffset + (i + 1) * 16);
-                let roomId = Helpers.getUUIDFromByteArray(roomIdBytes);
+                let bytesRoomId= bytes.slice(roomIdOffset, roomIdOffset + (i + 1) * 16);
+                let roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
                 roomIds.push(roomId);
                 let roomNameLengthOffset= (4 + roomCount * 16) + i;
-                let roomNameLengthBytes= bytes.slice(roomNameLengthOffset, roomNameLengthOffset + 1);
-                roomNameLengths.push(roomNameLengthBytes[0]);
+                let bytesRoomNameLength= bytes.slice(roomNameLengthOffset, roomNameLengthOffset + 1);
+                roomNameLengths.push(bytesRoomNameLength[0]);
                 let roomNameBytesOffset= 0;
                 if (0 < roomNameLengths.length && 0 < i) {
                     let prevRoomNameLengths = roomNameLengths.slice(0, i);
@@ -103,8 +146,8 @@ export namespace Domains {
                         roomNameBytesOffset = prevRoomNameLengths.reduce((p, c) => p + c);
                 }
                 let roomNameOffset = 4 + (roomCount * 16) + roomCount + roomNameBytesOffset + roomNameBytesOffset;
-                let roomNameBytes = bytes.slice(roomNameOffset, roomNameOffset + roomNameLengths[i]);
-                let roomName =  new TextDecoder().decode(roomNameBytes);
+                let bytesRoomName = bytes.slice(roomNameOffset, roomNameOffset + roomNameLengths[i]);
+                let roomName =  new TextDecoder().decode(bytesRoomName);
                 roomNames.push(roomName);
             }
 
