@@ -1,6 +1,7 @@
 package com.zangho.chat.server.service;
 
 import com.zangho.chat.server.domain.ChatRoom;
+import com.zangho.chat.server.domain.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
@@ -29,12 +30,14 @@ public class ChatService {
         return chatRooms.values().stream().filter(chatRoom -> chatRoom.getRoomName().equals(name)).findAny();
     }
 
-    public ChatRoom createRoom(String name) throws Exception {
+    public ChatRoom createRoom(String name, WebSocketSession session, User user) throws Exception {
         var randomId = UUID.randomUUID().toString();
         var chatRoom = ChatRoom.builder()
                 .roomId(randomId)
                 .roomName(name)
                 .build();
+
+        chatRoom.getSessions().put(session, user);
         chatRooms.put(randomId, chatRoom);
         return chatRoom;
     }

@@ -2,6 +2,7 @@ package com.zangho.chat.server.socketHandler;
 
 import com.zangho.chat.server.define.*;
 import com.zangho.chat.server.domain.ChatRoom;
+import com.zangho.chat.server.domain.User;
 import com.zangho.chat.server.helper.Helpers;
 import com.zangho.chat.server.service.ChatService;
 import org.slf4j.Logger;
@@ -76,9 +77,11 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var room = chatService.createRoom(roomName);
-                    room.getSessions().put(session, userName);
-                    logger.info("create ChatRoom: " + room.getRoomId() + ", " + roomName + ", " + userName);
+                    var userId = UUID.randomUUID().toString();
+                    var bytesUserId = Helpers.getByteArrayFromUUID(userId);
+                    var user = new User(userId, userName);
+                    var room = chatService.createRoom(roomName, session, user);
+                    logger.info("create ChatRoom: " + room.getRoomId() + ", " + roomName + ", " + userId + ", " + userName);
 
                     var bytesRoomId = Helpers.getByteArrayFromUUID(room.getRoomId());
                     if (0 == bytesRoomId.length) {
@@ -87,9 +90,10 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length);
+                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length + bytesUserId.length);
                     sendCallerBuffer.put(sendCallerPacketFlag);
                     sendCallerBuffer.put(bytesRoomId);
+                    sendCallerBuffer.put(bytesUserId);
                     sendToOne(session, sendCallerBuffer.array());
                     sendToAll(updateChatRoom());
                 } catch (Exception ex) {
@@ -115,7 +119,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var callerUserName = existsRoom.get().getSessions().get(session);
+                    var callerUser = existsRoom.get().getSessions().get(session);
 
                     if (!chatService.exitRoom(roomId, session)) {
                         sendCallerPacketFlag[1] = ErrorExitChatRoom.FAILED_TO_EXIT.getByte();
@@ -124,7 +128,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     }
 
                     sendToOne(session, sendCallerPacketFlag);
-                    noticeUserExitChatRoom(existsRoom.get(), callerUserName);
+                    noticeUserExitChatRoom(existsRoom.get(), callerUser.getName());
                     sendToAll(updateChatRoom());
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
@@ -134,8 +138,8 @@ public class ChatSocketHandler extends TextWebSocketHandler {
             case ENTER_CHAT_ROOM:
                 try {
                     var sendCallerPacketFlag = new byte[] {type.getByte(), ErrorEnterChatRoom.NONE.getByte()};
-                    var roomIdBytes = Arrays.copyOfRange(packet, 1, 17);
-                    var roomId = Helpers.getUUIDFromByteArray(roomIdBytes);
+                    var bytesRoomId = Arrays.copyOfRange(packet, 1, 17);
+                    var roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
                     var existsRoom = chatService.findRoomById(roomId);
                     if (existsRoom.isEmpty()) {
                         sendCallerPacketFlag[1] = ErrorEnterChatRoom.NO_EXISTS_ROOM.getByte();
@@ -149,13 +153,17 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var userNameBytes = Arrays.copyOfRange(packet, 17, packet.length);
-                    var userName = new String(userNameBytes);
-                    existsRoom.get().getSessions().put(session, userName);
+                    var bytesUserName = Arrays.copyOfRange(packet, 17, packet.length);
+                    var userName = new String(bytesUserName);
+                    var userId = UUID.randomUUID().toString();
+                    var bytesUserId = Helpers.getByteArrayFromUUID(userId);
+                    var user = new User(userId, userName);
+                    existsRoom.get().getSessions().put(session, user);
 
-                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + roomIdBytes.length);
+                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length + bytesUserId.length);
                     sendCallerBuffer.put(sendCallerPacketFlag);
-                    sendCallerBuffer.put(roomIdBytes);
+                    sendCallerBuffer.put(bytesRoomId);
+                    sendCallerBuffer.put(bytesUserId);
                     sendToOne(session, sendCallerBuffer.array());
 
                     var sessionsInRoom = new HashSet<>(existsRoom.get().getSessions().keySet());
@@ -182,30 +190,51 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    if (!existsRoom.get().getSessions().containsKey(session)) {
+                    var user = existsRoom.get().getSessions().get(session);
+
+                    if (null == user) {
                         sendPacketFlag[1] = ErrorTalkChatRoom.NOT_IN_ROOM.getByte();
                         sendToOne(session, sendPacketFlag);
                         return;
                     }
 
-                    var userNameBytesLength = packet[17];
-                    var chatMessageBytesLength = Helpers.getIntFromByteArray(Arrays.copyOfRange(packet, 18, 22));
-                    var bytesUserName = Arrays.copyOfRange(packet, 22, 22 + userNameBytesLength);
-                    var bytesChatMessage = Arrays.copyOfRange(packet, 22 + userNameBytesLength, 22 + userNameBytesLength + chatMessageBytesLength);
-                    var userName = new String(bytesUserName);
-                    var chatMessage = new String(bytesChatMessage);
+                    var bytesUserId = Arrays.copyOfRange(packet, 1, 33);
+                    var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    logger.info("talk userId: " + userId);
 
+                    if (!user.getId().equals(userId)) {
+                        sendPacketFlag[1] = ErrorTalkChatRoom.NOT_FOUND_USER.getByte();
+                        sendToOne(session, sendPacketFlag);
+                        return;
+                    }
+
+                    var userName = user.getName();
+                    var bytesUserName = userName.getBytes();
+                    var bytesUserNameBytesLength = (byte)bytesUserName.length;
+                    var bytesChatMessageBytesLength = Arrays.copyOfRange(packet, 33, 37);
+                    var chatMessageBytesLength = Helpers.getIntFromByteArray(bytesChatMessageBytesLength);
+                    var bytesChatMessage = Arrays.copyOfRange(packet, 37, 37 + chatMessageBytesLength);
+                    var chatMessage = new String(bytesChatMessage);
+                    var now = new Date().getTime();
+                    var bytesNow = Helpers.getByteArrayFromLong(now);
                     var chatId = UUID.randomUUID().toString();
                     var bytesChatId = Helpers.getByteArrayFromUUID(chatId);
+                    logger.info("talk chat room: " + roomId + ", " + userId + ", " + userName + ", " + chatMessage + ", " + now + ", " + chatId);
 
                     var sessionsInRoom = new HashSet<>(existsRoom.get().getSessions().keySet());
-                    var sendRoomBuffer = ByteBuffer.allocate(sendPacketFlag.length + 17 + userName.getBytes().length);
+                    var sendRoomBuffer = ByteBuffer.allocate(sendPacketFlag.length + 1 + bytesRoomId.length + bytesUserId.length + bytesChatId.length + 8 + 1 + 4 + bytesUserName.length + chatMessageBytesLength);
                     sendRoomBuffer.put(sendPacketFlag);
-                    sendRoomBuffer.put(bytesRoomId);
                     sendRoomBuffer.put(ChatType.TALK.getByte());
-                    sendRoomBuffer.put(userName.getBytes());
+                    sendRoomBuffer.put(bytesRoomId);
+                    sendRoomBuffer.put(bytesUserId);
+                    sendRoomBuffer.put(bytesChatId);
+                    sendRoomBuffer.put(bytesNow);
+                    sendRoomBuffer.put(bytesUserNameBytesLength);
+                    sendRoomBuffer.put(bytesChatMessageBytesLength);
+                    sendRoomBuffer.put(bytesUserName);
+                    sendRoomBuffer.put(bytesChatMessage);
 
-//                    sendToEachSession(sessionsInRoom, sendRoomBuffer.array());
+                    sendToEachSession(sessionsInRoom, sendRoomBuffer.array());
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -228,15 +257,15 @@ public class ChatSocketHandler extends TextWebSocketHandler {
     private void exitAllRooms(WebSocketSession session) throws Exception {
         for (ChatRoom chatRoom : chatService.findAllRoom()) {
             try {
-                var userName = chatRoom.getSessions().get(session);
-                if (null == userName)
+                var user = chatRoom.getSessions().get(session);
+                if (null == user)
                     continue;
 
                 var isExit = chatService.exitRoom(chatRoom.getRoomId(), session);
                 if (chatRoom.getSessions().isEmpty()) {
                     chatService.removeRoom(chatRoom.getRoomId());
                 } else if (isExit) {
-                    noticeUserExitChatRoom(chatRoom, userName);
+                    noticeUserExitChatRoom(chatRoom, user.getName());
                 }
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
