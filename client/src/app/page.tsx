@@ -299,21 +299,21 @@ export default function Home() {
             const flag = new Uint8Array(1);
             flag[0] = Defines.PacketType.TALK_CHAT_ROOM;
             const bytesChatRoomId = Helpers.getByteArrayFromUUID(chatRoomId.trim());
-            const bytesUserId = new Uint8Array(Buffer.from(userId.trim(), 'utf8'));
+            const bytesUserId = Helpers.getByteArrayFromUUID(userId.trim());
             const bytesMessage = new Uint8Array(Buffer.from(message.trim(), 'utf8'));
             const bytesMessageByteLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
 
-            const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + 4 + bytesMessage.byteLength);
+            const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length + bytesMessage.byteLength);
             packet.set(flag);
             packet.set(bytesChatRoomId, flag.byteLength);
             packet.set(bytesUserId, flag.byteLength + bytesChatRoomId.byteLength);
-            packet.set(bytesMessageByteLength, flag.byteLength + 32);
-            packet.set(bytesMessage, flag.byteLength + 36);
+            packet.set(bytesMessageByteLength, flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
+            packet.set(bytesMessage, flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
             console.log(packet)
             chatSocket.send(packet);
             setMessage('');
         }
-    }, [chatSocket, chatRoomId, userName, message, setMessage]);
+    }, [chatSocket, chatRoomId, userId, userName, message, setMessage]);
 
     const onKeyUpChatRoomName = useCallback((e: any) => {
         if (e.key == 'Enter')
@@ -372,15 +372,15 @@ export default function Home() {
                 let chat = chatDatas[i];
                 switch (chat.type) {
                     case Defines.ChatType.NOTICE:
-                        contents.push(<li key={i} style={{ listStyle: 'none', textAlign: 'center' }}>{chat.message}</li>);
+                        contents.push(<li key={i} style={{ listStyle: 'none', textAlign: 'center', marginTop: 5, padding: 5, borderRadius: 8, background: '#e9e9e9' }}>{chat.message}</li>);
                         break;
 
                     case Defines.ChatType.TALK:
                         contents.push(
-                            <li key={i} style={{ listStyle: 'none', display: 'flex', marginTop: 5, justifyContent: userName == chat.userName ? 'end' : 'start' }}>
+                            <li key={i} style={{ listStyle: 'none', display: 'flex', marginTop: 5, justifyContent: userId == chat.userId ? 'end' : 'start' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                     {
-                                        userName == chat.userName
+                                        userId == chat.userId
                                             ?
                                             <></>
                                             :
@@ -401,7 +401,7 @@ export default function Home() {
         return (
             <ul style={{ margin: 0, padding: 10, background: 'white' }}>{contents}</ul>
         );
-    }, [chatDatas, userName]);
+    }, [chatDatas, userId]);
 
     const contents = useCallback(() => {
         return (

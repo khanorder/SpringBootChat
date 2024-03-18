@@ -29,7 +29,7 @@ export namespace Domains {
         constructor(type: Defines.ChatType, roomId: string, userId: string, id: string, time: number, userName: string, message: string) {
             this.type = type;
             this.roomId = roomId;
-            this.userId = userName;
+            this.userId = userId;
             this.id = id;
             this.time = time;
             this.userName = userName;

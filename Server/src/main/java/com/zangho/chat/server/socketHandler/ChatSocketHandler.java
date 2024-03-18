@@ -198,9 +198,8 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var bytesUserId = Arrays.copyOfRange(packet, 1, 33);
+                    var bytesUserId = Arrays.copyOfRange(packet, 17, 33);
                     var userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                    logger.info("talk userId: " + userId);
 
                     if (!user.getId().equals(userId)) {
                         sendPacketFlag[1] = ErrorTalkChatRoom.NOT_FOUND_USER.getByte();
