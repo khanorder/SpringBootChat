@@ -30,7 +30,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         connectedSessions.put(session, new HashSet<>());
-        sendToOne(session, updateChatRoom());
+        sendToOne(session, updateChatRooms());
         logConnectionState();
         super.afterConnectionEstablished(session);
     }
@@ -39,7 +39,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession closeSession, CloseStatus status) throws Exception {
         connectedSessions.remove(closeSession);
         exitAllRooms(closeSession);
-        sendToAll(updateChatRoom());
+        sendToAll(updateChatRooms());
         logConnectionState();
         super.afterConnectionClosed(closeSession, status);
     }
@@ -95,7 +95,8 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     sendCallerBuffer.put(bytesRoomId);
                     sendCallerBuffer.put(bytesUserId);
                     sendToOne(session, sendCallerBuffer.array());
-                    sendToAll(updateChatRoom());
+                    sendToAll(updateChatRooms());
+                    updateChatRoom(room.getRoomId());
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -129,7 +130,8 @@ public class ChatSocketHandler extends TextWebSocketHandler {
 
                     sendToOne(session, sendCallerPacketFlag);
                     noticeUserExitChatRoom(existsRoom.get(), callerUser.getName());
-                    sendToAll(updateChatRoom());
+                    sendToAll(updateChatRooms());
+                    updateChatRoom(existsRoom.get().getRoomId());
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -173,6 +175,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     sendNoticeBuffer.put(userName.getBytes());
 
                     sendToEachSession(sessionsInRoom, sendNoticeBuffer.array());
+                    updateChatRoom(existsRoom.get().getRoomId());
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -321,23 +324,49 @@ public class ChatSocketHandler extends TextWebSocketHandler {
         });
     }
 
-    private byte[] updateChatRoom() throws Exception {
-        var updatePacketFlagBytes = new byte[] {PacketType.UPDATE_CHAT_ROOM.getByte()};
+    private byte[] updateChatRooms() throws Exception {
+        var bytesUpdatePacketFlag = new byte[] {PacketType.UPDATE_CHAT_ROOMS.getByte()};
         // 최대 채팅방 숫자는 int32
-        var roomCountBytes = Helpers.getByteArrayFromInt(chatService.findAllRoom().size());
+        var bytesRoomCount = Helpers.getByteArrayFromInt(chatService.findAllRoom().size());
 
-        var roomIdsBytes = new byte[0];
-        var roomNameLengthsBytes = new byte[0];
-        var roomNamesBytes = new byte[0];
+        var bytesRoomIds = new byte[0];
+        var bytesRoomNameLengths = new byte[0];
+        var bytesRoomNames = new byte[0];
 
         for (ChatRoom chatRoom : chatService.findAllRoom()) {
-            roomIdsBytes = mergeBytePacket(roomIdsBytes, Helpers.getByteArrayFromUUID(chatRoom.getRoomId()));
-            var roomNameBytes = chatRoom.getRoomName().getBytes();
-            roomNameLengthsBytes = mergeBytePacket(roomNameLengthsBytes, new byte[] {(byte)roomNameBytes.length});
-            roomNamesBytes = mergeBytePacket(roomNamesBytes, roomNameBytes);
+            bytesRoomIds = mergeBytePacket(bytesRoomIds, Helpers.getByteArrayFromUUID(chatRoom.getRoomId()));
+            var bytesRoomName = chatRoom.getRoomName().getBytes();
+            bytesRoomNameLengths = mergeBytePacket(bytesRoomNameLengths, new byte[] {(byte)bytesRoomName.length});
+            bytesRoomNames = mergeBytePacket(bytesRoomNames, bytesRoomName);
         }
 
-        return mergeBytePacket(updatePacketFlagBytes, roomCountBytes, roomIdsBytes, roomNameLengthsBytes, roomNamesBytes);
+        return mergeBytePacket(bytesUpdatePacketFlag, bytesRoomCount, bytesRoomIds, bytesRoomNameLengths, bytesRoomNames);
+    }
+
+    private void updateChatRoom(String roomId) throws Exception {
+        var chatRoom = chatService.findRoomById(roomId);
+        if (chatRoom.isEmpty())
+            return;
+
+        if (chatRoom.get().getSessions().isEmpty())
+            return;
+
+        var bytesUpdatePacketFlag = new byte[] {PacketType.UPDATE_CHAT_ROOM.getByte()};
+        // 입장한 사용자 숫자는 int32
+        var bytesUserCount = Helpers.getByteArrayFromInt(chatRoom.get().getSessions().size());
+
+        var bytesUserIds = new byte[0];
+        var bytesUserNameLengths = new byte[0];
+        var bytesUserNames = new byte[0];
+        for (User user : chatRoom.get().getSessions().values()) {
+            bytesUserIds = mergeBytePacket(bytesUserIds, Helpers.getByteArrayFromUUID(user.getId()));
+            var bytesUserName = user.getName().getBytes();
+            bytesUserNameLengths = mergeBytePacket(bytesUserNameLengths, new byte[] {(byte)bytesUserName.length});
+            bytesUserNames = mergeBytePacket(bytesUserNames, bytesUserName);
+        }
+
+        var packet = mergeBytePacket(bytesUpdatePacketFlag, bytesUserCount, bytesUserIds, bytesUserNameLengths, bytesUserNames);
+        sendToEachSession(chatRoom.get().getSessions().keySet(), packet);
     }
 
     private void logBytePackets(byte[] packet, String name) throws Exception {

@@ -17,6 +17,16 @@ export namespace Domains {
         }
     }
 
+    export class ChatRoomUser {
+        userId: string;
+        userName: string;
+
+        constructor(userId: string, userName: string) {
+            this.userId = userId;
+            this.userName = userName;
+        }
+    }
+
     export class Chat {
         type: Defines.ChatType;
         roomId: string;
@@ -125,7 +135,7 @@ export namespace Domains {
         }
     }
 
-    export class UpdateChatRoomRes {
+    export class UpdateChatRoomsRes {
         public roomIds: string[];
         public roomNames: string[];
 
@@ -134,8 +144,8 @@ export namespace Domains {
             this.roomNames = roomNames;
         }
 
-        public static decode(bytes: Uint8Array): UpdateChatRoomRes|null {
-            console.log('update chatroom: ');
+        public static decode(bytes: Uint8Array): UpdateChatRoomsRes|null {
+            console.log('update chatrooms: ');
             console.log(bytes);
 
             const bytesRoomCount= bytes.slice(0, 4);
@@ -145,7 +155,7 @@ export namespace Domains {
             const roomNameLengths: number[] = [];
             for (let i = 0; i < roomCount; i++) {
                 let roomIdOffset= 4 + (i * 16);
-                let bytesRoomId= bytes.slice(roomIdOffset, roomIdOffset + (i + 1) * 16);
+                let bytesRoomId= bytes.slice(roomIdOffset, roomIdOffset + 16);
                 let roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
                 roomIds.push(roomId);
                 let roomNameLengthOffset= (4 + roomCount * 16) + i;
@@ -157,13 +167,55 @@ export namespace Domains {
                     if (0 < prevRoomNameLengths.length)
                         roomNameBytesOffset = prevRoomNameLengths.reduce((p, c) => p + c);
                 }
-                let roomNameOffset = 4 + (roomCount * 16) + roomCount + roomNameBytesOffset + roomNameBytesOffset;
+                let roomNameOffset = 4 + (roomCount * 16) + roomCount + roomNameBytesOffset;
                 let bytesRoomName = bytes.slice(roomNameOffset, roomNameOffset + roomNameLengths[i]);
                 let roomName =  new TextDecoder().decode(bytesRoomName);
                 roomNames.push(roomName);
             }
 
-            return new UpdateChatRoomRes(roomIds, roomNames);
+            return new UpdateChatRoomsRes(roomIds, roomNames);
+        }
+    }
+
+    export class UpdateChatRoomUsersRes {
+        public userIds: string[];
+        public userNames: string[];
+
+        constructor(userIds: string[], userNames: string[]) {
+            this.userIds = userIds;
+            this.userNames = userNames;
+        }
+
+        public static decode(bytes: Uint8Array): UpdateChatRoomUsersRes|null {
+            console.log('update chatroom: ');
+            console.log(bytes);
+
+            const bytesUserCount= bytes.slice(0, 4);
+            const userCount= Helpers.getIntFromByteArray(bytesUserCount);
+            const userIds: string[] = [];
+            const userNames: string[] = [];
+            const userNameLengths: number[] = [];
+            for (let i = 0; i < userCount; i++) {
+                let userIdOffset= 4 + (i * 16);
+                let bytesUserId= bytes.slice(userIdOffset, userIdOffset + 16);
+                let userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                userIds.push(userId);
+                let userNameLengthOffset= (4 + userCount * 16) + i;
+                let bytesUserNameLength= bytes.slice(userNameLengthOffset, userNameLengthOffset + 1);
+                userNameLengths.push(bytesUserNameLength[0]);
+                let bytesUserNameOffset= 0;
+                if (0 < userNameLengths.length && 0 < i) {
+                    let prevUserNameLengths = userNameLengths.slice(0, i);
+                    if (0 < prevUserNameLengths.length)
+                        bytesUserNameOffset = prevUserNameLengths.reduce((p, c) => p + c);
+                }
+                let userNameOffset = 4 + (userCount * 16) + userCount + bytesUserNameOffset;
+                let bytesUserName = bytes.slice(userNameOffset, userNameOffset + userNameLengths[i]);
+                let userName =  new TextDecoder().decode(bytesUserName);
+                userNames.push(userName);
+            }
+
+            return new UpdateChatRoomUsersRes(userIds, userNames);
         }
     }
 

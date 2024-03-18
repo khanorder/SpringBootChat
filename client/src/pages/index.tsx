@@ -1,9 +1,8 @@
-'use client';
-import styles from './page.module.css'
+import styles from 'src/styles/index.module.css'
+import chatStyles from 'src/styles/chat.module.css'
 import {
     ChangeEvent,
     createRef,
-    KeyboardEventHandler,
     ReactElement,
     useCallback,
     useEffect,
@@ -16,11 +15,19 @@ import {Defines} from "@/defines";
 import {Errors} from "@/defines/errors";
 import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
-import UpdateChatRoomRes = Domains.UpdateChatRoomRes;
+import UpdateChatRoomRes = Domains.UpdateChatRoomsRes;
 import ChatRoom = Domains.ChatRoom;
 import { dayjs } from '@/helpers/localizedDayjs';
+import {NextPageContext} from "next";
+import DefaultLayout from "@/components/layouts/default";
+import ChatRoomUser = Domains.ChatRoomUser;
 
-export default function Home() {
+interface HomeProps {
+    isProd: boolean;
+    serverHost: string;
+}
+
+function Home({ isProd, serverHost }: HomeProps) {
     const firstRender = useRef(true);
     const [chatSocket, setWebsocket] = useState<WebSocket|null>(null);
     const [socketState, setSocketState] = useState<0|1|2|3>(WebSocket.CLOSED);
@@ -29,9 +36,11 @@ export default function Home() {
     const [userId, setUserId] = useState<string>('');
     const [userName, setUserName] = useState<string>('');
     const [chatRoomList, setChatRoomList] = useState<Domains.ChatRoom[]>([]);
+    const [chatRoomUserList, setChatRoomUserList] = useState<Domains.ChatRoomUser[]>([]);
     const [chatDatas, setChatDatas] = useState<Domains.Chat[]>([]);
     const [message, setMessage] = useState<string>('');
-    const chatContentsRef = createRef<HTMLDivElement>();
+    const [chatRoomUserListClass, setChatRoomUserListClass] = useState<string>(chatStyles.chatUserList);
+    const chatContentsRef = createRef<HTMLUListElement>();
 
     const connect = useCallback(() => {
         setSocketState(WebSocket.CONNECTING);
@@ -41,7 +50,8 @@ export default function Home() {
             setChatRoomId('');
             setChatRoomName('');
             setChatRoomList([]);
-            const newChatSocket = new WebSocket('ws://localhost:8080/ws/chat');
+            setChatRoomUserList([]);
+            const newChatSocket = new WebSocket(`${isProd ? 'wss' : 'ws'}://${serverHost}/ws/chat`);
             newChatSocket.binaryType = 'arraybuffer';
 
             newChatSocket.onopen = function (e) {
@@ -89,16 +99,31 @@ export default function Home() {
                                 }
                                 break;
 
-                            case Defines.PacketType.UPDATE_CHAT_ROOM:
-                                const updateChatRoomRes= Domains.UpdateChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
+                            case Defines.PacketType.UPDATE_CHAT_ROOMS:
+                                const updateChatRoomsRes= Domains.UpdateChatRoomsRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
                                 setChatRoomList([]);
-                                if (null != updateChatRoomRes && 0 < updateChatRoomRes.roomIds.length) {
+                                if (null != updateChatRoomsRes && 0 < updateChatRoomsRes.roomIds.length) {
                                     const list: ChatRoom[] = [];
-                                    for (let i = 0; i < updateChatRoomRes.roomIds.length; i++) {
-                                       list.push(new ChatRoom(updateChatRoomRes.roomIds[i], updateChatRoomRes.roomNames[i]));
+                                    for (let i = 0; i < updateChatRoomsRes.roomIds.length; i++) {
+                                       list.push(new ChatRoom(updateChatRoomsRes.roomIds[i], updateChatRoomsRes.roomNames[i]));
 
                                     }
+                                    console.log(list);
                                     setChatRoomList(list);
+                                }
+                                break;
+
+                            case Defines.PacketType.UPDATE_CHAT_ROOM:
+                                const updateChatRoomUsersRes= Domains.UpdateChatRoomUsersRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
+                                setChatRoomUserList([]);
+                                if (null != updateChatRoomUsersRes && 0 < updateChatRoomUsersRes.userIds.length) {
+                                    const list: ChatRoomUser[] = [];
+                                    for (let i = 0; i < updateChatRoomUsersRes.userIds.length; i++) {
+                                        list.push(new ChatRoomUser(updateChatRoomUsersRes.userIds[i], updateChatRoomUsersRes.userNames[i]));
+
+                                    }
+                                    console.log(list);
+                                    setChatRoomUserList(list);
                                 }
                                 break;
 
@@ -139,15 +164,15 @@ export default function Home() {
                                 switch (exitChatRoomRes.result) {
                                     case Errors.ExitChatRoom.NONE:
                                         break;
-                                        
+
                                     case Errors.ExitChatRoom.ROOM_REMOVED:
                                         alert('삭제된 채팅방입니다.');
                                         break;
-                                        
+
                                     case Errors.ExitChatRoom.NO_EXISTS_ROOM:
                                         alert('그 채팅방은 없습니다.');
                                         break;
-                                        
+
                                     case Errors.ExitChatRoom.NOT_IN_ROOM:
                                         alert('현재 그 채팅방에 입장중이 아닙니다.');
                                         break;
@@ -160,6 +185,7 @@ export default function Home() {
                                 setChatRoomName('');
                                 setUserId('');
                                 setUserName('');
+                                setChatRoomUserList([]);
                                 break;
 
                             case Defines.PacketType.NOTICE_ENTER_CHAT_ROOM:
@@ -201,7 +227,23 @@ export default function Home() {
         } else {
             console.log('이미 연결중');
         }
-    }, [chatSocket, socketState, chatRoomList, chatRoomId, chatDatas, setWebsocket, setSocketState, setChatRoomName, setChatRoomId, setUserId, setUserName, setChatRoomList, setChatDatas]);
+    }, [
+        isProd,
+        serverHost,
+        chatSocket,
+        socketState,
+        chatRoomList,
+        chatRoomId,
+        chatDatas,
+        setWebsocket,
+        setSocketState,
+        setChatRoomName,
+        setChatRoomId,
+        setUserId,
+        setUserName,
+        setChatRoomList,
+        setChatDatas
+    ]);
 
     //#region OnRender
     useEffect(() => {
@@ -226,8 +268,12 @@ export default function Home() {
             alert('연결 안됨');
         } else if ('' == chatRoomName) {
             alert('채팅방 정보를 입력해주세요.');
+        } else if (10 < chatRoomName.length) {
+            alert('채팅방 이름은 10글자 이내로 입력해주세요.');
         } else if ('' == userName) {
             alert('대화명을 입력해주세요.');
+        } else if (10 < userName.length) {
+            alert('대화명은 10글자 이내로 입력해주세요.');
         } else if ('' != chatRoomId) {
             alert('이미 채팅방에 들어와 있습니다.');
         } else {
@@ -254,6 +300,8 @@ export default function Home() {
             alert('채팅방 정보 없음');
         } else if ('' == userName) {
             alert('대화명을 입력해 주세요.');
+        } else if (10 < userName.length) {
+            alert('대화명은 10글자 이내로 입력해주세요.');
         } else {
             const flag = new Uint8Array(1);
             flag[0] = Defines.PacketType.ENTER_CHAT_ROOM;
@@ -321,7 +369,18 @@ export default function Home() {
     }, [createChatRoom]);
 
     const changeChatRoomName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        setChatRoomName(e.target.value ? e.target.value.trim() : '');
+        if (e.target.value && 10 < e.target.value.toString().length) {
+            alert('채팅방 이름은 10글자 이내로 입력해주세요.')
+            setChatRoomName(prev => {
+                if (null == prev) {
+                    return '';
+                }
+
+                return prev.trim();
+            });
+        } else {
+            setChatRoomName(e.target.value ? e.target.value.trim() : '');
+        }
     }, [setChatRoomName]);
 
     const onKeyUpUserName = useCallback((e: any) => {
@@ -330,7 +389,18 @@ export default function Home() {
     }, [createChatRoom]);
 
     const changeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        setUserName(e.target.value ? e.target.value.trim() : '');
+        if (e.target.value && 10 < e.target.value.toString().length) {
+            alert('대화명은 10글자 이내로 입력해주세요.')
+            setUserName(prev => {
+                if (null == prev) {
+                    return '';
+                }
+
+                return prev.trim();
+            });
+        } else {
+            setUserName(e.target.value ? e.target.value.trim() : '');
+        }
     }, [setUserName]);
 
     const onKeyUpMessage = useCallback((e: any|KeyboardEvent) => {
@@ -348,21 +418,42 @@ export default function Home() {
     const chatRooms = useCallback(() => {
         if (null == chatRoomList || 1 > chatRoomList.length) {
             return (
-                <ul>
-                    <li style={{ textAlign: 'center', listStyle: 'none' }}>없습니다.</li>
+                <ul className={chatStyles.chatRoomList}>
+                    <li className={chatStyles.chatRoomListItem}>{isProd ? '개설된 채팅방이 없습니다.' : ''}</li>
                 </ul>
             );
         } else {
             const list: ReactElement[] = [];
             for (let i = 0; i < chatRoomList.length; i++) {
-                list.push(<li key={i} style={{ listStyle: 'none' }}><strong>[{i + 1}]</strong> <button onClick={e => enterChatRoom(chatRoomList[i].roomId)}>입장</button> {chatRoomList[i].roomName}</li>)
+                list.push(
+                    <li key={i} className={chatStyles.chatRoomListItem}>
+                        <strong>[{i + 1}]</strong>
+                        &nbsp;
+                        <button className={chatStyles.chatRoomEnterButton} onClick={e => enterChatRoom(chatRoomList[i].roomId)}>입장</button>
+                        &nbsp;
+                        <span>{chatRoomList[i].roomName}</span>
+                    </li>
+                )
             }
 
             return (
-                <ul>{list}</ul>
+                <ul className={chatStyles.chatRoomList}>{list}</ul>
             );
         }
-    }, [chatRoomList, enterChatRoom]);
+    }, [chatRoomList, enterChatRoom, isProd]);
+
+    const chatRoomUsers = useCallback(() => {
+        const users: ReactElement[] = [];
+        users.push(<li key={'userCount'} className={chatStyles.chatRoomUserCount}>{`참여인원: ${chatRoomUserList.length} 명`}</li>)
+
+        if (0 < chatRoomUserList.length) {
+            for (let i = 0; i < chatRoomUserList.length; i++) {
+                users.push(<li key={i} className={chatStyles.chatRoomUser}>{chatRoomUserList[i].userName}</li>);
+            }
+        }
+
+        return users;
+    }, [chatRoomUserList]);
 
     const chatContents = useCallback(() => {
         const contents: ReactElement[] = [];
@@ -378,7 +469,7 @@ export default function Home() {
                     case Defines.ChatType.TALK:
                         contents.push(
                             <li key={i} style={{ listStyle: 'none', display: 'flex', marginTop: 5, justifyContent: userId == chat.userId ? 'end' : 'start' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ flex: '0 1 auto', display: 'flex', flexDirection: 'column' }}>
                                     {
                                         userId == chat.userId
                                             ?
@@ -386,7 +477,7 @@ export default function Home() {
                                             :
                                             <div style={{ marginBottom: 5, fontSize: 13 }}>{chat.userName}</div>
                                     }
-                                    <div style={{ display: 'block', border: '1px solid #d9d9d9', borderRadius: 8, textAlign: 'left', marginLeft: 8, marginRight: 8, padding: 8 }} dangerouslySetInnerHTML={{ __html: chat.message.replaceAll('\n', '<br />') }}></div>
+                                    <div style={{ display: 'block', border: (userId == chat.userId ? '1px solid #3399dd' : '1px solid #d9d9d9'), borderRadius: 8, textAlign: 'left', marginLeft: 8, marginRight: 8, padding: 8, background: (userId == chat.userId ? '#66bbff' : '#ffffff'), color: (userId == chat.userId ? '#ffffff' : '#000000') }} dangerouslySetInnerHTML={{ __html: chat.message.replaceAll('\n', '<br />') }}></div>
                                     <div style={{ marginTop: 5, fontSize: 12, textAlign: 'right' }}>{dayjs(chat.time).fromNow(true)}</div>
                                 </div>
                             </li>
@@ -395,13 +486,26 @@ export default function Home() {
                 }
             }
         } else {
-            contents.push(<li key={'none'} style={{ listStyle: 'none', textAlign: 'center' }}>채팅 내용이 없습니다.</li>);
+            contents.push(<li key={'none'} style={{ listStyle: 'none', textAlign: 'center' }}>{isProd ? '채팅 내용이 없습니다.' : ''}</li>);
         }
 
-        return (
-            <ul style={{ margin: 0, padding: 10, background: 'white' }}>{contents}</ul>
-        );
-    }, [chatDatas, userId]);
+        return contents;
+    }, [chatDatas, userId, isProd]);
+
+    const toggleChatRoomUserList = useCallback(() => {
+        setChatRoomUserListClass(prev => {
+            if (null == prev || '' == prev)
+                return chatStyles.chatUserList;
+
+            if (chatStyles.chatUserList == prev) {
+                return chatStyles.chatUserList + ' ' + chatStyles.chatUserListScroll;
+            } else if (`${chatStyles.chatUserList} ${chatStyles.chatUserListScroll}` == prev) {
+                return chatStyles.chatUserList;
+            } else {
+                return chatStyles.chatUserList;
+            }
+        });
+    }, [setChatRoomUserListClass]);
 
     const contents = useCallback(() => {
         return (
@@ -413,24 +517,27 @@ export default function Home() {
                             '' == chatRoomId || '' == userId
                                 ?
                                 <>
-                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                        <input value={userName} onKeyUp={e => onKeyUpUserName(e)} onChange={e => changeUserName(e)} placeholder={'대화명'} />
-                                        &nbsp;
-                                        <input value={chatRoomName} onKeyUp={e => onKeyUpChatRoomName(e)} onChange={e => changeChatRoomName(e)} placeholder={'채팅방 이름'} />
-                                        &nbsp;
-                                        <button onClick={createChatRoom}>만들기</button>
+                                    <div className={chatStyles.chatRoomInputWrapper}>
+                                        <input className={chatStyles.userNameInput} value={userName} onKeyUp={e => onKeyUpUserName(e)} onChange={e => changeUserName(e)} placeholder={isProd ? '대화명' : '' } />
+                                        <input className={chatStyles.roomNameInput} value={chatRoomName} onKeyUp={e => onKeyUpChatRoomName(e)} onChange={e => changeChatRoomName(e)} placeholder={isProd ? '채팅방 이름' : ''} />
+                                        <button className={chatStyles.createRoomButton} onClick={createChatRoom}>만들기</button>
                                     </div>
-                                    <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
+                                    <div className={chatStyles.chatRoomListWrapper}>
                                         {chatRooms()}
                                     </div>
                                 </>
                                 :
                                 <>
-                                    <div style={{ marginTop: 0, marginBottom: 10, border: '2px solid #d9d9d9', borderRadius: 8, maxHeight: 300, overflowY: 'scroll' }} ref={chatContentsRef}>
-                                        {chatContents()}
+                                    <div className={chatStyles.chatContentsWrapper}>
+                                        <ul className={chatRoomUserListClass} onClick={toggleChatRoomUserList}>
+                                            {chatRoomUsers()}
+                                        </ul>
+                                        <ul className={chatStyles.chatContentsList} ref={chatContentsRef}>
+                                            {chatContents()}
+                                        </ul>
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                                        <textarea value={message} style={{ flex: '1 1 auto', padding: 5, resize: 'none' }} onKeyUp={e => onKeyUpMessage(e)} onChange={e => changeMessage(e)} placeholder={'메세지를 입력해 주세요.'}>
+                                    <div style={{display: 'flex', flexWrap: 'wrap' }}>
+                                        <textarea value={message} style={{ flex: '1 1 auto', padding: 5, resize: 'none' }} onKeyUp={e => onKeyUpMessage(e)} onChange={e => changeMessage(e)} placeholder={isProd ? '메세지를 입력해 주세요.' : ''}>
                                             {message}
                                         </textarea>
                                         <button style={{ marginLeft: 5, padding: '0 5px' }} onClick={sendMessage}>전송</button>
@@ -439,30 +546,33 @@ export default function Home() {
                                 </>
                         )
                         :
-                        <button onClick={connect}>연결</button>
+                        <div style={{ textAlign: 'center' }}></div>
                 }
             </div>
         );
     }, [
+        isProd,
         chatSocket,
         socketState,
         chatRoomId,
         chatRoomName,
+        userId,
         userName,
         changeChatRoomName,
         changeUserName,
         createChatRoom,
-        connect,
         message,
         sendMessage,
         chatRooms,
         exitChatRoom,
         changeMessage,
         chatContents,
+        chatRoomUsers,
         onKeyUpUserName,
         onKeyUpChatRoomName,
         onKeyUpMessage,
-        chatDatas,
+        toggleChatRoomUserList,
+        chatRoomUserListClass,
         chatContentsRef
     ]);
 
@@ -472,3 +582,19 @@ export default function Home() {
         </main>
     )
 }
+
+Home.getLayout = function getLayout(page: ReactElement) {
+    return (
+        <DefaultLayout>{page}</DefaultLayout>
+    );
+}
+
+Home.getInitialProps = ({ res, err }: NextPageContext) => {
+    let serverHost: string = process.env.SERVER_HOST ?? "";
+    if ('undefined' == typeof serverHost || null == serverHost || '' == serverHost)
+        return { notFound: true };
+
+    return { isProd: ("production" === process.env.NODE_ENV), serverHost: serverHost };
+}
+
+export default Home;
