@@ -48,7 +48,6 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): Chat|null {
             console.log('chat: ');
-            console.log(bytes);
 
             const type = bytes[0];
             const bytesRoomId= bytes.slice(1, 17);
@@ -84,7 +83,7 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): CreateChatRoomRes|null {
             console.log('create chatroom: ');
-            console.log(bytes);
+
             if (1 != bytes.byteLength && 33 != bytes.byteLength)
                 return null;
 
@@ -105,7 +104,6 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): ExitChatRoomRes|null {
             console.log('exit chatroom: ');
-            console.log(bytes);
 
             return new ExitChatRoomRes(bytes[0]);
         }
@@ -124,7 +122,6 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): EnterChatRoomRes|null {
             console.log('enter chatroom: ');
-            console.log(bytes);
 
             const bytesRoomId = bytes.slice(1, 17);
             const bytesUserId = bytes.slice(17, 33);
@@ -146,7 +143,6 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): UpdateChatRoomsRes|null {
             console.log('update chatrooms: ');
-            console.log(bytes);
 
             const bytesRoomCount= bytes.slice(0, 4);
             const roomCount= Helpers.getIntFromByteArray(bytesRoomCount);
@@ -188,7 +184,6 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): UpdateChatRoomUsersRes|null {
             console.log('update chatroom: ');
-            console.log(bytes);
 
             const bytesUserCount= bytes.slice(0, 4);
             const userCount= Helpers.getIntFromByteArray(bytesUserCount);
@@ -228,7 +223,6 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): NoticeEnterChatRoomRes|null {
             console.log('notice enter chatroom: ');
-            console.log(bytes);
 
             const userName= new TextDecoder().decode(bytes);
             return new NoticeEnterChatRoomRes(userName);
@@ -244,7 +238,6 @@ export namespace Domains {
 
         public static decode(bytes: Uint8Array): NoticeExitChatRoomRes|null {
             console.log('notice exit chatroom: ');
-            console.log(bytes);
 
             const userName= new TextDecoder().decode(bytes);
             return new NoticeExitChatRoomRes(userName);

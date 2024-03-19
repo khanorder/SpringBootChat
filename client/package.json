@@ -10,7 +10,7 @@
     "build:next": "cross-env NODE_ENV=production next build",
     "prebuild:server": "rimraf dist",
     "build:server": "cross-env NODE_ENV=production tsc -p tsconfig.server.json --skipLibCheck",
-    "postbuild:server": "copyfiles package.json dist && copyfiles .env dist && copyfiles next.config.js dist && copyfiles -a public/**/* dist && copyfiles -a .next/**/* dist",
+    "postbuild:server": "copyfiles package.json dist && copyfiles next.config.js dist && copyfiles -a public/**/* dist && copyfiles -a .next/**/* dist",
     "start": "cross-env NODE_ENV=production node --es-module-specifier-resolution=node dist/server.js",
     "lint": "next lint"
   },

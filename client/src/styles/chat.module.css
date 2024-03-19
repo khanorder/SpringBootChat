@@ -1,4 +1,5 @@
 .chatRoomInputWrapper {
+    width: 80vw;
     display: flex;
     justify-content: center;
 
@@ -18,17 +19,24 @@
 }
 
 .chatRoomListWrapper {
-    display: flex;
-    justify-content: center;
+    width: 80vw;
     margin-top: 20px;
 
     .chatRoomList {
+        width: 100%;
+
         .chatRoomListItem {
+            display: flex;
+            justify-content: center;
             list-style: none;
             text-align: center;
 
             .chatRoomEnterButton {
-                padding: 5px;
+                width: 50vw;
+                border: 1px solid #d9d9d9;
+                border-radius: 5px;
+                padding: 10px 5px;
+                background: white;
             }
         }
     }
@@ -36,6 +44,7 @@
 
 .chatContentsWrapper {
     display: flex;
+    width: 80vw;
 
     .chatUserList {
         list-style: none;
@@ -72,7 +81,7 @@
         flex: 1 1 auto;
         margin-top: 0;
         margin-bottom: 10px;
-        border: 2px solid #d9d9d9;
+        border: 1px solid #d9d9d9;
         border-radius: 8px;
         max-height: 300px;
         overflow-y: scroll;
@@ -81,8 +90,14 @@
     }
 }
 
+.chatMessageInputWrapper {
+    display: flex;
+    width: 80vw;
+}
+
 @media (max-width: 700px) {
     .chatRoomInputWrapper {
+        width: 100%;
         flex-direction: column;
 
         .userNameInput {
@@ -100,7 +115,22 @@
         }
     }
 
+    .chatRoomListWrapper {
+        width: 100%;
+
+        .chatRoomList {
+
+            .chatRoomListItem {
+
+                .chatRoomEnterButton {
+                    width: 100%;
+                }
+            }
+        }
+    }
+
     .chatContentsWrapper {
+        width: 100%;
         flex-direction: column;
 
         .chatUserList {
@@ -118,5 +148,9 @@
         .chatContentsList {
             max-height: 200px;
         }
+    }
+
+    .chatMessageInputWrapper {
+        width: 100%;
     }
 }

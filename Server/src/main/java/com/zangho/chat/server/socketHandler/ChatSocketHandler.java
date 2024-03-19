@@ -5,6 +5,7 @@ import com.zangho.chat.server.domain.ChatRoom;
 import com.zangho.chat.server.domain.User;
 import com.zangho.chat.server.helper.Helpers;
 import com.zangho.chat.server.service.ChatService;
+import com.zangho.chat.server.service.LineNotifyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.BinaryMessage;
@@ -20,10 +21,12 @@ public class ChatSocketHandler extends TextWebSocketHandler {
 
     private final Logger logger = LoggerFactory.getLogger(ChatSocketHandler.class);
     private final ChatService chatService;
+    private final LineNotifyService lineNotifyService;
     private final Map<WebSocketSession, Set<String>> connectedSessions;
 
-    public ChatSocketHandler(ChatService chatService) {
+    public ChatSocketHandler(ChatService chatService, LineNotifyService lineNotifyService) {
         this.chatService = chatService;
+        this.lineNotifyService = lineNotifyService;
         this.connectedSessions = new ConcurrentHashMap<>();
     }
 
@@ -32,15 +35,26 @@ public class ChatSocketHandler extends TextWebSocketHandler {
         connectedSessions.put(session, new HashSet<>());
         sendToOne(session, updateChatRooms());
         logConnectionState();
+        lineNotifyService.Notify("채팅샘플 접속 (" + session.getHandshakeHeaders().get("X-Forwarded-For") + ")");
         super.afterConnectionEstablished(session);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession closeSession, CloseStatus status) throws Exception {
         connectedSessions.remove(closeSession);
+        var chatRooms = new ArrayList<ChatRoom>();
+        for (var chatRoom : chatService.findAllRoom()) {
+            if (chatRoom.getSessions().containsKey(closeSession))
+                chatRooms.add(chatRoom);
+        }
+
         exitAllRooms(closeSession);
+        for (ChatRoom chatRoom : chatRooms) {
+            updateChatRoom(chatRoom);
+        }
         sendToAll(updateChatRooms());
         logConnectionState();
+        lineNotifyService.Notify("채팅샘플 접속종료 (" + closeSession.getHandshakeHeaders().get("X-Forwarded-For") + ")");
         super.afterConnectionClosed(closeSession, status);
     }
 
@@ -96,7 +110,8 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     sendCallerBuffer.put(bytesUserId);
                     sendToOne(session, sendCallerBuffer.array());
                     sendToAll(updateChatRooms());
-                    updateChatRoom(room.getRoomId());
+                    updateChatRoom(room);
+                    lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userName:" + userName + ", ip: " + session.getHandshakeHeaders().get("X-Forwarded-For") + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -131,7 +146,8 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     sendToOne(session, sendCallerPacketFlag);
                     noticeUserExitChatRoom(existsRoom.get(), callerUser.getName());
                     sendToAll(updateChatRooms());
-                    updateChatRoom(existsRoom.get().getRoomId());
+                    updateChatRoom(existsRoom.get());
+                    lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", userName:" + callerUser.getName() + ", ip: " + session.getHandshakeHeaders().get("X-Forwarded-For") + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -175,7 +191,8 @@ public class ChatSocketHandler extends TextWebSocketHandler {
                     sendNoticeBuffer.put(userName.getBytes());
 
                     sendToEachSession(sessionsInRoom, sendNoticeBuffer.array());
-                    updateChatRoom(existsRoom.get().getRoomId());
+                    updateChatRoom(existsRoom.get());
+                    lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userName:" + userName + ", ip: " + session.getHandshakeHeaders().get("X-Forwarded-For") + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -348,17 +365,21 @@ public class ChatSocketHandler extends TextWebSocketHandler {
         if (chatRoom.isEmpty())
             return;
 
-        if (chatRoom.get().getSessions().isEmpty())
+        updateChatRoom(chatRoom.get());
+    }
+
+    private void updateChatRoom(ChatRoom chatRoom) throws Exception {
+        if (chatRoom.getSessions().isEmpty())
             return;
 
         var bytesUpdatePacketFlag = new byte[] {PacketType.UPDATE_CHAT_ROOM.getByte()};
         // 입장한 사용자 숫자는 int32
-        var bytesUserCount = Helpers.getByteArrayFromInt(chatRoom.get().getSessions().size());
+        var bytesUserCount = Helpers.getByteArrayFromInt(chatRoom.getSessions().size());
 
         var bytesUserIds = new byte[0];
         var bytesUserNameLengths = new byte[0];
         var bytesUserNames = new byte[0];
-        for (User user : chatRoom.get().getSessions().values()) {
+        for (User user : chatRoom.getSessions().values()) {
             bytesUserIds = mergeBytePacket(bytesUserIds, Helpers.getByteArrayFromUUID(user.getId()));
             var bytesUserName = user.getName().getBytes();
             bytesUserNameLengths = mergeBytePacket(bytesUserNameLengths, new byte[] {(byte)bytesUserName.length});
@@ -366,7 +387,7 @@ public class ChatSocketHandler extends TextWebSocketHandler {
         }
 
         var packet = mergeBytePacket(bytesUpdatePacketFlag, bytesUserCount, bytesUserIds, bytesUserNameLengths, bytesUserNames);
-        sendToEachSession(chatRoom.get().getSessions().keySet(), packet);
+        sendToEachSession(chatRoom.getSessions().keySet(), packet);
     }
 
     private void logBytePackets(byte[] packet, String name) throws Exception {

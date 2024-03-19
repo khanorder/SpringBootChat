@@ -15,12 +15,9 @@ import {Defines} from "@/defines";
 import {Errors} from "@/defines/errors";
 import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
-import UpdateChatRoomRes = Domains.UpdateChatRoomsRes;
-import ChatRoom = Domains.ChatRoom;
 import { dayjs } from '@/helpers/localizedDayjs';
 import {NextPageContext} from "next";
 import DefaultLayout from "@/components/layouts/default";
-import ChatRoomUser = Domains.ChatRoomUser;
 
 interface HomeProps {
     isProd: boolean;
@@ -51,6 +48,7 @@ function Home({ isProd, serverHost }: HomeProps) {
             setChatRoomName('');
             setChatRoomList([]);
             setChatRoomUserList([]);
+            setChatDatas([]);
             const newChatSocket = new WebSocket(`${isProd ? 'wss' : 'ws'}://${serverHost}/ws/chat`);
             newChatSocket.binaryType = 'arraybuffer';
 
@@ -71,14 +69,11 @@ function Home({ isProd, serverHost }: HomeProps) {
 
             //메세지 수신했을 때 이벤트.
             newChatSocket.onmessage = function (e) {
-                const start = new Date();
-                console.log("start: " + start.getTime() + " " + start.getMilliseconds())
-                console.log(e.data);
                 if (e.data instanceof ArrayBuffer) {
                     const byteLen = e.data.byteLength;
                     if (1 < byteLen) {
                         const flag= new Uint8Array(e.data, 0, 1);
-                        console.log(Defines.PacketType[flag[0]]);
+
                         switch (flag[0]) {
                             case Defines.PacketType.CREATE_CHAT_ROOM:
                                 const createChatRoomRes = Domains.CreateChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
@@ -89,6 +84,8 @@ function Home({ isProd, serverHost }: HomeProps) {
 
                                 switch (createChatRoomRes.result) {
                                     case Errors.CreateChatRoom.NONE:
+                                        setMessage('');
+                                        setChatDatas([]);
                                         setChatRoomId(createChatRoomRes.roomId);
                                         setUserId(createChatRoomRes.userId);
                                         break;
@@ -103,12 +100,11 @@ function Home({ isProd, serverHost }: HomeProps) {
                                 const updateChatRoomsRes= Domains.UpdateChatRoomsRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
                                 setChatRoomList([]);
                                 if (null != updateChatRoomsRes && 0 < updateChatRoomsRes.roomIds.length) {
-                                    const list: ChatRoom[] = [];
+                                    const list: Domains.ChatRoom[] = [];
                                     for (let i = 0; i < updateChatRoomsRes.roomIds.length; i++) {
-                                       list.push(new ChatRoom(updateChatRoomsRes.roomIds[i], updateChatRoomsRes.roomNames[i]));
+                                       list.push(new Domains.ChatRoom(updateChatRoomsRes.roomIds[i], updateChatRoomsRes.roomNames[i]));
 
                                     }
-                                    console.log(list);
                                     setChatRoomList(list);
                                 }
                                 break;
@@ -117,19 +113,18 @@ function Home({ isProd, serverHost }: HomeProps) {
                                 const updateChatRoomUsersRes= Domains.UpdateChatRoomUsersRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
                                 setChatRoomUserList([]);
                                 if (null != updateChatRoomUsersRes && 0 < updateChatRoomUsersRes.userIds.length) {
-                                    const list: ChatRoomUser[] = [];
+                                    const list: Domains.ChatRoomUser[] = [];
                                     for (let i = 0; i < updateChatRoomUsersRes.userIds.length; i++) {
-                                        list.push(new ChatRoomUser(updateChatRoomUsersRes.userIds[i], updateChatRoomUsersRes.userNames[i]));
+                                        list.push(new Domains.ChatRoomUser(updateChatRoomUsersRes.userIds[i], updateChatRoomUsersRes.userNames[i]));
 
                                     }
-                                    console.log(list);
                                     setChatRoomUserList(list);
                                 }
                                 break;
 
                             case Defines.PacketType.ENTER_CHAT_ROOM:
                                 const enterChatRoomRes = Domains.EnterChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
-                                console.log(enterChatRoomRes)
+
                                 if (null == enterChatRoomRes) {
                                     alert('데이터 형식 오류.');
                                     return;
@@ -137,6 +132,8 @@ function Home({ isProd, serverHost }: HomeProps) {
 
                                 switch (enterChatRoomRes.result) {
                                     case Errors.EnterChatRoom.NONE:
+                                        setMessage('');
+                                        setChatDatas([]);
                                         setChatRoomId(enterChatRoomRes.roomId);
                                         setUserId(enterChatRoomRes.userId);
                                         const chatRoom = chatRoomList.find(_ => _.roomId == enterChatRoomRes.roomId);
@@ -155,7 +152,7 @@ function Home({ isProd, serverHost }: HomeProps) {
 
                             case Defines.PacketType.EXIT_CHAT_ROOM:
                                 const exitChatRoomRes = Domains.ExitChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
-                                console.log(exitChatRoomRes)
+
                                 if (null == exitChatRoomRes) {
                                     alert('데이터 형식 오류.');
                                     return;
@@ -181,46 +178,56 @@ function Home({ isProd, serverHost }: HomeProps) {
                                         alert('채팅방 나가기 실패.');
                                         break;
                                 }
+                                setChatDatas([]);
                                 setChatRoomId('');
                                 setChatRoomName('');
                                 setUserId('');
                                 setUserName('');
+                                setMessage('');
                                 setChatRoomUserList([]);
                                 break;
 
                             case Defines.PacketType.NOTICE_ENTER_CHAT_ROOM:
                                 const noticeEnterChatRoomRes = Domains.NoticeEnterChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
-                                console.log(noticeEnterChatRoomRes);
+
                                 const enterNotice = new Domains.Chat(Defines.ChatType.NOTICE, chatRoomId, uuid(), uuid(), new Date().getTime(), '', `'${noticeEnterChatRoomRes?.userName}'님이 입장했습니다.`);
-                                chatDatas.push(enterNotice);
-                                const addEnterNoticeChatDatas = deepmerge([], chatDatas);
-                                setChatDatas(addEnterNoticeChatDatas);
+                                setChatDatas(prev => {
+                                    if (null == prev)
+                                        return [];
+
+                                    prev.push(enterNotice);
+                                    return deepmerge([], prev);
+                                });
                                 break;
 
                             case Defines.PacketType.NOTICE_EXIT_CHAT_ROOM:
                                 const noticeExitChatRoomRes = Domains.NoticeExitChatRoomRes.decode(new Uint8Array(e.data, 1, byteLen - 1).slice(0, byteLen - 1));
-                                console.log(noticeExitChatRoomRes);
+
                                 const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, chatRoomId, uuid(), uuid(), new Date().getTime(), '', `'${noticeExitChatRoomRes?.userName}'님이 퇴장했습니다.`);
-                                chatDatas.push(exitNotice);
-                                const addExitNoticeChatDatas = deepmerge([], chatDatas);
-                                setChatDatas(addExitNoticeChatDatas);
+                                setChatDatas(prev => {
+                                    if (null == prev)
+                                        return [];
+
+                                    prev.push(exitNotice);
+                                    return deepmerge([], prev);
+                                });
                                 break;
 
                             case Defines.PacketType.TALK_CHAT_ROOM:
                                 const chatRes = Domains.Chat.decode(new Uint8Array(e.data, 2, byteLen - 2).slice(0, byteLen - 2));
-                                console.log(chatRes);
-                                chatDatas.push(chatRes as Domains.Chat);
-                                const addTalkChatDatas = deepmerge([], chatDatas);
-                                setChatDatas(addTalkChatDatas);
+                                setChatDatas(prev => {
+                                    if (null == prev)
+                                        return [];
+
+                                    prev.push(chatRes as Domains.Chat);
+                                    return deepmerge([], prev);
+                                });
                                 break;
                         }
                     }
                 } else {
 
                 }
-                const end = new Date();
-                console.log("end: " + end.getTime() + " " + end.getMilliseconds())
-                console.log("elapsed: " + (end.getTime() - start.getTime()));
             }
 
             setWebsocket(newChatSocket);
@@ -357,7 +364,7 @@ function Home({ isProd, serverHost }: HomeProps) {
             packet.set(bytesUserId, flag.byteLength + bytesChatRoomId.byteLength);
             packet.set(bytesMessageByteLength, flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
             packet.set(bytesMessage, flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
-            console.log(packet)
+
             chatSocket.send(packet);
             setMessage('');
         }
@@ -412,7 +419,18 @@ function Home({ isProd, serverHost }: HomeProps) {
     }, [sendMessage]);
 
     const changeMessage = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
-        setMessage(e.target.value ?? '');
+        if (e.target.value && 300 < e.target.value.toString().length) {
+            alert('채팅내용은 300글자 이내로 입력해주세요.')
+            setMessage(prev => {
+                if (null == prev) {
+                    return '';
+                }
+
+                return prev.trim();
+            });
+        } else {
+            setMessage(e.target.value ?? '');
+        }
     }, [setMessage]);
 
     const chatRooms = useCallback(() => {
@@ -427,11 +445,7 @@ function Home({ isProd, serverHost }: HomeProps) {
             for (let i = 0; i < chatRoomList.length; i++) {
                 list.push(
                     <li key={i} className={chatStyles.chatRoomListItem}>
-                        <strong>[{i + 1}]</strong>
-                        &nbsp;
-                        <button className={chatStyles.chatRoomEnterButton} onClick={e => enterChatRoom(chatRoomList[i].roomId)}>입장</button>
-                        &nbsp;
-                        <span>{chatRoomList[i].roomName}</span>
+                        <button className={chatStyles.chatRoomEnterButton} onClick={e => enterChatRoom(chatRoomList[i].roomId)}>{chatRoomList[i].roomName}{isProd ? ` 채팅방 입장` : ''}</button>
                     </li>
                 )
             }
@@ -509,7 +523,7 @@ function Home({ isProd, serverHost }: HomeProps) {
 
     const contents = useCallback(() => {
         return (
-            <div style={{ width: '100%' }}>
+            <>
                 {
                     chatSocket && WebSocket.OPEN === socketState
                         ?
@@ -536,7 +550,7 @@ function Home({ isProd, serverHost }: HomeProps) {
                                             {chatContents()}
                                         </ul>
                                     </div>
-                                    <div style={{display: 'flex', flexWrap: 'wrap' }}>
+                                    <div className={chatStyles.chatMessageInputWrapper}>
                                         <textarea value={message} style={{ flex: '1 1 auto', padding: 5, resize: 'none' }} onKeyUp={e => onKeyUpMessage(e)} onChange={e => changeMessage(e)} placeholder={isProd ? '메세지를 입력해 주세요.' : ''}>
                                             {message}
                                         </textarea>
@@ -548,7 +562,7 @@ function Home({ isProd, serverHost }: HomeProps) {
                         :
                         <div style={{ textAlign: 'center' }}></div>
                 }
-            </div>
+            </>
         );
     }, [
         isProd,
