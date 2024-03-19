@@ -3,9 +3,17 @@
   
 # 언어 및 프레임워크 정보  
 ## Server
-  * Java 17
-  * Spring Boot 3
+  * Java
+    * version: 17
+  * Spring Boot
+    * version: 3
 
 ## Client
-  * Node.js 16
-  * Next.js 13
+  * Node.js
+    * version: 16
+  * Typescript
+    * version: 5
+  * Next.js
+    * version: 13
+  * Express
+    * version: 4
