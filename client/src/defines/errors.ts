@@ -20,4 +20,13 @@ export namespace Errors {
         ALREADY_IN_ROOM,
         FAILED_TO_ENTER,
     }
+
+    export enum TalkChatRoom {
+        NONE,
+        ROOM_REMOVED = 1,
+        NO_EXISTS_ROOM = 2,
+        NOT_IN_ROOM = 3,
+        NOT_FOUND_USER = 4,
+        FAILED_TO_SEND = 5,
+    }
 }

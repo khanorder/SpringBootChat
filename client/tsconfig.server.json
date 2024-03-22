@@ -9,7 +9,8 @@
     "moduleResolution": "node",
     "outDir": "dist",
     "noEmit": false,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./"
   },
   "include": ["src/server.ts"],
   "exclude": ["node_modules"]

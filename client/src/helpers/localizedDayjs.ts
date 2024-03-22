@@ -6,8 +6,6 @@ import 'dayjs/locale/ko';
 dayjs.extend(timezone);
 dayjs.extend(utc);
 dayjs.extend(relativeTime);
-// const currentTimezone: string = 'GMT';
-// const currentTimezone: string = 'America/Los_Angeles';
 const currentTimezone: string = 'Asia/Seoul';
 let timezoneName = '';
 switch (currentTimezone) {
