@@ -92,7 +92,7 @@ function Home({isProd}: HomeProps) {
 
     const changeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         dispatch(setUserName(e.target.value ? e.target.value.trim() : ''));
-    }, [user, dispatch]);
+    }, [dispatch]);
 
     const chatRooms = useCallback(() => {
         if (!chat.roomList || 1 > chat.roomList.length) {
@@ -107,7 +107,12 @@ function Home({isProd}: HomeProps) {
                 list.push(
                     <li key={i} className={styles.chatRoomListItem}>
                         <button className={styles.chatRoomEnterButton} onClick={e => enterChatRoom(chat.roomList[i].roomId)}>
-                            <span className={styles.chatRoomName}>{chat.roomList[i].roomName} [{chat.roomList[i].userCount}]</span>{isProd ? ` 채팅방 입장` : ''}
+                            <div className={styles.chatRoomNameIcon}>
+                                <div className={styles.chatRoomNameIconText}>
+                                    {chat.roomList[i].roomName.substring(0, 1)}
+                                </div>
+                            </div>
+                            <div className={styles.chatRoomName}>{!isProd ? `${chat.roomList[i].roomName}[${chat.roomList[i].userCount}] 채팅방 입장` : ''}</div>
                         </button>
                     </li>
                 )

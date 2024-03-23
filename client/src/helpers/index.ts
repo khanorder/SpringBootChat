@@ -1,5 +1,6 @@
 import base from "base-x";
 const base62 = base('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+const base64 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
 
 export namespace Helpers {
 
@@ -126,6 +127,24 @@ export namespace Helpers {
         }
     }
 
+    export function encodeBase64(bytes: Uint8Array): string {
+        try {
+            return base64.encode(bytes);
+        } catch (error) {
+            console.log(error);
+            return '';
+        }
+    }
+
+    export function decodeBase64(base64String: string): Uint8Array {
+        try {
+            return base64.decode(base64String);
+        } catch (error) {
+            console.log(error);
+            return new Uint8Array([0]);
+        }
+    }
+
     export function getBase62FromUUID(uuid: string): string {
         try {
             const bytes = getByteArrayFromUUID(uuid);
@@ -185,5 +204,50 @@ export namespace Helpers {
             console.error(error);
         }
         return "";
+    }
+
+    export async function getDataURLResizeImage(origDataURL: string, maxWidth: number, maxHeight: number, fileType?: string): Promise<string> {
+        if (!document)
+            return '';
+
+        const img = document.createElement("img");
+        img.src = origDataURL;
+
+        return new Promise((resolve) => {
+            img.onload = async () => {
+                const origCanvas = document.createElement('canvas');
+                const origCtx = origCanvas.getContext('2d');
+                if (!origCtx)
+                    return;
+
+                origCtx.drawImage(img, 0, 0, img.width, img.height);
+
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas')
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx)
+                    return '';
+
+                canvas.width = width;
+                canvas.height = height;
+
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL(fileType ?? 'image/jpeg'));
+            }
+        })
     }
 }

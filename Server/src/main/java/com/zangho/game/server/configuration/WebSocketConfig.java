@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 @Configuration
 @EnableWebSocket
@@ -27,6 +28,15 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Bean
     public GameSocketHandler chatSocketHandler() {
         return new GameSocketHandler(chatService(), lineNotifyService);
+    }
+
+    @Bean
+    public ServletServerContainerFactoryBean createWebSocketContainer() {
+        var container = new ServletServerContainerFactoryBean();
+        // 버퍼사이즈를 20MB로 제한
+        container.setMaxTextMessageBufferSize(20971520);
+        container.setMaxBinaryMessageBufferSize(20971520);
+        return container;
     }
 
     @Bean

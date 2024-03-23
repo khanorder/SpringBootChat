@@ -9,7 +9,8 @@ public enum ErrorTalkChatRoom {
     NO_EXISTS_ROOM(2),
     NOT_IN_ROOM(3),
     NOT_FOUND_USER(4),
-    FAILED_TO_SEND(5);
+    NOT_AVAILABLE_CHAT_TYPE(5),
+    FAILED_TO_SEND(6);
 
     private final int number;
     ErrorTalkChatRoom(int number) {

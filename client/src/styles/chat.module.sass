@@ -66,6 +66,8 @@
                     margin-top: 0
 
                 .chatRoomEnterButton
+                    display: flex
+                    align-items: center
                     width: 50vw
                     border: 1px solid #d9d9d9
                     border-radius: 5px
@@ -75,11 +77,31 @@
                     &:hover
                         cursor: pointer
 
-                    .chatRoomName
-                        border-radius: 3px
+                    .chatRoomNameIcon
+                        display: flex
+                        justify-content: center
+                        align-items: center
+                        margin-left: 10px
+                        width: 40px
+                        height: 40px
+                        vertical-align: center
+                        border-radius: 20px
                         padding: 3px 5px
                         color: #ffffff
                         background: #3399dd
+
+                        .chatRoomNameIconText
+                            width: 20px
+                            height: 20px
+                            margin: 0
+                            padding: 0
+                            font-size: 20px
+                            line-height: 20px
+                            font-weight: 700
+
+                    .chatRoomName
+                        margin-left: 10px
+                        font-size: 14px
 
     .chatRoomTitleWrapper
         display: flex
@@ -160,10 +182,33 @@
                 padding-bottom: 10px
 
             .chatRoomUser
+                display: flex
+                justify-content: flex-start
                 font-size: 12px
-                padding: 2px 3px 2px 27px
+                padding: 2px 3px
                 margin-top: 5px
-                background: center left / contain no-repeat url('/images/user-circle.svg')
+
+                .chatRoomUserIcon
+                    position: relative
+                    width: 20px
+                    height: 20px
+                    border-radius: 10px
+
+                    .chatRoomUserIconImage
+                        object-fit: contain
+
+
+                .chatRoomUserName
+                    display: block
+                    padding-left: 5px
+
+                &.mine
+                    .chatRoomUserIcon
+                        color: #ffffff
+                        background-color: #66bbff
+
+                    .chatRoomUserName
+                        font-weight: 700
 
             .chatRoomUser:nth-child(2)
                 margin-top: 10px
@@ -200,6 +245,8 @@
                 &.mine
                     justify-content: flex-end
 
+                //&.chatContentsImage
+
                 .chatWrapper
                     flex: 0 1 auto
                     display: flex
@@ -210,6 +257,7 @@
                         font-size: 13px
 
                     .chatMessage
+                        position: relative
                         display: block
                         border: 1px solid #d9d9d9
                         border-radius: 8px
@@ -225,16 +273,49 @@
                             background: #66bbff
                             color: #ffffff
 
+                        &.chatMessageImage
+                            width: 150px
+                            height: 150px
+                            overflow: hidden
+
+                        .chatImage
+                            width: 100%
+                            height: 100%
+                            padding: 5px
+                            object-fit: contain
+                            max-width: 150px
+                            max-height: 150px
+
                     .chatTime
                         margin-top: 5px
                         font-size: 12px
                         text-align: right
 
-    .chatMessageLength
+    .chatMessageInputTopWrapper
+        display: flex
+        align-items: center
         margin-bottom: 5px
         width: 80vw
-        text-align: left
-        font-size: 11px
+
+        .chatMessageLength
+            text-align: left
+            font-size: 11px
+
+        .chatImageButtonWrapper
+            margin-left: 10px
+
+            .chatImageButton
+                display: flex
+                border: 1px solid #d9d9d9
+                border-radius: 5px
+                padding: 2px
+                background: #ffffff
+
+                &:hover
+                    cursor: pointer
+
+            .chatImageInput
+                display: none
 
     .chatMessageInputWrapper
         display: flex
@@ -258,6 +339,74 @@
             &:hover
                 cursor: pointer
 
+    .chatImageDialogWrapper
+        display: none
+        position: absolute
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+        background: #00000066
+        z-index: 1000
+
+        .chatImageDialog
+            position: absolute
+            top: calc(50% - 25vh)
+            left: calc(50% - 35vw)
+            display: flex
+            flex-direction: column
+            border: 1px solid #d9d9d9
+            border-radius: 8px
+            padding: 10px
+            width: 70vw
+            height: 50vh
+            background: #ffffff
+            z-index: 1002
+
+            .chatImageDialogContent
+                position: relative
+                display: flex
+                justify-content: center
+                align-items: center
+                flex: 1 1 auto
+
+                .chatImageThumb
+                    position: unset !important
+                    display: block
+                    max-width: 150px
+                    max-height: 150px
+                    width: 100%
+                    height: 100%
+                    object-fit: contain
+
+            .chatImageDialogButtons
+                display: flex
+                justify-content: center
+                align-items: center
+                flex: 1 1 auto
+
+                .chatImageDialogButton
+                    margin-left: 10px
+                    border: 1px solid #d9d9d9
+                    border-radius: 8px
+                    padding: 5px
+                    width: 70px
+                    background: #ffffff
+
+                    &:hover
+                        cursor: pointer
+
+                    &:first-child
+                        margin-left: 0
+
+        .chatImageDialogPane
+            width: 100%
+            height: 100%
+            z-index: 1001
+
+        &.active
+            display: block
+
 @media (max-width: 700px)
     .main
         .chatRoomInputWrapper
@@ -276,6 +425,10 @@
                 margin-top: 10px
                 margin-left: 0
                 background: #ffffff
+
+            .enterChatRoomButton
+                margin-top: 10px
+                margin-left: 0
 
         .chatRoomListWrapper
             width: 100%
@@ -317,7 +470,7 @@
             .chatContentsList
                 max-height: 200px
 
-        .chatMessageLength
+        .chatMessageInputTopWrapper
             width: 100%
 
         .chatMessageInputWrapper

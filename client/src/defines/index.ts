@@ -16,6 +16,7 @@ export namespace Defines {
 
     export enum ChatType {
         TALK = 0,
-        NOTICE = 1,
+        IMAGE = 1,
+        NOTICE = 2,
     }
 }

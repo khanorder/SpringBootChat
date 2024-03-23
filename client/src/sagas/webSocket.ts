@@ -8,7 +8,9 @@ import {
     resetCountTryConnect,
     startReconnecting,
     createChatRoomReq,
-    enterChatRoomReq, exitChatRoomReq, sendMessageReq
+    enterChatRoomReq,
+    exitChatRoomReq,
+    sendMessageReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -27,8 +29,6 @@ import {
     updateChatRoomRes,
     updateChatRoomsRes
 } from "@/sagas/socketPackets/chatResponse";
-import {ChatState} from "@/stores/reducers/chat";
-import {UserState} from "@/stores/reducers/user";
 import {
     callCreateChatRoomReq,
     callEnterChatRoomReq,

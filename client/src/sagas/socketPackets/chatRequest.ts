@@ -1,5 +1,5 @@
 import {ChatState} from "@/stores/reducers/chat";
-import {put, select} from "redux-saga/effects";
+import {select} from "redux-saga/effects";
 import {RootState} from "@/stores/reducers";
 import {UserState} from "@/stores/reducers/user";
 import {WebSocketState} from "@/stores/reducers/webSocket";
@@ -7,6 +7,7 @@ import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {PayloadAction} from "@reduxjs/toolkit";
 import {Domains} from "@/domains";
+import ChatType = Defines.ChatType;
 
 export function* callCreateChatRoomReq(action: PayloadAction<string>) {
     if ('production' !== process.env.NODE_ENV)
@@ -87,7 +88,19 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callSendMessageReq`);
 
-    const chatState: ChatState = yield select((state: RootState) => state.chat);
+    switch (action.payload.type) {
+        case ChatType.TALK:
+            break;
+
+        case ChatType.IMAGE:
+            break;
+
+        default:
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`saga - callSendMessageReq: not available chat type.`);
+            return;
+    }
+
     const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
@@ -99,17 +112,19 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
 
     const flag = new Uint8Array(1);
     flag[0] = Defines.PacketType.TALK_CHAT_ROOM;
+    const chatType = new Uint8Array(1);
+    chatType[0] = action.payload.type;
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.roomId.trim());
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesMessage = new Uint8Array(Buffer.from(action.payload.message.trim(), 'utf8'));
     const bytesMessageByteLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
 
-    const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length + bytesMessage.byteLength);
+    const packet = new Uint8Array(flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length + bytesMessage.byteLength);
     packet.set(flag);
-    packet.set(bytesChatRoomId, flag.byteLength);
-    packet.set(bytesUserId, flag.byteLength + bytesChatRoomId.byteLength);
-    packet.set(bytesMessageByteLength, flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
-    packet.set(bytesMessage, flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
+    packet.set(chatType, flag.byteLength);
+    packet.set(bytesChatRoomId, flag.byteLength + chatType.byteLength);
+    packet.set(bytesUserId, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength);
+    packet.set(bytesMessageByteLength, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
+    packet.set(bytesMessage, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
     webSocketState.socket.send(packet);
-
 }
