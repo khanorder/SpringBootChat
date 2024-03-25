@@ -19,7 +19,7 @@ public class PropertiesConfiguration {
 
     public void loadExternalPropertySource(final MutablePropertySources propertySources, String name) {
         var sourceLoader = new PropertiesPropertySourceLoader();
-        var fileResource = new FileSystemResource(String.format("/properties/%s.properties", name));
+        var fileResource = new FileSystemResource(String.format("./properties/%s.properties", name));
         try {
             propertySources.addLast(sourceLoader.load(name, fileResource).get(0));
         } catch (Exception e) {
@@ -46,8 +46,9 @@ public class PropertiesConfiguration {
         MutablePropertySources propertySources = new MutablePropertySources();
 
         loadInnerPropertySource(propertySources, "default");
-        loadInnerPropertySource(propertySources, "linenotify");
-        loadInnerPropertySource(propertySources, "database");
+        loadExternalPropertySource(propertySources, "server");
+        loadExternalPropertySource(propertySources, "linenotify");
+        loadExternalPropertySource(propertySources, "database");
 
         configurer.setPropertySources(propertySources);
         configurer.setIgnoreResourceNotFound(true);

@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    poweredByHeader: false,
+    async headers() {
+        return [];
+    },
     experimental: {
         turbo: {
             loaders: {
@@ -7,20 +11,6 @@ const nextConfig = {
             }
         }
     }
-    // webpack(config) {
-    //     config.module.rules.push({
-    //         test: /\.svg$/,
-    //         use: [
-    //             {
-    //                 loader: '@svgr/webpack',
-    //                 options: {
-    //                     native: true,
-    //                 },
-    //             },
-    //         ]
-    //     });
-    //     return config;
-    // }
 }
 
 //module.exports = nextConfig

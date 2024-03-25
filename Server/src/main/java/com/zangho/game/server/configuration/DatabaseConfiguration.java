@@ -1,6 +1,6 @@
 package com.zangho.game.server.configuration;
 
-import com.zangho.game.server.repo.VisitRepository;
+import com.zangho.game.server.repository.VisitRepository;
 import com.zangho.game.server.service.VisitService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

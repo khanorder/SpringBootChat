@@ -1,4 +1,4 @@
-package com.zangho.game.server.repo;
+package com.zangho.game.server.repository;
 
 import com.zangho.game.server.domain.Visit;
 import org.slf4j.Logger;

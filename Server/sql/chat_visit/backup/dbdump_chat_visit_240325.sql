@@ -411,7 +411,7 @@ DROP TABLE IF EXISTS `visitors`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `visitors` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `session` char(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `session` char(24) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `device` bigint(20) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uniq_session` (`session`) USING BTREE
@@ -681,4 +681,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-25 18:14:13
+-- Dump completed on 2024-03-25 21:53:30
