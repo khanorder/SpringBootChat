@@ -11,14 +11,14 @@ export const metadata: Metadata = {
 
 export default function DefaultLayout({children}: { children: ReactNode }) {
     const webSocket = useAppSelector(state => state.webSocket);
-    const title: string = '게임 샘플';
-    const subject: string = '게임 샘플';
-    const description: string = '웹소캣 통신 구현을 위한 게임 샘플';
-    const keyword: string = '게임 샘플, 웹소캣';
+    const title: string = '채팅 샘플';
+    const subject: string = '채팅 샘플';
+    const description: string = '웹소켓 구현, 채팅 샘플';
+    const keyword: string = '채팅 샘플, 웹소캣, 채팅방';
     const author: string = '배장호';
     const copyright: string = '배장호';
-    const url: string = 'game.baejangho.com';
-    const ogImage: string = '/images/logo-m3_gmbaejangho.gif`';
+    const url: string = 'chat.baejangho.com';
+    const ogImage: string = '/images/logo-m3_gmbaejangho.gif';
 
     return (
         <>

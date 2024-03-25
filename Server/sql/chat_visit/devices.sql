@@ -1,0 +1,17 @@
+CREATE TABLE `devices` (
+	`id` BIGINT(20) UNSIGNED NOT NULL,
+	`deviceType` TINYINT(3) UNSIGNED NOT NULL,
+	`deviceVendor` INT(10) UNSIGNED NOT NULL,
+	`deviceModel` INT(10) UNSIGNED NOT NULL,
+	`agent` INT(11) UNSIGNED NOT NULL,
+	`browser` INT(10) UNSIGNED NOT NULL,
+	`browserVersion` INT(10) UNSIGNED NOT NULL,
+	`engine` INT(10) UNSIGNED NOT NULL,
+	`engineVersion` INT(10) UNSIGNED NOT NULL,
+	`os` TINYINT(3) UNSIGNED NOT NULL,
+	`osVersion` INT(10) UNSIGNED NOT NULL,
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='utf8mb4_general_ci'
+ENGINE=InnoDB
+;

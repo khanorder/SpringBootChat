@@ -183,6 +183,17 @@ export namespace Helpers {
         }
     }
 
+    export function setCookie30Min(cname: string, cvalue: string) {
+        try {
+            const d = new Date();
+            d.setTime(d.getTime() + (30 * 60 * 1000));
+            let expires = "expires="+ d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     export function getCookie(cname?: string|null): string {
         if ('undefined' === typeof document)
             return '';

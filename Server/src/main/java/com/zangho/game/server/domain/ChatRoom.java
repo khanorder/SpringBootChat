@@ -18,4 +18,8 @@ public class ChatRoom {
         this.roomId = roomId;
         this.roomName = roomName;
     }
+
+    public ChatRoomInfo getInfo() {
+        return new ChatRoomInfo(this.roomId, this.roomName);
+    }
 }

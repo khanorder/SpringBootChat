@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 
 @Data
 @Service
-@PropertySource("classpath:linenotify.properties")
 public class LineNotifyService {
     @Value("${line.client.id}")
     private String clientId;

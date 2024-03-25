@@ -356,4 +356,24 @@ export namespace Domains {
             }
         }
     }
+
+    export class Visit {
+        session: string = '';
+        fp: number = 0;
+        deviceType: string = '';
+        deviceVendor: string = '';
+        deviceModel: string = '';
+        agent: string = '';
+        browser: string = '';
+        browserVersion: string = '';
+        engine: string = '';
+        engineVersion: string = '';
+        os: string = '';
+        osVersion: string = '';
+        host: string = '';
+        parameter: string = '';
+        path: string = '';
+        title: string = '';
+        localTime: Date = new Date();
+    }
 }

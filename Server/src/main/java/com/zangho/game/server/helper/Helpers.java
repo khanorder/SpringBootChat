@@ -1,5 +1,6 @@
 package com.zangho.game.server.helper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Arrays;
@@ -111,12 +112,31 @@ public class Helpers {
         return uuid.toString().toLowerCase();
     }
 
+    public static String getBase62FromUUID(String uuidString) {
+        var bytesUUID = getByteArrayFromUUID(uuidString);
+        return Base62.base62Encode(bytesUUID);
+    }
+
+    public static String getUUIDFromBase62(String base62String) {
+        var bytesUUID = Base62.base62Decode(base62String.toCharArray());
+        return getUUIDFromByteArray(bytesUUID);
+    }
+
     public static String getSessionIP(WebSocketSession session) {
         var headers = session.getHandshakeHeaders().get("X-Forwarded-For");
         if (null == headers || headers.isEmpty()) {
             return null == session.getRemoteAddress() ? "" : session.getRemoteAddress().toString();
         } else {
             return headers.get(0);
+        }
+    }
+
+    public static String getRemoteIP(HttpServletRequest request) {
+        var header = request.getHeader("X-Forwarded-For");
+        if (null == header || header.isEmpty()) {
+            return null == request.getRemoteAddr() ? "" : request.getRemoteAddr().toString();
+        } else {
+            return header;
         }
     }
 

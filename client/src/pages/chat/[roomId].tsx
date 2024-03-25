@@ -19,13 +19,14 @@ import Head from "next/head";
 
 interface ChatRoomProps {
     isProd: boolean;
+    roomId: string;
+    roomName: string;
 }
 
-function ChatRoom({isProd}: ChatRoomProps) {
+function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
+    const title = '채팅방 - ' + roomName;
     const router = useRouter();
     const firstRender = useRef(true);
-    const {roomId} = router.query;
-    const [currentChatRoom, setCurrentChatRoom] = useState<Domains.ChatRoom | undefined>(undefined);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
@@ -37,27 +38,29 @@ function ChatRoom({isProd}: ChatRoomProps) {
     const chatImageInputRef = createRef<HTMLInputElement>();
     const [chatImage, setChatImage] = useState<string|ArrayBuffer|null>(null);
     const [chatImageDialogWrapperClass, setChatImageDialogWrapperClass] = useState<string>(styles.chatImageDialogWrapper)
+    const [currentChatRoom, setCurrentChatRoom] = useState<Domains.ChatRoom|null|undefined>(null);
 
     //#region OnRender
     useEffect(() => {
         if (firstRender.current)
             firstRender.current = false;
 
-    }, [firstRender, chat]);
+    }, [firstRender]);
     //#endregion
 
     useEffect(() => {
         if (!firstRender.current) {
-            setCurrentChatRoom(chat.roomList.find(_ => _.roomId == Helpers.getUUIDFromBase62(roomId?.toString() ?? '')));
 
             if (chatContentsRef.current?.scrollHeight)
                 chatContentsRef.current.scrollTop = chatContentsRef.current.scrollHeight;
 
             if (chatMessageInputRef.current)
                 chatMessageInputRef.current.focus();
+
+            setCurrentChatRoom(chat.roomList.find(_ => _.roomId == Helpers.getUUIDFromBase62(roomId)));
         }
 
-    }, [firstRender, chat, chatContentsRef, chatMessageInputRef, setCurrentChatRoom, roomId]);
+    }, [firstRender, chat, roomId, setCurrentChatRoom, chatContentsRef, chatMessageInputRef]);
 
     const exitChatRoom = useCallback(() => {
         if (!webSocket.socket) {
@@ -221,13 +224,10 @@ function ChatRoom({isProd}: ChatRoomProps) {
     }, [dispatch]);
 
     const createUser = useCallback(() => {
-        if (!currentChatRoom)
-            return <></>;
-
         return (
             <>
                 <div className={styles.chatroomInputNotice}>
-                    {isProd ? `'${currentChatRoom.roomName}' 대화방에서 사용할 대화명을 입력해주세요.` : ''}
+                    {isProd ? `'${roomName}' 대화방에서 사용할 대화명을 입력해주세요.` : ''}
                 </div>
                 <div className={styles.chatRoomInputWrapper}>
                     <input className={styles.userNameInput} value={user.name}
@@ -239,7 +239,7 @@ function ChatRoom({isProd}: ChatRoomProps) {
                 </div>
             </>
         );
-    }, [isProd, user, currentChatRoom, onKeyUpUserName, changeUserName, enterChatRoom]);
+    }, [isProd, user, roomName, onKeyUpUserName, changeUserName, enterChatRoom]);
 
     const copyShareLink = useCallback(() => {
         if (window) {
@@ -289,7 +289,7 @@ function ChatRoom({isProd}: ChatRoomProps) {
             <>
                 <div className={styles.chatRoomTitleWrapper}>
                     <button className={styles.chatRoomShare} onClick={copyShareLink}>공유</button>
-                    <span className={styles.chatRoomTitle}>{currentChatRoom.roomName}</span>
+                    <span className={styles.chatRoomTitle}>{roomName}</span>
                     <button className={styles.chatRoomExit} onClick={exitChatRoom}>나가기</button>
                 </div>
                 <div className={styles.chatContentsWrapper}>
@@ -322,6 +322,7 @@ function ChatRoom({isProd}: ChatRoomProps) {
         );
     }, [
         currentChatRoom,
+        roomName,
         chatRoomUserListClass,
         toggleChatRoomUserList,
         chatRoomUsers,
@@ -394,7 +395,19 @@ function ChatRoom({isProd}: ChatRoomProps) {
     return (
         <>
             <Head>
-                <title>채팅방 - {currentChatRoom?.roomName}</title>
+                <title>{'채팅방 - ' + roomName}</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+                <meta name="title" content={'채팅방 - ' + roomName}/>
+                <meta name="subject" content={'채팅방 - ' + roomName}/>
+                <meta name="description" content={'채팅방 - ' + roomName}/>
+                <meta name="keyword" content={'채팅방 - ' + roomName}/>
+                <meta property="og:title" content={'채팅방 - ' + roomName}/>
+                <meta property="og:site_name" content={'채팅방 - ' + roomName}/>
+                <meta property="og:type" content={'채팅방 - ' + roomName}/>
+                <meta property="og:description" content={'채팅방 - ' + roomName}/>
+                <meta property="og:image:alt" content={'채팅방 - ' + roomName}/>
+                <meta name="twitter:title" content={'채팅방 - ' + roomName}/>
+                <meta name="twitter:description" content={'채팅방 - ' + roomName}/>
             </Head>
             <main className={styles.main}>
                 {chatImageDialog()}
@@ -411,9 +424,36 @@ ChatRoom.getLayout = function getLayout(page: ReactElement) {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
+    const { roomId } = context.query;
+    if (!roomId)
+        return { notFound: true };
+
+    let roomIdUUID: string = '';
+    let roomNameProp: string = '';
+
+    const serverHost = process.env.SERVER_HOST ?? 'localhost:8080';
+    const url = ('production' === process.env.NODE_ENV ? 'https://' : 'http://') + serverHost + "/api/room/" + Helpers.getUUIDFromBase62(roomId as string ?? '');
+    try {
+        const response = await fetch(`${url}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (200 == response.status) {
+            const json = await response.json();
+            if (json.roomId && json.roomName) {
+                roomNameProp = json.roomName;
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
+
     return {
         props: {
-            isProd: ("production" === process.env.NODE_ENV)
+            isProd: ("production" === process.env.NODE_ENV),
+            roomId: roomId,
+            roomName: roomNameProp
         }
     };
 }

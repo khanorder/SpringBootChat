@@ -112,7 +112,7 @@ function Home({isProd}: HomeProps) {
                                     {chat.roomList[i].roomName.substring(0, 1)}
                                 </div>
                             </div>
-                            <div className={styles.chatRoomName}>{!isProd ? `${chat.roomList[i].roomName}[${chat.roomList[i].userCount}] 채팅방 입장` : ''}</div>
+                            <div className={styles.chatRoomName}>{isProd ? `${chat.roomList[i].roomName}[${chat.roomList[i].userCount}] 채팅방 입장` : ''}</div>
                         </button>
                     </li>
                 )
