@@ -17,3 +17,7 @@
     * version: 13
   * Express
     * version: 4
+
+## Database
+  * MariaDB
+    * version: 10
