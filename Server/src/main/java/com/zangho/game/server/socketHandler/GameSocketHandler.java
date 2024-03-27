@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.*;
 import com.zangho.game.server.domain.ChatRoom;
 import com.zangho.game.server.domain.User;
+import com.zangho.game.server.domain.UserInRoom;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.ChatService;
 import com.zangho.game.server.service.LineNotifyService;
+import com.zangho.game.server.service.MessageService;
 import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,13 +28,15 @@ public class GameSocketHandler extends TextWebSocketHandler {
     private final UserService userService;
     private final ChatService chatService;
     private final LineNotifyService lineNotifyService;
+    private final MessageService messageService;
     private final Map<WebSocketSession, Optional<User>> connectedSessions;
     private final boolean isDevelopment;
 
-    public GameSocketHandler(UserService userService, ChatService chatService, LineNotifyService lineNotifyService) {
+    public GameSocketHandler(UserService userService, ChatService chatService, LineNotifyService lineNotifyService, MessageService messageService) {
         this.userService = userService;
         this.chatService = chatService;
         this.lineNotifyService = lineNotifyService;
+        this.messageService = messageService;
         this.connectedSessions = new ConcurrentHashMap<>();
         var config = System.getProperty("Config");
         isDevelopment = null == config || !config.equals("production");
@@ -256,6 +260,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     sendToAll(updateChatRooms());
                     updateChatRoom(existsRoom.get());
 
+                    browserNotifyUserInRoom(existsRoom.get(), "채팅방 퇴장", "'" + callerUser.getName() + "'님이 대화방에 퇴장했습니다.");
                     lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", userName:" + callerUser.getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
@@ -295,7 +300,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    existsRoom.get().getSessions().put(session, user.get());
+                    existsRoom.get().getSessions().put(session, user.get().getUserInRoom());
                     sessionUser.ifPresent(old -> old.setChatRoom(Optional.of(existsRoom.get().getInfo())));
 
                     var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length);
@@ -313,6 +318,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     sendToEachSession(sessionsInRoom, sendNoticeBuffer.array());
                     sendToAll(updateChatRooms());
                     updateChatRoom(existsRoom.get());
+                    browserNotifyUserInRoom(existsRoom.get(), "채팅방 입장", "'" + user.get().getName() + "'님이 대화방에 입장했습니다.");
                     lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + user.get().getId() + ", userName:" + user.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
@@ -391,6 +397,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     sendRoomBuffer.put(bytesChatMessage);
 
                     sendToEachSession(sessionsInRoom, sendRoomBuffer.array());
+                    browserNotifyUserInRoom(existsRoom.get(), userName, chatMessage);
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -531,9 +538,9 @@ public class GameSocketHandler extends TextWebSocketHandler {
         var bytesUserIds = new byte[0];
         var bytesUserNameLengths = new byte[0];
         var bytesUserNames = new byte[0];
-        for (User user : chatRoom.getSessions().values()) {
-            bytesUserIds = mergeBytePacket(bytesUserIds, Helpers.getByteArrayFromUUID(user.getId()));
-            var bytesUserName = user.getName().getBytes();
+        for (UserInRoom userInRoom : chatRoom.getSessions().values()) {
+            bytesUserIds = mergeBytePacket(bytesUserIds, Helpers.getByteArrayFromUUID(userInRoom.getId()));
+            var bytesUserName = userInRoom.getName().getBytes();
             bytesUserNameLengths = mergeBytePacket(bytesUserNameLengths, new byte[] {(byte)bytesUserName.length});
             bytesUserNames = mergeBytePacket(bytesUserNames, bytesUserName);
         }
@@ -555,6 +562,14 @@ public class GameSocketHandler extends TextWebSocketHandler {
         }
 
         logger.info(packetString.toString());
+    }
+
+    private void browserNotifyUserInRoom(ChatRoom chatRoom, String title, String body) {
+        chatRoom.getSessions().values().forEach(userInRoom -> {
+            userInRoom.getSubscription().ifPresent(subscription -> {
+                messageService.sendNotification(subscription, title, body);
+            });
+        });
     }
 
     private void logConnectionState() {

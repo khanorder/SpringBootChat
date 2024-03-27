@@ -28,4 +28,8 @@ public class User {
 
     @Transient
     private Optional<ChatRoomInfo> chatRoom;
+
+    public UserInRoom getUserInRoom() {
+        return new UserInRoom(this.id, this.name);
+    }
 }

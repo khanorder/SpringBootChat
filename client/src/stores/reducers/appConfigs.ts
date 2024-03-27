@@ -5,7 +5,7 @@ interface AppConfigsState {
 }
 
 const initialState: AppConfigsState = {
-    name: '샘플 게임'
+    name: '채팅 샘플'
 }
 
 const appConfigsSlice = createSlice({

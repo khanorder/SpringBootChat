@@ -17,6 +17,8 @@ import UserIcon from 'public/images/user-circle.svg';
 import ModifyIcon from 'public/images/modify-icon.svg';
 import Image from "next/image";
 import Head from "next/head";
+import Layout from "@/components/layouts";
+import {CommonAPI} from "@/apis/commonAPI";
 
 interface ChatRoomProps {
     isProd: boolean;
@@ -283,6 +285,10 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         }
     }, [roomId]);
 
+    const subscribeChatRoomNotify = useCallback(async () => {
+        await CommonAPI.SubscribeChatRoom(currentChatRoom?.roomId ?? '', user.id);
+    }, [currentChatRoom, user]);
+
     const onChangeChatImageFile = useCallback(async () => {
         if (chatImageInputRef.current?.files && 0 < chatImageInputRef.current?.files.length) {
             const file = chatImageInputRef.current?.files[0];
@@ -323,6 +329,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
             <>
                 <div className={styles.chatRoomTitleWrapper}>
                     <button className={styles.chatRoomShare} onClick={copyShareLink}>공유</button>
+                    <button className={styles.chatRoomNotify} onClick={subscribeChatRoomNotify}>알림</button>
                     <span className={styles.chatRoomTitle}>{roomName}</span>
                     <button className={styles.chatRoomExit} onClick={exitChatRoom}>나가기</button>
                 </div>
@@ -374,6 +381,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         enterUser,
         copyShareLink,
         isProd,
+        subscribeChatRoomNotify,
         message
     ]);
 
@@ -454,7 +462,9 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
 
 ChatRoom.getLayout = function getLayout(page: ReactElement) {
     return (
-        <ChatRoomLayout>{page}</ChatRoomLayout>
+        <Layout>
+            <ChatRoomLayout>{page}</ChatRoomLayout>
+        </Layout>
     );
 }
 

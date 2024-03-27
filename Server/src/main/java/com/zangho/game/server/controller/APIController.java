@@ -1,9 +1,12 @@
 package com.zangho.game.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zangho.game.server.domain.SubscriptionRequest;
 import com.zangho.game.server.domain.Visit;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.ChatService;
+import com.zangho.game.server.service.MessageService;
+import com.zangho.game.server.service.UserService;
 import com.zangho.game.server.service.VisitService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -19,10 +22,19 @@ public class APIController {
     private final Logger logger = LoggerFactory.getLogger(APIController.class);
     private final ChatService chatService;
     private final VisitService visitService;
+    private final UserService userService;
+    private final MessageService messageService;
 
-    public APIController(ChatService chatService, VisitService visitService) {
+    public APIController(
+            ChatService chatService,
+            VisitService visitService,
+            UserService userService,
+            MessageService messageService
+    ) {
         this.chatService = chatService;
         this.visitService = visitService;
+        this.userService = userService;
+        this.messageService = messageService;
     }
 
     @PostMapping(value = "/api/room/{id}")
@@ -66,5 +78,31 @@ public class APIController {
 
         response.put("result", result);
         return (new ObjectMapper()).writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/api/getPublicKey")
+    @ResponseBody
+    public String getPublicKey(HttpServletRequest request) throws Exception {
+        var publicKey = messageService.getPublicKey();
+        var response = """
+            {"publicKey":"%s"}
+        """;
+        return String.format(response, publicKey);
+    }
+
+    @PostMapping(value = "/api/subscription")
+    @ResponseBody
+    public String subscription(@RequestBody SubscriptionRequest subRequest, HttpServletRequest request) throws Exception {
+        var result = messageService.subscribeChatRoom(subRequest.getSubscription(), subRequest.getRoomId(), subRequest.getUserId());
+        var response = """
+            {"result":%d}
+        """;
+        return String.format(response, result.getNumber());
+    }
+
+    @PostMapping(value = "/api/unsubscription")
+    @ResponseBody
+    public void unsubscription(@RequestBody String endpoint, HttpServletRequest request) throws Exception {
+        messageService.unsubscribe(endpoint);
     }
 }

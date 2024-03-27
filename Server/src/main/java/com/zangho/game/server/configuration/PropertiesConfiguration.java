@@ -49,6 +49,7 @@ public class PropertiesConfiguration {
         loadExternalPropertySource(propertySources, "server");
         loadExternalPropertySource(propertySources, "linenotify");
         loadExternalPropertySource(propertySources, "database");
+        loadExternalPropertySource(propertySources, "vapid");
 
         configurer.setPropertySources(propertySources);
         configurer.setIgnoreResourceNotFound(true);

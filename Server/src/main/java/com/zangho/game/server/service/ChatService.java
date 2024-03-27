@@ -37,7 +37,7 @@ public class ChatService {
                 .roomName(name)
                 .build();
 
-        chatRoom.getSessions().put(session, user);
+        chatRoom.getSessions().put(session, user.getUserInRoom());
         chatRooms.put(randomId, chatRoom);
         return chatRoom;
     }

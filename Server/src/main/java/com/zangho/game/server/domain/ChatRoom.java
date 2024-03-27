@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChatRoom {
     private String roomId;
     private String roomName;
-    private Map<WebSocketSession, User> sessions = new ConcurrentHashMap<>();
+    private Map<WebSocketSession, UserInRoom> sessions = new ConcurrentHashMap<>();
 
     @Builder
     public ChatRoom(String roomId, String roomName) {

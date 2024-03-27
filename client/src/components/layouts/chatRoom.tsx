@@ -1,9 +1,6 @@
 import type {Metadata} from 'next'
 import {ReactNode} from "react";
 import Head from "next/head";
-import {useAppSelector} from "@/hooks";
-import style from "@/styles/layout.module.sass";
-import {Defines} from "@/defines";
 
 export const metadata: Metadata = {
     title: 'chat client',
@@ -11,8 +8,6 @@ export const metadata: Metadata = {
 }
 
 export default function DefaultLayout({children}: { children: ReactNode }) {
-    const webSocket = useAppSelector(state => state.webSocket);
-    const user = useAppSelector(state => state.user);
     const title: string = '채팅 샘플';
     const subject: string = '채팅 샘플';
     const description: string = '웹소켓 구현, 채팅 샘플';
@@ -21,10 +16,6 @@ export default function DefaultLayout({children}: { children: ReactNode }) {
     const copyright: string = '배장호';
     const url: string = 'chat.baejangho.com';
     const ogImage: string = '/images/logo-m3_gmbaejangho.gif';
-
-    if (Defines.AuthStateType.ALREADY_SIGN_IN == user.authState) {
-        return <></>;
-    }
 
     return (
         <>
@@ -50,19 +41,7 @@ export default function DefaultLayout({children}: { children: ReactNode }) {
                 <meta name="twitter:description" content={description}/>
                 <meta name="twitter:image" content={ogImage}/>
             </Head>
-            {
-                webSocket
-                    ?
-                    WebSocket.OPEN === webSocket.connectionState
-                        ?
-                        children
-                        :
-                        <div className={style.loaderWrapper}>
-                            <div className={style.loader}></div>
-                        </div>
-                    :
-                    <></>
-            }
+            {children}
         </>
     )
 }

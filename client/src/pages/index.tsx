@@ -8,13 +8,14 @@ import {
     useState
 } from "react";
 import {NextPageContext} from "next";
-import DefaultLayout from "@/components/layouts/default";
+import MainLayout from "@/components/layouts/main";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import {
     createChatRoomReq,
     enterChatRoomReq
 } from "@/stores/reducers/webSocket";
+import Layout from "@/components/layouts";
 
 interface HomeProps {
     isProd: boolean;
@@ -156,7 +157,9 @@ function Home({isProd}: HomeProps) {
 
 Home.getLayout = function getLayout(page: ReactElement) {
     return (
-        <DefaultLayout>{page}</DefaultLayout>
+        <Layout>
+            <MainLayout>{page}</MainLayout>
+        </Layout>
     );
 }
 

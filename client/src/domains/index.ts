@@ -418,4 +418,16 @@ export namespace Domains {
         title: string = '';
         localTime: Date = new Date();
     }
+
+    export class SubscriptionRequest {
+        subscription: PushSubscription;
+        roomId: string;
+        userId: string;
+
+        constructor(subscription: PushSubscription, roomId: string, userId: string) {
+            this.subscription = subscription;
+            this.roomId = roomId;
+            this.userId = userId;
+        }
+    }
 }
