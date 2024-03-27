@@ -13,6 +13,7 @@ import {
     ChatState
 } from '@/stores/reducers/chat';
 import {
+    setAuthState,
     setUserId,
     setUserName
 } from '@/stores/reducers/user';
@@ -22,6 +23,39 @@ import {Defines} from "@/defines";
 import {v4 as uuid} from "uuid";
 import deepmerge from "deepmerge";
 import {push} from "connected-next-router";
+
+export function* checkAuthenticationRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - checkAuthentication`);
+
+    const response = Domains.CheckAuthenticationRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.CheckAuthentication.NONE:
+            yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
+            yield put(setChatDatas([]));
+            yield put(setUserId(response.userId));
+            yield put(setUserName(response.userName));
+            Helpers.setCookie("userId", response.userId);
+
+            break;
+
+        case Errors.CheckAuthentication.ALREADY_SIGN_IN_USER:
+            yield put(setAuthState(Defines.AuthStateType.ALREADY_SIGN_IN));
+            alert('다른 창으로 로그인 중입니다.');
+            break;
+
+        case Errors.CheckAuthentication.FAILED_TO_CREATE_USER:
+            alert('유저 생성 실패.');
+            break;
+    }
+
+    return response;
+}
 
 export function* createChatRoomRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -36,7 +70,6 @@ export function* createChatRoomRes(data: Uint8Array) {
     switch (response.result) {
         case Errors.CreateChatRoom.NONE:
             yield put(setChatDatas([]));
-            yield put(setUserId(response.userId));
             yield put(push(`/chat/${Helpers.getBase62FromUUID(response.roomId)}`));
 
             break;
@@ -87,14 +120,16 @@ export function* enterChatRoomRes(data: Uint8Array) {
 
     switch (response.result) {
         case Errors.EnterChatRoom.NONE:
-            const chatState: ChatState = yield select((state: RootState) => state.chat);
             yield put(setChatDatas([]));
-            yield put(setUserId(response.userId));
             yield put(push(`/chat/${Helpers.getBase62FromUUID(response.roomId)}`));
             break;
 
         case Errors.EnterChatRoom.NO_EXISTS_ROOM:
-            alert('그런 채팅방은 없습니다..');
+            alert('그런 채팅방은 없습니다.');
+            break;
+
+        case Errors.EnterChatRoom.NOT_FOUND_USER:
+            alert('유저 정보를 찾을 수 없습니다.');
             break;
 
         case Errors.EnterChatRoom.ALREADY_IN_ROOM:
@@ -134,8 +169,6 @@ export function* exitChatRoomRes(data: Uint8Array) {
             break;
     }
     yield put(setChatDatas([]));
-    yield put(setUserId(''));
-    yield put(setUserName(''));
     yield put(setChatRoomUserList([]));
     yield put(push('/'));
 
@@ -154,6 +187,14 @@ export function* noticeExitChatRoomRes(data: Uint8Array) {
     const response = Domains.NoticeExitChatRoomRes.decode(data);
 
     const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.userName}'님이 퇴장했습니다.`);
+    yield put(addChatData(exitNotice));
+    return response;
+}
+
+export function* noticeChangeNameChatRoomRes(data: Uint8Array) {
+    const response = Domains.NoticeChangeNameChatRoomRes.decode(data);
+
+    const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.oldUserName}'님이 '${response?.newUserName}'으로 대화명을 변경했습니다.`);
     yield put(addChatData(exitNotice));
     return response;
 }

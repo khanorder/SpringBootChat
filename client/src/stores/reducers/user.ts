@@ -1,14 +1,18 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 import isEmpty from "lodash/isEmpty";
+import {Defines} from "@/defines";
+import AuthStateType = Defines.AuthStateType;
 
 interface UserState {
     id: string;
     name: string;
+    authState: Defines.AuthStateType;
 }
 
 const initialState: UserState = {
     id: '',
-    name: ''
+    name: '',
+    authState: AuthStateType.NONE
 }
 
 const userSlice = createSlice({
@@ -32,14 +36,21 @@ const userSlice = createSlice({
             }
 
             state.name = isEmpty(action.payload) ? '' : action.payload;
-        }
+        },
+        setAuthState: (state, action: PayloadAction<Defines.AuthStateType>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setAuthState: ${JSON.stringify(Defines.AuthStateType[action.payload])}`);
+
+            state.authState = action.payload;
+        },
     }
 });
 
 export type { UserState };
 export const {
     setUserId,
-    setUserName
+    setUserName,
+    setAuthState
 } = userSlice.actions;
 
 export default userSlice.reducer;

@@ -7,13 +7,14 @@ import {useAppDispatch, useAppSelector} from "@/hooks";
 import {Defines} from "@/defines";
 import {dayjs} from "@/helpers/localizedDayjs";
 import isEmpty from "lodash/isEmpty";
-import {enterChatRoomReq, exitChatRoomReq, sendMessageReq} from "@/stores/reducers/webSocket";
+import {enterChatRoomReq, exitChatRoomReq, saveUserNameReq, sendMessageReq} from "@/stores/reducers/webSocket";
 import {Domains} from "@/domains";
 import {setUserName} from "@/stores/reducers/user";
 import Link from "next/link";
 import {Helpers} from "@/helpers";
 import Picture from 'public/images/Picture_icon_BLACK.svg';
 import UserIcon from 'public/images/user-circle.svg';
+import ModifyIcon from 'public/images/modify-icon.svg';
 import Image from "next/image";
 import Head from "next/head";
 
@@ -24,8 +25,6 @@ interface ChatRoomProps {
 }
 
 function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
-    const title = '채팅방 - ' + roomName;
-    const router = useRouter();
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
@@ -39,6 +38,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
     const [chatImage, setChatImage] = useState<string|ArrayBuffer|null>(null);
     const [chatImageDialogWrapperClass, setChatImageDialogWrapperClass] = useState<string>(styles.chatImageDialogWrapper)
     const [currentChatRoom, setCurrentChatRoom] = useState<Domains.ChatRoom|null|undefined>(null);
+    const [newUserName, setNewUserName] = useState<string>('');
 
     //#region OnRender
     useEffect(() => {
@@ -54,13 +54,17 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
             if (chatContentsRef.current?.scrollHeight)
                 chatContentsRef.current.scrollTop = chatContentsRef.current.scrollHeight;
 
-            if (chatMessageInputRef.current)
-                chatMessageInputRef.current.focus();
-
-            setCurrentChatRoom(chat.roomList.find(_ => _.roomId == Helpers.getUUIDFromBase62(roomId)));
+            if (!isEmpty(roomId))
+                setCurrentChatRoom(chat.roomList.find(_ => _.roomId == Helpers.getUUIDFromBase62(roomId)));
         }
 
-    }, [firstRender, chat, roomId, setCurrentChatRoom, chatContentsRef, chatMessageInputRef]);
+    }, [firstRender, chat, roomId, setCurrentChatRoom, chatContentsRef]);
+
+    // useEffect(() => {
+    //     if (chatMessageInputRef.current)
+    //         chatMessageInputRef.current.focus();
+    //
+    // }, [currentChatRoom, chatMessageInputRef]);
 
     const exitChatRoom = useCallback(() => {
         if (!webSocket.socket) {
@@ -109,9 +113,52 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         }
     }, [sendMessage]);
 
+    const toggleChatRoomUserList = useCallback(() => {
+        setChatRoomUserListClass(prev => {
+            if (null == prev || '' == prev)
+                return styles.chatUserList;
+
+            if (styles.chatUserList == prev) {
+                return styles.chatUserList + ' ' + styles.chatUserListScroll;
+            } else if (`${styles.chatUserList} ${styles.chatUserListScroll}` == prev) {
+                return styles.chatUserList;
+            } else {
+                return styles.chatUserList;
+            }
+        });
+    }, [setChatRoomUserListClass]);
+
+    const onSaveUserName = useCallback(() => {
+        if (!newUserName || 2 > newUserName.length) {
+            alert('대화명은 2글자 이상으로 입력해주세요.');
+            dispatch(setUserName(user.name));
+            return;
+        }
+
+        if (10 < newUserName.length) {
+            alert('대화명은 10글자 이내로 입력해 주세요.');
+            dispatch(setUserName(user.name));
+            return;
+        }
+
+        if (newUserName != user.name) {
+            dispatch(setUserName(newUserName))
+            dispatch(saveUserNameReq());
+        }
+    }, [dispatch, user, newUserName]);
+
+    const onKeyUpUserName = useCallback((e: any) => {
+        if (e.key == 'Enter')
+            onSaveUserName();
+    }, [onSaveUserName]);
+
+    const onChangeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setNewUserName(e.target.value.trim());
+    }, [setNewUserName]);
+
     const chatRoomUsers = useCallback(() => {
         const users: ReactElement[] = [];
-        users.push(<li key={'userCount'} className={styles.chatRoomUserCount}>{`참여인원: ${chat.roomUserList.length} 명`}</li>);
+        users.push(<li key={'userCount'} className={styles.chatRoomUserCount} onClick={toggleChatRoomUserList}>{`참여인원: ${chat.roomUserList.length} 명`}</li>);
 
         if (0 < chat.roomUserList.length) {
             for (let i = 0; i < chat.roomUserList.length; i++) {
@@ -124,14 +171,30 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
                         <div className={styles.chatRoomUserIcon}>
                             <Image className={styles.chatRoomUserIconImage} src={UserIcon} alt='채팅방 입장 사용자' fill={true} priority={true} />
                         </div>
-                        <div className={styles.chatRoomUserName}>{chat.roomUserList[i].userName}</div>
+                        <div className={styles.chatRoomUserName}>
+                            <div className={styles.currentUserName}>{chat.roomUserList[i].userName}</div>
+                            {
+                                chat.roomUserList[i].userId == user.id
+                                    ?
+                                    <div className={styles.userNameInputWrapper}>
+                                        <input className={styles.userNameInput} value={newUserName}
+                                               onKeyUp={e => onKeyUpUserName(e)}
+                                               onChange={e => onChangeUserName(e)}
+                                               onBlur={onSaveUserName}
+                                               onFocus={e => { setNewUserName(user.name) }}
+                                               placeholder={isProd ? '대화명' : ''}/>
+                                    </div>
+                                    :
+                                    <></>
+                            }
+                        </div>
                     </li>
                 );
             }
         }
 
         return users;
-    }, [chat, user]);
+    }, [isProd, chat, user, toggleChatRoomUserList, onKeyUpUserName, onChangeUserName, onSaveUserName, newUserName]);
 
     const chatContents = useCallback(() => {
         const contents: ReactElement[] = [];
@@ -185,21 +248,6 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         return contents;
     }, [chat, user, isProd]);
 
-    const toggleChatRoomUserList = useCallback(() => {
-        setChatRoomUserListClass(prev => {
-            if (null == prev || '' == prev)
-                return styles.chatUserList;
-
-            if (styles.chatUserList == prev) {
-                return styles.chatUserList + ' ' + styles.chatUserListScroll;
-            } else if (`${styles.chatUserList} ${styles.chatUserListScroll}` == prev) {
-                return styles.chatUserList;
-            } else {
-                return styles.chatUserList;
-            }
-        });
-    }, [setChatRoomUserListClass]);
-
     const enterChatRoom = useCallback(() => {
         if (!webSocket.socket) {
             alert('연결 안됨');
@@ -214,32 +262,18 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         }
     }, [webSocket, user, dispatch, roomId]);
 
-    const onKeyUpUserName = useCallback((e: any) => {
-        if (e.key == 'Enter')
-            enterChatRoom();
-    }, [enterChatRoom]);
-
-    const changeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        dispatch(setUserName(e.target.value ? e.target.value.trim() : ''));
-    }, [dispatch]);
-
-    const createUser = useCallback(() => {
+    const enterUser = useCallback(() => {
         return (
             <>
                 <div className={styles.chatroomInputNotice}>
-                    {isProd ? `'${roomName}' 대화방에서 사용할 대화명을 입력해주세요.` : ''}
+                    {isProd ? `${roomName}' 대화방에 입장하시겠습니까?.` : ''}
                 </div>
                 <div className={styles.chatRoomInputWrapper}>
-                    <input className={styles.userNameInput} value={user.name}
-                           onKeyUp={e => onKeyUpUserName(e)}
-                           onChange={e => changeUserName(e)}
-                           placeholder={isProd ? '대화명' : ''}/>
-                    <button className={styles.enterChatRoomButton} onClick={enterChatRoom}>입장
-                    </button>
+                    <button className={styles.enterChatRoomButton} onClick={enterChatRoom}>입장</button>
                 </div>
             </>
         );
-    }, [isProd, user, roomName, onKeyUpUserName, changeUserName, enterChatRoom]);
+    }, [isProd, roomName, enterChatRoom]);
 
     const copyShareLink = useCallback(() => {
         if (window) {
@@ -282,8 +316,8 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
             );
         }
 
-        if (!user.id)
-            return createUser();
+        if (1 > chat.roomUserList.length)
+            return enterUser();
 
         return (
             <>
@@ -293,7 +327,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
                     <button className={styles.chatRoomExit} onClick={exitChatRoom}>나가기</button>
                 </div>
                 <div className={styles.chatContentsWrapper}>
-                    <ul className={chatRoomUserListClass} onClick={toggleChatRoomUserList}>
+                    <ul className={chatRoomUserListClass}>
                         {chatRoomUsers()}
                     </ul>
                     <ul className={styles.chatContentsList} ref={chatContentsRef}>
@@ -310,7 +344,9 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
                     </div>
                 </div>
                 <div className={styles.chatMessageInputWrapper}>
-                    <textarea ref={chatMessageInputRef} value={message} className={styles.chatMessageInput}
+                    <textarea ref={chatMessageInputRef}
+                              value={message}
+                              className={styles.chatMessageInput}
                               onKeyUp={e => onKeyUpMessage(e)}
                               onChange={e => changeMessage(e)}
                               placeholder={isProd ? '메세지를 입력해 주세요.' : ''}>
@@ -321,10 +357,10 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
             </>
         );
     }, [
+        chat,
         currentChatRoom,
         roomName,
         chatRoomUserListClass,
-        toggleChatRoomUserList,
         chatRoomUsers,
         chatImageInputRef,
         onChangeChatImageFile,
@@ -335,8 +371,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         changeMessage,
         sendMessage,
         exitChatRoom,
-        user,
-        createUser,
+        enterUser,
         copyShareLink,
         isProd,
         message
@@ -425,17 +460,23 @@ ChatRoom.getLayout = function getLayout(page: ReactElement) {
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { roomId } = context.query;
-    if (!roomId)
-        return { notFound: true };
+    if (!roomId || isEmpty(roomId)) {
+        return {
+            props: {
+                isProd: ("production" === process.env.NODE_ENV),
+                roomId: '',
+                roomName: ''
+            }
+        };
+    }
 
-    let roomIdUUID: string = '';
     let roomNameProp: string = '';
-
     const serverHost = process.env.SERVER_HOST ?? 'localhost:8080';
+
     const url = ('production' === process.env.NODE_ENV ? 'https://' : 'http://') + serverHost + "/api/room/" + Helpers.getUUIDFromBase62(roomId as string ?? '');
     try {
         const response = await fetch(`${url}`, {
-            method: 'GET',
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
 

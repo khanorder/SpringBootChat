@@ -1,13 +1,12 @@
 package com.zangho.game.server.define;
 
-public enum ErrorCreateChatRoom {
+public enum ErrorCheckAuthentication {
     NONE(0),
-    NOT_FOUND_USER(1),
-    EXISTS_ROOM(2),
-    REQUIRED_ROOM_ID(3);
+    ALREADY_SIGN_IN_USER(1),
+    FAILED_TO_CREATE_USER(2);
 
     private final int number;
-    private ErrorCreateChatRoom(int number) {
+    private ErrorCheckAuthentication(int number) {
         this.number = number;
     }
 

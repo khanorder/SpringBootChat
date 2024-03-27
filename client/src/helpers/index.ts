@@ -44,8 +44,6 @@ export namespace Helpers {
             return new Uint8Array(8);
         const hexBytes = new Uint8Array(hex.length / 2);
         const paddingBytes = new Uint8Array(8 - (hex.length / 2));
-        console.log(hexBytes.byteLength)
-        console.log(paddingBytes.byteLength)
 
         for (let i = 0; i < hex.length; i += 2)
             hexBytes[i/2] = parseInt(hex.substring(i, i+2), 16);
@@ -113,7 +111,7 @@ export namespace Helpers {
         try {
             return base62.encode(bytes);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             return '';
         }
     }
@@ -122,7 +120,7 @@ export namespace Helpers {
         try {
             return base62.decode(base62String);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             return new Uint8Array([0]);
         }
     }
@@ -131,7 +129,7 @@ export namespace Helpers {
         try {
             return base64.encode(bytes);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             return '';
         }
     }
@@ -140,7 +138,7 @@ export namespace Helpers {
         try {
             return base64.decode(base64String);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             return new Uint8Array([0]);
         }
     }
@@ -150,7 +148,7 @@ export namespace Helpers {
             const bytes = getByteArrayFromUUID(uuid);
             return base62.encode(bytes);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             return '';
         }
     }
@@ -160,7 +158,7 @@ export namespace Helpers {
             const bytes = base62.decode(base62String);
             return getUUIDFromByteArray(bytes);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             return '';
         }
     }

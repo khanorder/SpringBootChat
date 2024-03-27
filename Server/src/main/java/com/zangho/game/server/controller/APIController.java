@@ -25,7 +25,7 @@ public class APIController {
         this.visitService = visitService;
     }
 
-    @GetMapping(value = "/api/room/{id}")
+    @PostMapping(value = "/api/room/{id}")
     @ResponseBody
     public String room(@PathVariable("id") String id) throws Exception {
         if (id.isEmpty()) {
@@ -35,13 +35,13 @@ public class APIController {
         try {
             var chatRoom = chatService.findRoomById(id);
             if (chatRoom.isEmpty())
-                return "";
+                return "{}";
 
             return (new ObjectMapper()).writeValueAsString(chatRoom.get().getInfo());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
-        return "";
+        return "{}";
     }
 
     @PostMapping(value = "/api/visit")

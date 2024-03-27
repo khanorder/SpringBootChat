@@ -11,7 +11,6 @@ import {NextPageContext} from "next";
 import DefaultLayout from "@/components/layouts/default";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
-import {setUserName} from "@/stores/reducers/user";
 import {
     createChatRoomReq,
     enterChatRoomReq
@@ -85,15 +84,6 @@ function Home({isProd}: HomeProps) {
         });
     }, [setChatRoomName]);
 
-    const onKeyUpUserName = useCallback((e: any) => {
-        if (e.key == 'Enter')
-            createChatRoom();
-    }, [createChatRoom]);
-
-    const changeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        dispatch(setUserName(e.target.value ? e.target.value.trim() : ''));
-    }, [dispatch]);
-
     const chatRooms = useCallback(() => {
         if (!chat.roomList || 1 > chat.roomList.length) {
             return (
@@ -115,7 +105,7 @@ function Home({isProd}: HomeProps) {
                             <div className={styles.chatRoomName}>{isProd ? `${chat.roomList[i].roomName}[${chat.roomList[i].userCount}] 채팅방 입장` : ''}</div>
                         </button>
                     </li>
-                )
+                );
             }
 
             return (
@@ -133,10 +123,6 @@ function Home({isProd}: HomeProps) {
         return (
             <>
                 <div className={styles.chatRoomInputWrapper}>
-                    <input className={styles.userNameInput} value={user.name}
-                           onKeyUp={e => onKeyUpUserName(e)}
-                           onChange={e => changeUserName(e)}
-                           placeholder={isProd ? '대화명' : ''}/>
                     <input className={styles.roomNameInput} value={chatRoomName}
                            onKeyUp={e => onKeyUpChatRoomName(e)}
                            onChange={e => changeChatRoomName(e)}
@@ -152,13 +138,10 @@ function Home({isProd}: HomeProps) {
     }, [
         isProd,
         webSocket,
-        user,
         chatRoomName,
         changeChatRoomName,
-        changeUserName,
         createChatRoom,
         chatRooms,
-        onKeyUpUserName,
         onKeyUpChatRoomName,
         appConfigs
     ]);
@@ -168,7 +151,7 @@ function Home({isProd}: HomeProps) {
             <div className={styles.title}>{ isProd ? appConfigs.name : ''}</div>
             {contents()}
         </main>
-    )
+    );
 }
 
 Home.getLayout = function getLayout(page: ReactElement) {

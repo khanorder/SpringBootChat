@@ -13,7 +13,6 @@ export function* callCreateChatRoomReq(action: PayloadAction<string>) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callCreateChatRoomReq`);
 
-    const chatState: ChatState = yield select((state: RootState) => state.chat);
     const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
@@ -25,16 +24,12 @@ export function* callCreateChatRoomReq(action: PayloadAction<string>) {
 
     const flag = new Uint8Array(1);
     flag[0] = Defines.PacketType.CREATE_CHAT_ROOM;
+    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesChatRoomName = new Uint8Array(Buffer.from(action.payload.trim(), 'utf-8'));
-    const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf-8'));
-    const bytesChatRoomNameLength = Helpers.getByteArrayFromInt(bytesChatRoomName.byteLength);
-    const bytesUserNameLength = Helpers.getByteArrayFromInt(bytesUserName.byteLength);
-    const packet = new Uint8Array(flag.byteLength + 8 + bytesChatRoomName.byteLength + bytesUserName.byteLength);
+    const packet = new Uint8Array(flag.byteLength + bytesUserId.byteLength + bytesChatRoomName.byteLength);
     packet.set(flag);
-    packet.set(bytesChatRoomNameLength, flag.byteLength);
-    packet.set(bytesUserNameLength, flag.byteLength + 4);
-    packet.set(bytesChatRoomName, flag.byteLength + 8);
-    packet.set(bytesUserName, flag.byteLength + 8 + bytesChatRoomName.byteLength);
+    packet.set(bytesUserId, flag.byteLength);
+    packet.set(bytesChatRoomName, flag.byteLength + bytesUserId.byteLength);
     webSocketState.socket.send(packet);
 }
 
@@ -54,11 +49,11 @@ export function* callEnterChatRoomReq(action: PayloadAction<string>) {
     const flag = new Uint8Array(1);
     flag[0] = Defines.PacketType.ENTER_CHAT_ROOM;
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.trim());
-    const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
-    const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + bytesUserName.byteLength);
+    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
+    const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
     packet.set(flag);
     packet.set(bytesChatRoomId, flag.byteLength);
-    packet.set(bytesUserName, flag.byteLength + bytesChatRoomId.byteLength);
+    packet.set(bytesUserId, flag.byteLength + bytesChatRoomId.byteLength);
     webSocketState.socket.send(packet);
 }
 
@@ -126,5 +121,44 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
     packet.set(bytesUserId, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength);
     packet.set(bytesMessageByteLength, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
     packet.set(bytesMessage, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
+    webSocketState.socket.send(packet);
+}
+
+export function* callSaveUserNameReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSaveUserNameReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserNameReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserNameReq: not found user id.`);
+        return;
+    }
+
+    if (2 > userState.name.length || 10 < userState.name.length) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserNameReq: not found user id.`);
+
+        alert('대화명은 2 글자 이상, 10 이하로 입력해주세요.');
+        return;
+    }
+
+    const flag = new Uint8Array(1);
+    flag[0] = Defines.PacketType.CHANGE_USER_NAME;
+    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
+    const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
+
+    const packet = new Uint8Array(flag.byteLength + bytesUserId.byteLength + bytesUserName.byteLength);
+    packet.set(flag);
+    packet.set(bytesUserId, flag.byteLength);
+    packet.set(bytesUserName, flag.byteLength + bytesUserId.byteLength);
     webSocketState.socket.send(packet);
 }

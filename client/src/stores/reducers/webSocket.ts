@@ -65,6 +65,10 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - sendMessage`);
         },
+        saveUserNameReq: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - saveUserNameReq`);
+        },
     }
 });
 
@@ -79,7 +83,8 @@ export const {
     createChatRoomReq,
     enterChatRoomReq,
     exitChatRoomReq,
-    sendMessageReq
+    sendMessageReq,
+    saveUserNameReq
 } = webSocketSlice.actions;
 
 export default webSocketSlice.reducer;

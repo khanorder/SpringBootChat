@@ -181,6 +181,9 @@
                 border-bottom: 1px solid #d9d9d9
                 padding-bottom: 10px
 
+                &:hover
+                    cursor: pointer
+
             .chatRoomUser
                 display: flex
                 justify-content: flex-start
@@ -190,6 +193,7 @@
 
                 .chatRoomUserIcon
                     position: relative
+                    flex: 0 0 auto
                     width: 20px
                     height: 20px
                     border-radius: 10px
@@ -199,8 +203,28 @@
 
 
                 .chatRoomUserName
+                    position: relative
+                    flex: 1 1 auto
                     display: block
-                    padding-left: 5px
+                    margin-left: 5px
+
+                    .currentUserName
+                        position: absolute
+                        top: 0
+                        left: 0
+                        width: 100%
+
+                    .userNameInput
+                        position: absolute
+                        top: 0
+                        left: 0
+                        width: 100%
+                        border: 1px solid #ffffff00
+                        font-size: 12px
+                        opacity: 0
+
+                        &:focus
+                            opacity: 1
 
                 &.mine
                     .chatRoomUserIcon
@@ -209,6 +233,7 @@
 
                     .chatRoomUserName
                         font-weight: 700
+                        background: right center / contain no-repeat url("/images/modify-icon.svg")
 
             .chatRoomUser:nth-child(2)
                 margin-top: 10px

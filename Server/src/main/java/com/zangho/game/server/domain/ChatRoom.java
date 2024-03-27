@@ -22,4 +22,8 @@ public class ChatRoom {
     public ChatRoomInfo getInfo() {
         return new ChatRoomInfo(this.roomId, this.roomName);
     }
+
+    public boolean checkUserInRoom(String userId) {
+        return sessions.values().stream().anyMatch(user -> user.getId().equals(userId));
+    }
 }

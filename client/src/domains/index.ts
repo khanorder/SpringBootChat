@@ -143,27 +143,45 @@ export namespace Domains {
         }
     }
 
+    export class CheckAuthenticationRes {
+        public result: Errors.CheckAuthentication;
+        public userId: string;
+        public userName: string;
+
+        constructor(result: Errors.CheckAuthentication, userId: string, userName: string) {
+            this.result = result;
+            this.userId = userId;
+            this.userName = userName;
+        }
+
+        public static decode(bytes: Uint8Array): CheckAuthenticationRes|null {
+            try {
+                const bytesUserId = bytes.slice(1, 17);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                const bytesUserName = bytes.slice(17, bytes.byteLength);
+                const userName = new TextDecoder().decode(bytesUserName);
+                return new CheckAuthenticationRes(bytes[0], userId, userName);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
     export class CreateChatRoomRes {
         public result: Errors.CreateChatRoom;
         public roomId: string;
-        public userId: string;
 
-        constructor(result: Errors.CreateChatRoom, roomId: string, userId: string) {
+        constructor(result: Errors.CreateChatRoom, roomId: string) {
             this.result = result;
             this.roomId = roomId;
-            this.userId = userId;
         }
 
         public static decode(bytes: Uint8Array): CreateChatRoomRes|null {
-            if (1 != bytes.byteLength && 33 != bytes.byteLength)
-                return null;
-
             try {
                 const bytesRoomId = bytes.slice(1, 17);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-                const bytesUserId = bytes.slice(17, 33);
-                const userId = Helpers.getUUIDFromByteArray(bytesUserId)
-                return new CreateChatRoomRes(bytes[0], roomId, userId);
+                return new CreateChatRoomRes(bytes[0], roomId);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -191,22 +209,18 @@ export namespace Domains {
     export class EnterChatRoomRes {
         public result: Errors.EnterChatRoom;
         public roomId: string;
-        public userId: string;
 
-        constructor(result: Errors.EnterChatRoom, roomId: string, userId: string) {
+        constructor(result: Errors.EnterChatRoom, roomId: string) {
             this.result = result;
             this.roomId = roomId;
-            this.userId = userId;
         }
 
         public static decode(bytes: Uint8Array): EnterChatRoomRes|null {
             try {
                 const bytesRoomId = bytes.slice(1, 17);
-                const bytesUserId = bytes.slice(17, 33);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
 
-                return new EnterChatRoomRes(bytes[0], roomId, userId);
+                return new EnterChatRoomRes(bytes[0], roomId);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -350,6 +364,34 @@ export namespace Domains {
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
                 const userName= new TextDecoder().decode(bytesUserName);
                 return new NoticeExitChatRoomRes(roomId, userName);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NoticeChangeNameChatRoomRes {
+        public roomId: string;
+        public oldUserName: string;
+        public newUserName: string;
+
+        constructor(roomId: string, oldUserName: string, newUserName: string) {
+            this.roomId = roomId;
+            this.oldUserName = oldUserName;
+            this.newUserName = newUserName;
+        }
+
+        public static decode(bytes: Uint8Array): NoticeChangeNameChatRoomRes|null {
+            try {
+                const bytesRoomId = bytes.slice(0, 16);
+                const oldUserNameLength = bytes[16];
+                const bytesOldUserName = bytes.slice(17, 17 + oldUserNameLength);
+                const bytesNewUserName = bytes.slice(17 + oldUserNameLength, bytes.byteLength);
+                const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
+                const oldUserName= new TextDecoder().decode(bytesOldUserName);
+                const newUserName= new TextDecoder().decode(bytesNewUserName);
+                return new NoticeChangeNameChatRoomRes(roomId, oldUserName, newUserName);
             } catch (error) {
                 console.error(error);
                 return null;

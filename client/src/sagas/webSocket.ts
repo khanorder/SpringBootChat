@@ -10,7 +10,7 @@ import {
     createChatRoomReq,
     enterChatRoomReq,
     exitChatRoomReq,
-    sendMessageReq
+    sendMessageReq, saveUserNameReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -20,9 +20,10 @@ import {eventChannel, EventChannel, Unsubscribe} from "redux-saga";
 import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {
+    checkAuthenticationRes,
     createChatRoomRes,
     enterChatRoomRes,
-    exitChatRoomRes,
+    exitChatRoomRes, noticeChangeNameChatRoomRes,
     noticeEnterChatRoomRes,
     noticeExitChatRoomRes,
     talkChatRoomRes,
@@ -32,9 +33,10 @@ import {
 import {
     callCreateChatRoomReq,
     callEnterChatRoomReq,
-    callExitChatRoomReq,
+    callExitChatRoomReq, callSaveUserNameReq,
     callSendMessageReq
 } from "@/sagas/socketPackets/chatRequest";
+import isEmpty from "lodash/isEmpty";
 
 function createConnectionStateChannel (socket: WebSocket): EventChannel<number> {
     return eventChannel<number>(emit => {
@@ -117,7 +119,6 @@ export function* checkConnection (socket: WebSocket) {
                         yield setConnectionState(readyState);
 
                         try {
-                            //const router: RouterState = yield select((state: RootState) => state.router);
                             const flag = new Uint8Array([Defines.PacketType.CHECK_CONNECTION]);
                             const packet = new Uint8Array(flag.length);
                             packet.set(flag);
@@ -160,6 +161,19 @@ function* onOpen (socket: WebSocket) {
                 try {
                     const event: Event = yield take(channel);
                     yield call(setConnectionState, WebSocket.OPEN);
+                    const flag = new Uint8Array([Defines.PacketType.CHECK_AUTHENTICATION]);
+                    const userId = Helpers.getCookie("userId");
+                    const bytesUserId = new Uint8Array(isEmpty(userId) || 36 !== userId.length ? 0 : 16);
+                    if (!isEmpty(userId) && 36 === userId.length)
+                        bytesUserId.set(Helpers.getByteArrayFromUUID(userId));
+
+                    const packet = new Uint8Array(flag.byteLength + bytesUserId.byteLength);
+                    packet.set(flag);
+                    if (0 < bytesUserId.byteLength)
+                        packet.set(bytesUserId, flag.byteLength);
+
+                    socket.send(packet);
+
                     if ('production' !== process.env.NODE_ENV)
                         console.log("connection opened.");
                 } catch (innerError) {
@@ -238,6 +252,10 @@ function* onMessage (socket: WebSocket) {
                     const packetData = Helpers.getDataBytes(event);
 
                     switch (packetFlag[0]) {
+                        case Defines.PacketType.CHECK_AUTHENTICATION:
+                            yield call(checkAuthenticationRes, packetData);
+                            break;
+
                         case Defines.PacketType.CREATE_CHAT_ROOM:
                             yield call(createChatRoomRes, packetData);
                             break;
@@ -264,6 +282,10 @@ function* onMessage (socket: WebSocket) {
 
                         case Defines.PacketType.NOTICE_EXIT_CHAT_ROOM:
                             yield call(noticeExitChatRoomRes, packetData);
+                            break;
+
+                        case Defines.PacketType.NOTICE_CHANGE_NAME_CHAT_ROOM:
+                            yield call(noticeChangeNameChatRoomRes, packetData);
                             break;
 
                         case Defines.PacketType.TALK_CHAT_ROOM:
@@ -339,4 +361,5 @@ export function* watchWebSocket() {
     yield takeLatest(enterChatRoomReq, callEnterChatRoomReq);
     yield takeLatest(exitChatRoomReq, callExitChatRoomReq);
     yield takeLatest(sendMessageReq, callSendMessageReq);
+    yield takeLatest(saveUserNameReq, callSaveUserNameReq);
 }

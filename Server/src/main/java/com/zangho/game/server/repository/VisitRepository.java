@@ -3,6 +3,7 @@ package com.zangho.game.server.repository;
 import com.zangho.game.server.domain.Visit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
 import javax.sql.DataSource;
@@ -10,10 +11,11 @@ import java.sql.*;
 
 public class VisitRepository {
 
+
     private final DataSource visitDataSource;
     private Logger logger = LoggerFactory.getLogger(VisitRepository.class);
 
-    public VisitRepository(DataSource visitDataSource) {
+    public VisitRepository(@Qualifier("visitDataSource")DataSource visitDataSource) {
         this.visitDataSource = visitDataSource;
     }
 

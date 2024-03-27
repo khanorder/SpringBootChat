@@ -1,11 +1,14 @@
 package com.zangho.game.server.socketHandler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.*;
 import com.zangho.game.server.domain.ChatRoom;
 import com.zangho.game.server.domain.User;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.ChatService;
 import com.zangho.game.server.service.LineNotifyService;
+import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.BinaryMessage;
@@ -20,12 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameSocketHandler extends TextWebSocketHandler {
 
     private final Logger logger = LoggerFactory.getLogger(GameSocketHandler.class);
+    private final UserService userService;
     private final ChatService chatService;
     private final LineNotifyService lineNotifyService;
-    private final Map<WebSocketSession, Set<String>> connectedSessions;
+    private final Map<WebSocketSession, Optional<User>> connectedSessions;
     private final boolean isDevelopment;
 
-    public GameSocketHandler(ChatService chatService, LineNotifyService lineNotifyService) {
+    public GameSocketHandler(UserService userService, ChatService chatService, LineNotifyService lineNotifyService) {
+        this.userService = userService;
         this.chatService = chatService;
         this.lineNotifyService = lineNotifyService;
         this.connectedSessions = new ConcurrentHashMap<>();
@@ -35,7 +40,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        connectedSessions.put(session, new HashSet<>());
+        connectedSessions.put(session, Optional.empty());
         sendToOne(session, updateChatRooms());
         logConnectionState();
         if (isDevelopment)
@@ -66,6 +71,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
         logConnectionState();
+        var sessionUser = connectedSessions.get(session);
         var payload = message.getPayload();
         if (!payload.hasArray())
             return;
@@ -91,18 +97,88 @@ public class GameSocketHandler extends TextWebSocketHandler {
                 }
                 break;
 
+            case CHECK_AUTHENTICATION:
+                try {
+                    if (isDevelopment)
+                        logger.info("CHECK_AUTHENTICATION: " + Helpers.getSessionIP(session));
+
+                    var sendCallerPacketFlag = new byte[] {type.getByte(), ErrorCheckAuthentication.NONE.getByte()};
+                    Optional<User> user = Optional.empty();
+                    if (17 == packet.length) {
+                        var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
+                        var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                        if (connectedSessions.values().stream().anyMatch(exists -> exists.isPresent() && exists.get().getId().equals(userId))) {
+                            sendCallerPacketFlag = new byte[] {type.getByte(), ErrorCheckAuthentication.ALREADY_SIGN_IN_USER.getByte()};
+                            sendToOne(session, sendCallerPacketFlag);
+                            break;
+                        }
+                        user = userService.findUser(userId);
+                    }
+
+                    if (user.isEmpty()) {
+                        user = userService.createNewUser();
+                        if (user.isEmpty()) {
+                            sendCallerPacketFlag = new byte[] {type.getByte(), ErrorCheckAuthentication.FAILED_TO_CREATE_USER.getByte()};
+                            sendToOne(session, sendCallerPacketFlag);
+                            logBytePackets(sendCallerPacketFlag, "failed create user");
+                            break;
+                        }
+                    }
+
+                    user.ifPresent(old -> old.setChatRoom(Optional.empty()));
+                    var finalUser = user;
+                    connectedSessions.computeIfPresent(session, (key, old) -> finalUser);
+
+                    var bytesUserId = Helpers.getByteArrayFromUUID(user.get().getId());
+                    var bytesUserName = user.get().getName().getBytes();
+                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesUserId.length + bytesUserName.length);
+                    sendCallerBuffer.put(sendCallerPacketFlag);
+                    sendCallerBuffer.put(bytesUserId);
+                    sendCallerBuffer.put(bytesUserName);
+                    sendToOne(session, sendCallerBuffer.array());
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+                break;
+
+            case CHANGE_USER_NAME:
+                try {
+                    if (isDevelopment)
+                        logger.info("CHANGE_USER_NAME: " + Helpers.getSessionIP(session));
+
+                    var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
+                    var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    if (sessionUser.isEmpty() || !sessionUser.get().getId().equals(userId))
+                        return;
+
+                    var bytesUserName = Arrays.copyOfRange(packet, 17, packet.length);
+                    var newUserName = new String(bytesUserName);
+
+                    var oldUserName =  sessionUser.get().getName();
+                    sessionUser.get().setName(newUserName);
+                    var result = userService.updateUser(sessionUser.get());
+                    if (result && sessionUser.get().getChatRoom().isPresent()) {
+                        var enteredRoom = chatService.findRoomById(sessionUser.get().getChatRoom().get().getRoomId());
+                        if (enteredRoom.isPresent() && !enteredRoom.get().getSessions().isEmpty()) {
+                            var userInRoom = enteredRoom.get().getSessions().values().stream().filter(roomUser -> roomUser.getId().equals(userId)).findAny();
+                            userInRoom.ifPresent(existsUser -> existsUser.setName(newUserName));
+                            noticeChangeUserNameChatRoom(enteredRoom.get(), oldUserName, newUserName);
+                            updateChatRoom(enteredRoom.get());
+                        }
+                    }
+                } catch (Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+                break;
+
             case CREATE_CHAT_ROOM:
                 lineNotifyService.Notify("CREATE_CHAT_ROOM: " + Helpers.getSessionIP(session));
                 try {
                     var sendCallerPacketFlag = new byte[] {type.getByte(), ErrorCreateChatRoom.NONE.getByte()};
-                    var roomNameLengthBytes = Arrays.copyOfRange(packet, 1, 5);
-                    var userNameLengthBytes = Arrays.copyOfRange(packet, 5, 9);
-                    var roomNameLength = Helpers.getIntFromByteArray(roomNameLengthBytes);
-                    var userNameLength = Helpers.getIntFromByteArray(userNameLengthBytes);
-                    var roomNameBytes = Arrays.copyOfRange(packet, 9, 9 + roomNameLength);
-                    var roomName = new String(roomNameBytes);
-                    var userNameBytes = Arrays.copyOfRange(packet,  9 + roomNameLength, 9 + roomNameLength + userNameLength);
-                    var userName = new String(userNameBytes);
+                    var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
+                    var bytesRoomName = Arrays.copyOfRange(packet, 17, packet.length);
+                    var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    var roomName = new String(bytesRoomName);
                     var existsRoom = chatService.findRoomByName(roomName);
                     if (existsRoom.isPresent()) {
                         sendCallerPacketFlag[1] = ErrorCreateChatRoom.EXISTS_ROOM.getByte();
@@ -110,12 +186,22 @@ public class GameSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var userId = UUID.randomUUID().toString();
-                    var bytesUserId = Helpers.getByteArrayFromUUID(userId);
-                    var user = new User(userId, userName);
-                    var room = chatService.createRoom(roomName, session, user);
+                    var user = userService.findUser(userId);
+                    if (user.isEmpty()) {
+                        sendCallerPacketFlag[1] = ErrorCreateChatRoom.NOT_FOUND_USER.getByte();
+                        sendToOne(session, sendCallerPacketFlag);
+                        return;
+                    }
+
+                    if (sessionUser.isEmpty()) {
+                        sendCallerPacketFlag[1] = ErrorCreateChatRoom.NOT_FOUND_USER.getByte();
+                        sendToOne(session, sendCallerPacketFlag);
+                        return;
+                    }
+
+                    var room = chatService.createRoom(roomName, session, user.get());
                     if (isDevelopment)
-                        logger.info("CREATE_CHAT_ROOM: " + room.getRoomId() + ", " + roomName + ", " + userId + ", " + userName);
+                        logger.info("CREATE_CHAT_ROOM: " + room.getRoomId() + ", " + roomName + ", " + user.get().getId() + ", " + user.get().getName());
 
                     var bytesRoomId = Helpers.getByteArrayFromUUID(room.getRoomId());
                     if (0 == bytesRoomId.length) {
@@ -124,14 +210,14 @@ public class GameSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length + bytesUserId.length);
+                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length);
                     sendCallerBuffer.put(sendCallerPacketFlag);
                     sendCallerBuffer.put(bytesRoomId);
-                    sendCallerBuffer.put(bytesUserId);
                     sendToOne(session, sendCallerBuffer.array());
                     sendToAll(updateChatRooms());
                     updateChatRoom(room);
-                    lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userName:" + userName + ", ip: " + Helpers.getSessionIP(session) + ")");
+                    sessionUser.get().setChatRoom(Optional.of(room.getInfo()));
+                    lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + user.get().getId() + ", userName:" + user.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -163,10 +249,13 @@ public class GameSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
+                    sessionUser.ifPresent(old -> old.setChatRoom(Optional.empty()));
+
                     sendToOne(session, sendCallerPacketFlag);
                     noticeUserExitChatRoom(existsRoom.get(), callerUser.getName());
                     sendToAll(updateChatRooms());
                     updateChatRoom(existsRoom.get());
+
                     lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", userName:" + callerUser.getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
@@ -191,30 +280,40 @@ public class GameSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var bytesUserName = Arrays.copyOfRange(packet, 17, packet.length);
-                    var userName = new String(bytesUserName);
-                    var userId = UUID.randomUUID().toString();
-                    var bytesUserId = Helpers.getByteArrayFromUUID(userId);
-                    var user = new User(userId, userName);
-                    existsRoom.get().getSessions().put(session, user);
+                    var bytesUserId = Arrays.copyOfRange(packet, 17, packet.length);
+                    var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    var user = userService.findUser(userId);
+                    if (user.isEmpty()) {
+                        sendCallerPacketFlag[1] = ErrorEnterChatRoom.NOT_FOUND_USER.getByte();
+                        sendToOne(session, sendCallerPacketFlag);
+                        return;
+                    }
 
-                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length + bytesUserId.length);
+                    if (existsRoom.get().checkUserInRoom(userId)) {
+                        sendCallerPacketFlag[1] = ErrorEnterChatRoom.ALREADY_IN_ROOM.getByte();
+                        sendToOne(session, sendCallerPacketFlag);
+                        return;
+                    }
+
+                    existsRoom.get().getSessions().put(session, user.get());
+                    sessionUser.ifPresent(old -> old.setChatRoom(Optional.of(existsRoom.get().getInfo())));
+
+                    var sendCallerBuffer = ByteBuffer.allocate(sendCallerPacketFlag.length + bytesRoomId.length);
                     sendCallerBuffer.put(sendCallerPacketFlag);
                     sendCallerBuffer.put(bytesRoomId);
-                    sendCallerBuffer.put(bytesUserId);
                     sendToOne(session, sendCallerBuffer.array());
 
                     var sessionsInRoom = new HashSet<>(existsRoom.get().getSessions().keySet());
                     var sendNoticePacketFlag = new byte[] {PacketType.NOTICE_ENTER_CHAT_ROOM.getByte()};
-                    var sendNoticeBuffer = ByteBuffer.allocate(sendNoticePacketFlag.length + 16 + userName.getBytes().length);
+                    var sendNoticeBuffer = ByteBuffer.allocate(sendNoticePacketFlag.length + 16 + user.get().getName().getBytes().length);
                     sendNoticeBuffer.put(sendNoticePacketFlag);
                     sendNoticeBuffer.put(bytesRoomId);
-                    sendNoticeBuffer.put(userName.getBytes());
+                    sendNoticeBuffer.put(user.get().getName().getBytes());
 
                     sendToEachSession(sessionsInRoom, sendNoticeBuffer.array());
                     sendToAll(updateChatRooms());
                     updateChatRoom(existsRoom.get());
-                    lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userName:" + userName + ", ip: " + Helpers.getSessionIP(session) + ")");
+                    lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + user.get().getId() + ", userName:" + user.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
                 } catch (Exception ex) {
                     logger.error(ex.getMessage(), ex);
                 }
@@ -240,9 +339,9 @@ public class GameSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var user = existsRoom.get().getSessions().get(session);
+                    var userInRoom = existsRoom.get().getSessions().get(session);
 
-                    if (null == user) {
+                    if (null == userInRoom) {
                         sendPacketFlag[1] = ErrorTalkChatRoom.NOT_IN_ROOM.getByte();
                         sendToOne(session, sendPacketFlag);
                         return;
@@ -251,13 +350,20 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     var bytesUserId = Arrays.copyOfRange(packet, 18, 34);
                     var userId = Helpers.getUUIDFromByteArray(bytesUserId);
 
-                    if (!user.getId().equals(userId)) {
+                    var exitsUser = userService.findUser(userId);
+                    if (exitsUser.isEmpty()) {
                         sendPacketFlag[1] = ErrorTalkChatRoom.NOT_FOUND_USER.getByte();
                         sendToOne(session, sendPacketFlag);
                         return;
                     }
 
-                    var userName = user.getName();
+                    if (!userInRoom.getId().equals(userId)) {
+                        sendPacketFlag[1] = ErrorTalkChatRoom.NOT_FOUND_USER.getByte();
+                        sendToOne(session, sendPacketFlag);
+                        return;
+                    }
+
+                    var userName = userInRoom.getName();
                     var bytesUserName = userName.getBytes();
                     var bytesUserNameBytesLength = (byte)bytesUserName.length;
                     var bytesChatMessageBytesLength = Arrays.copyOfRange(packet, 34, 38);
@@ -302,6 +408,18 @@ public class GameSocketHandler extends TextWebSocketHandler {
         sendNoticeBuffer.put(sendNoticePacketFlag);
         sendNoticeBuffer.put(Helpers.getByteArrayFromUUID(chatRoom.getRoomId()));
         sendNoticeBuffer.put(userName.getBytes());
+        sendToEachSession(sessionsInRoom, sendNoticeBuffer.array());
+    }
+
+    private void noticeChangeUserNameChatRoom(ChatRoom chatRoom, String oldUserName, String newUserName) throws Exception {
+        var sessionsInRoom = new HashSet<>(chatRoom.getSessions().keySet());
+        var sendNoticePacketFlag = new byte[] {PacketType.NOTICE_CHANGE_NAME_CHAT_ROOM.getByte()};
+        var sendNoticeBuffer = ByteBuffer.allocate(sendNoticePacketFlag.length + 17 + oldUserName.getBytes().length + newUserName.getBytes().length);
+        sendNoticeBuffer.put(sendNoticePacketFlag);
+        sendNoticeBuffer.put(Helpers.getByteArrayFromUUID(chatRoom.getRoomId()));
+        sendNoticeBuffer.put(new byte[] {(byte) oldUserName.getBytes().length});
+        sendNoticeBuffer.put(oldUserName.getBytes());
+        sendNoticeBuffer.put(newUserName.getBytes());
         sendToEachSession(sessionsInRoom, sendNoticeBuffer.array());
     }
 
@@ -445,6 +563,15 @@ public class GameSocketHandler extends TextWebSocketHandler {
 
         try {
             logger.info("sessionCount: " + connectedSessions.size());
+            connectedSessions.values().forEach(user -> {
+                if (user.isPresent()) {
+                    try {
+                        logger.info("sessionUser: " + (new ObjectMapper()).writeValueAsString(user.get()));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
             logger.info("roomCount: " + chatService.findAllRoom().size());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
