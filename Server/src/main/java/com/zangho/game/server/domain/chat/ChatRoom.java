@@ -1,5 +1,6 @@
-package com.zangho.game.server.domain;
+package com.zangho.game.server.domain.chat;
 
+import com.zangho.game.server.domain.user.UserInRoom;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.web.socket.WebSocketSession;

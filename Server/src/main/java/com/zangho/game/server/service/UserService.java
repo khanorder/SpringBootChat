@@ -1,8 +1,7 @@
 package com.zangho.game.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zangho.game.server.domain.User;
-import com.zangho.game.server.repository.UserRepository;
+import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.repository.user.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

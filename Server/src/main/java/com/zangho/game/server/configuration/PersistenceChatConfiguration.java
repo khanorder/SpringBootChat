@@ -18,8 +18,8 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "com.zangho.game.server.repository.user", entityManagerFactoryRef = "userEntityManager", transactionManagerRef = "userTransactionManager")
-public class PersistenceUserConfiguration {
+@EnableJpaRepositories(basePackages = "com.zangho.game.server.repository.chat", entityManagerFactoryRef = "chatEntityManager", transactionManagerRef = "chatTransactionManager")
+public class PersistenceChatConfiguration {
 
     @Value("${rds.jpa.hibernate.ddl-auto}")
     private String ddlAuto;
@@ -29,22 +29,22 @@ public class PersistenceUserConfiguration {
 
 //    private final Environment env;
 //
-//    public PersistenceUserConfiguration(Environment env) {
+//    public PersistenceChatConfiguration(Environment env) {
 //        this.env = env;
 //    }
 
-    @Bean(name = "userDataSource")
-    @ConfigurationProperties(prefix = "rds.user.datasource")
-    public DataSource userDataSource() {
+    @Bean(name = "chatDataSource")
+    @ConfigurationProperties(prefix = "rds.chat.datasource")
+    public DataSource chatDataSource() {
         return DataSourceBuilder.create().type(HikariDataSource.class).build();
     }
 
     @Bean
     @Primary
-    public LocalContainerEntityManagerFactoryBean userEntityManager() {
+    public LocalContainerEntityManagerFactoryBean chatEntityManager() {
         var em = new LocalContainerEntityManagerFactoryBean();
-        em.setDataSource(userDataSource());
-        em.setPackagesToScan("com.zangho.game.server.domain.user");
+        em.setDataSource(chatDataSource());
+        em.setPackagesToScan("com.zangho.game.server.domain.chat");
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         var properties = new HashMap<String, Object>();
 
@@ -60,9 +60,9 @@ public class PersistenceUserConfiguration {
 
     @Bean
     @Primary
-    public PlatformTransactionManager userTransactionManager() {
+    public PlatformTransactionManager chatTransactionManager() {
         var transactionManager = new JpaTransactionManager();
-        transactionManager.setEntityManagerFactory(userEntityManager().getObject());
+        transactionManager.setEntityManagerFactory(chatEntityManager().getObject());
         return transactionManager;
     }
 

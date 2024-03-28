@@ -1,7 +1,7 @@
 package com.zangho.game.server.service;
 
-import com.zangho.game.server.domain.ChatRoom;
-import com.zangho.game.server.domain.User;
+import com.zangho.game.server.domain.chat.ChatRoom;
+import com.zangho.game.server.domain.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;

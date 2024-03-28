@@ -1,10 +1,6 @@
 package com.zangho.game.server.configuration;
 
-import com.zangho.game.server.domain.User;
-import com.zangho.game.server.service.ChatService;
-import com.zangho.game.server.service.LineNotifyService;
-import com.zangho.game.server.service.MessageService;
-import com.zangho.game.server.service.UserService;
+import com.zangho.game.server.service.*;
 import com.zangho.game.server.socketHandler.GameSocketHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,12 +15,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final ChatService chatService;
     private final UserService userService;
+    private final ChatImageService chatImageService;
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
 
-    public WebSocketConfig (ChatService chatService, UserService userService, LineNotifyService lineNotifyService, MessageService messageService) {
+    public WebSocketConfig (ChatService chatService, UserService userService, ChatImageService chatImageService, LineNotifyService lineNotifyService, MessageService messageService) {
         this.chatService = chatService;
         this.userService = userService;
+        this.chatImageService = chatImageService;
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
     }
@@ -36,7 +34,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public GameSocketHandler chatSocketHandler() {
-        return new GameSocketHandler(userService, chatService, lineNotifyService, messageService);
+        return new GameSocketHandler(userService, chatImageService, chatService, lineNotifyService, messageService);
     }
 
     @Bean

@@ -1,5 +1,6 @@
-package com.zangho.game.server.domain;
+package com.zangho.game.server.domain.user;
 
+import com.zangho.game.server.domain.chat.ChatRoomInfo;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.Optional;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")

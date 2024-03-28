@@ -39,4 +39,14 @@ export namespace Errors {
         NOT_AVAILABLE_CHAT_TYPE = 6,
         FAILED_TO_SEND = 7,
     }
+
+    export enum SubscribeChatRoom {
+        NONE = 0,
+        REQUIRED_ROOM_ID = 1,
+        REQUIRED_USER_ID = 2,
+        NOT_FOUND_CHAT_ROOM = 3,
+        EMPTY_USER_IN_ROOM = 4,
+        NOT_FOUND_USER_IN_ROOM = 5,
+        ALREADY_SUBSCRIBE_ROOM = 6,
+    }
 }

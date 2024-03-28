@@ -1,6 +1,6 @@
-package com.zangho.game.server.repository;
+package com.zangho.game.server.repository.user;
 
-import com.zangho.game.server.domain.User;
+import com.zangho.game.server.domain.user.User;
 import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     <S extends User> List<S> findAll(Example<S> example);
 
     @Override
-    Optional<User> findById(String s);
+    Optional<User> findById(String id);
 
     Optional<User> findByName(String name);
 

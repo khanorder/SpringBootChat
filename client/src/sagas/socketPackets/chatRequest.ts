@@ -109,18 +109,20 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
     flag[0] = Defines.PacketType.TALK_CHAT_ROOM;
     const chatType = new Uint8Array(1);
     chatType[0] = action.payload.type;
+    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.roomId.trim());
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesMessage = new Uint8Array(Buffer.from(action.payload.message.trim(), 'utf8'));
     const bytesMessageByteLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
 
-    const packet = new Uint8Array(flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length + bytesMessage.byteLength);
+    const packet = new Uint8Array(flag.byteLength + bytesId.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length + bytesMessage.byteLength);
     packet.set(flag);
     packet.set(chatType, flag.byteLength);
-    packet.set(bytesChatRoomId, flag.byteLength + chatType.byteLength);
-    packet.set(bytesUserId, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength);
-    packet.set(bytesMessageByteLength, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
-    packet.set(bytesMessage, flag.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
+    packet.set(bytesId, flag.byteLength + chatType.byteLength);
+    packet.set(bytesChatRoomId, flag.byteLength + chatType.byteLength + bytesId.byteLength);
+    packet.set(bytesUserId, flag.byteLength + chatType.byteLength + bytesId.byteLength + bytesChatRoomId.byteLength);
+    packet.set(bytesMessageByteLength, flag.byteLength + chatType.byteLength + bytesId.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
+    packet.set(bytesMessage, flag.byteLength + chatType.byteLength + bytesId.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
     webSocketState.socket.send(packet);
 }
 

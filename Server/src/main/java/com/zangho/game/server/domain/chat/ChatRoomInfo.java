@@ -1,4 +1,4 @@
-package com.zangho.game.server.domain;
+package com.zangho.game.server.domain.chat;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

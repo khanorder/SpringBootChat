@@ -31,11 +31,13 @@ export namespace Domains {
 
     export class SendMessage {
         type: ChatType;
+        id: string;
         roomId: string;
         message: string;
 
-        constructor(type: ChatType, roomId: string, message: string) {
+        constructor(type: ChatType, id: string, roomId: string, message: string) {
             this.type = type;
+            this.id = id;
             this.roomId = roomId;
             this.message = message;
         }
@@ -428,6 +430,22 @@ export namespace Domains {
             this.subscription = subscription;
             this.roomId = roomId;
             this.userId = userId;
+        }
+    }
+
+    export class UploadChatImageRequest {
+        chatId: string;
+        roomId: string;
+        userId: string;
+        largeData: string;
+        smallData: string;
+
+        constructor(chatId: string, roomId: string, userId: string, largeData: string, smallData: string) {
+            this.chatId = chatId;
+            this.roomId = roomId;
+            this.userId = userId;
+            this.largeData = largeData;
+            this.smallData = smallData;
         }
     }
 }

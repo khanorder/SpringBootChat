@@ -1,4 +1,4 @@
-package com.zangho.game.server.domain;
+package com.zangho.game.server.domain.user;
 
 import lombok.*;
 import nl.martijndwars.webpush.Subscription;

@@ -3,14 +3,11 @@ package com.zangho.game.server.socketHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.*;
-import com.zangho.game.server.domain.ChatRoom;
-import com.zangho.game.server.domain.User;
-import com.zangho.game.server.domain.UserInRoom;
+import com.zangho.game.server.domain.chat.ChatRoom;
+import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.domain.user.UserInRoom;
 import com.zangho.game.server.helper.Helpers;
-import com.zangho.game.server.service.ChatService;
-import com.zangho.game.server.service.LineNotifyService;
-import com.zangho.game.server.service.MessageService;
-import com.zangho.game.server.service.UserService;
+import com.zangho.game.server.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.BinaryMessage;
@@ -26,14 +23,16 @@ public class GameSocketHandler extends TextWebSocketHandler {
 
     private final Logger logger = LoggerFactory.getLogger(GameSocketHandler.class);
     private final UserService userService;
+    private final ChatImageService chatImageService;
     private final ChatService chatService;
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
     private final Map<WebSocketSession, Optional<User>> connectedSessions;
     private final boolean isDevelopment;
 
-    public GameSocketHandler(UserService userService, ChatService chatService, LineNotifyService lineNotifyService, MessageService messageService) {
+    public GameSocketHandler(UserService userService, ChatImageService chatImageService, ChatService chatService, LineNotifyService lineNotifyService, MessageService messageService) {
         this.userService = userService;
+        this.chatImageService = chatImageService;
         this.chatService = chatService;
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
@@ -336,7 +335,11 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     }
 
                     var chatType = chatOptType.get();
-                    var bytesRoomId = Arrays.copyOfRange(packet, 2, 18);
+
+                    var bytesId = Arrays.copyOfRange(packet, 2, 18);
+                    var chatId = Helpers.getUUIDFromByteArray(bytesId);
+
+                    var bytesRoomId = Arrays.copyOfRange(packet, 18, 34);
                     var roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
                     var existsRoom = chatService.findRoomById(roomId);
                     if (existsRoom.isEmpty()) {
@@ -353,7 +356,7 @@ public class GameSocketHandler extends TextWebSocketHandler {
                         return;
                     }
 
-                    var bytesUserId = Arrays.copyOfRange(packet, 18, 34);
+                    var bytesUserId = Arrays.copyOfRange(packet, 34, 50);
                     var userId = Helpers.getUUIDFromByteArray(bytesUserId);
 
                     var exitsUser = userService.findUser(userId);
@@ -372,15 +375,14 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     var userName = userInRoom.getName();
                     var bytesUserName = userName.getBytes();
                     var bytesUserNameBytesLength = (byte)bytesUserName.length;
-                    var bytesChatMessageBytesLength = Arrays.copyOfRange(packet, 34, 38);
+                    var bytesChatMessageBytesLength = Arrays.copyOfRange(packet, 50, 54);
                     var chatMessageBytesLength = Helpers.getIntFromByteArray(bytesChatMessageBytesLength);
-                    var bytesChatMessage = Arrays.copyOfRange(packet, 38, 38 + chatMessageBytesLength);
+                    var bytesChatMessage = Arrays.copyOfRange(packet, 54, 54 + chatMessageBytesLength);
                     var chatMessage = new String(bytesChatMessage);
                     var now = new Date().getTime();
                     var bytesNow = Helpers.getByteArrayFromLong(now);
-                    var chatId = UUID.randomUUID().toString();
                     var bytesChatId = Helpers.getByteArrayFromUUID(chatId);
-                    if (isDevelopment)
+                    if (isDevelopment && ChatType.IMAGE != chatType)
                         logger.info("TALK_CHAT_ROOM: " + chatType + ", " + roomId + ", " + userId + ", " + userName + ", " + chatMessage + ", " + now + ", " + chatId);
 
                     var sessionsInRoom = new HashSet<>(existsRoom.get().getSessions().keySet());
@@ -395,7 +397,6 @@ public class GameSocketHandler extends TextWebSocketHandler {
                     sendRoomBuffer.put(bytesChatMessageBytesLength);
                     sendRoomBuffer.put(bytesUserName);
                     sendRoomBuffer.put(bytesChatMessage);
-
                     sendToEachSession(sessionsInRoom, sendRoomBuffer.array());
                     browserNotifyUserInRoom(existsRoom.get(), userName, chatMessage);
                 } catch (Exception ex) {

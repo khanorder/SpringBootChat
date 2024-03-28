@@ -15,18 +15,22 @@ import {Helpers} from "@/helpers";
 import Picture from 'public/images/Picture_icon_BLACK.svg';
 import UserIcon from 'public/images/user-circle.svg';
 import ModifyIcon from 'public/images/modify-icon.svg';
+import CloseIcon from 'public/images/close-circle-svgrepo-com.svg';
 import Image from "next/image";
 import Head from "next/head";
 import Layout from "@/components/layouts";
 import {CommonAPI} from "@/apis/commonAPI";
+import { v4 as uuid } from 'uuid';
+import {ChatAPI} from "@/apis/chatAPI";
 
 interface ChatRoomProps {
     isProd: boolean;
     roomId: string;
     roomName: string;
+    serverHost: string;
 }
 
-function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
+function ChatRoom({isProd, roomId, roomName, serverHost}: ChatRoomProps) {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
@@ -37,8 +41,11 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
     const chatMessageInputRef = createRef<HTMLTextAreaElement>();
     const [message, setMessage] = useState<string>('');
     const chatImageInputRef = createRef<HTMLInputElement>();
-    const [chatImage, setChatImage] = useState<string|ArrayBuffer|null>(null);
-    const [chatImageDialogWrapperClass, setChatImageDialogWrapperClass] = useState<string>(styles.chatImageDialogWrapper)
+    const [chatLargeImage, setChatLargeImage] = useState<string|ArrayBuffer|null>(null);
+    const [chatSmallImage, setChatSmallImage] = useState<string|ArrayBuffer|null>(null);
+    const [chatImageInputDialogWrapperClass, setChatImageInputDialogWrapperClass] = useState<string>(styles.chatImageInputDialogWrapper)
+    const [chatImageDetailDialogWrapperClass, setChatImageDetailDialogWrapperClass] = useState<string>(styles.chatImageDetailDialogWrapper)
+    const [chatDetailImageId, setChatDetailImageId] = useState<string>('');
     const [currentChatRoom, setCurrentChatRoom] = useState<Domains.ChatRoom|null|undefined>(null);
     const [newUserName, setNewUserName] = useState<string>('');
 
@@ -91,7 +98,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         } else if (300 < message.trim().length) {
             alert(`채팅내용은 300글자 이내로 입력해주세요.`);
         } else {
-            dispatch(sendMessageReq({type: Defines.ChatType.TALK, roomId: Helpers.getUUIDFromBase62(roomId?.toString() ?? ''), message: message}));
+            dispatch(sendMessageReq({id: uuid(), type: Defines.ChatType.TALK, roomId: Helpers.getUUIDFromBase62(roomId?.toString() ?? ''), message: message}));
             setMessage('');
         }
     }, [webSocket, user, message, setMessage, roomId, dispatch]);
@@ -198,6 +205,14 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         return users;
     }, [isProd, chat, user, toggleChatRoomUserList, onKeyUpUserName, onChangeUserName, onSaveUserName, newUserName]);
 
+    const openChatImageDetailDialog = useCallback((chatId: string) => {
+        if (isEmpty(chatId))
+            return;
+
+        setChatImageDetailDialogWrapperClass(`${styles.chatImageDetailDialogWrapper} ${styles.active}`);
+        setChatDetailImageId(chatId);
+    }, [setChatImageDetailDialogWrapperClass, setChatDetailImageId]);
+
     const chatContents = useCallback(() => {
         const contents: ReactElement[] = [];
 
@@ -234,7 +249,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
                                 <div className={styles.chatWrapper}>
                                     {isMine ? <></> : <div className={styles.chatUserName}>{chatData.userName}</div>}
                                     <div className={chatMessageClass}>
-                                        <img className={styles.chatImage} src={chatData.message} alt={chatData.id + ' 이미지'} />
+                                        <img className={styles.chatImage} src={`${serverHost}/api/chatSmallImage/${chatData.id}`} alt={chatData.id + ' 이미지'} onClick={e => openChatImageDetailDialog(chatData.id)} />
                                     </div>
                                     <div className={styles.chatTime}>{dayjs(chatData.time).fromNow(true)}</div>
                                 </div>
@@ -248,7 +263,7 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         }
 
         return contents;
-    }, [chat, user, isProd]);
+    }, [chat.chatDatas, user.id, serverHost, isProd]);
 
     const enterChatRoom = useCallback(() => {
         if (!webSocket.socket) {
@@ -299,14 +314,16 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
                         return;
 
                     const origDataURL = 'string' == typeof reader.result ? reader.result : '';
-                    const resizeDataURL = await Helpers.getDataURLResizeImage(origDataURL, 150, 150, file.type);
-                    setChatImage(resizeDataURL);
+                    const smallDataURL = await Helpers.getDataURLResizeImage(origDataURL, 256, 256, file.type);
+                    const largeDataURL = await Helpers.getDataURLResizeImage(origDataURL, 1024, 1024, file.type);
+                    setChatSmallImage(smallDataURL);
+                    setChatLargeImage(largeDataURL);
                 }
                 reader.readAsDataURL(file);
             }
-            setChatImageDialogWrapperClass(`${styles.chatImageDialogWrapper} ${styles.active}`);
+            setChatImageInputDialogWrapperClass(`${styles.chatImageInputDialogWrapper} ${styles.active}`);
         }
-    }, [chatImageInputRef, setChatImage, setChatImageDialogWrapperClass]);
+    }, [chatImageInputRef, setChatSmallImage, setChatLargeImage, setChatImageInputDialogWrapperClass]);
 
     const contents = useCallback(() => {
         if (!currentChatRoom) {
@@ -385,55 +402,86 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
         message
     ]);
 
-    const hideChatImageDialog = useCallback(() => {
-        setChatImageDialogWrapperClass(styles.chatImageDialogWrapper);
-        setChatImage('');
+    const hideChatImageInputDialog = useCallback(() => {
+        setChatImageInputDialogWrapperClass(styles.chatImageInputDialogWrapper);
+        setChatSmallImage('');
+        setChatLargeImage('');
         if (chatImageInputRef.current)
             chatImageInputRef.current.value = '';
-    }, [setChatImageDialogWrapperClass, setChatImage, chatImageInputRef]);
+    }, [setChatImageInputDialogWrapperClass, setChatSmallImage, setChatLargeImage, chatImageInputRef]);
 
-    const onSendImage = useCallback(() => {
+    const hideChatImageDetailDialog = useCallback(() => {
+        setChatImageDetailDialogWrapperClass(styles.chatImageDetailDialogWrapper);
+        setChatDetailImageId('');
+    }, [setChatImageDetailDialogWrapperClass, setChatDetailImageId]);
+
+    const onSendImage = useCallback(async () => {
         if (!webSocket.socket) {
             alert('연결 안됨');
         } else if (isEmpty(user.id)) {
             alert('채팅방에 입장해 주세요.');
         } else if (isEmpty(user.name)) {
             alert('대화명을 입력해 주세요.');
-        } else if (isEmpty(chatImage)) {
+        } else if (isEmpty(chatSmallImage) || isEmpty(chatLargeImage)) {
             alert('이미지를 선택해 주세요.');
-            hideChatImageDialog();
+            hideChatImageInputDialog();
         } else if (!chatImageInputRef.current || !chatImageInputRef.current.files || 1 > chatImageInputRef.current.files.length) {
             alert(`전송할 이미지를 선택해주세요.`);
         } else if (10485760 < chatImageInputRef.current.files[0].size) {
             alert(`파일크기 10MB 이하의 이미지만 전송 가능합니다.`);
         } else {
-            dispatch(sendMessageReq({ type: Defines.ChatType.IMAGE, roomId: Helpers.getUUIDFromBase62(roomId?.toString() ?? ''), message: 'string' == typeof chatImage ? chatImage : ''}));
-            hideChatImageDialog();
+            const chatId = uuid();
+            const roomUUID = Helpers.getUUIDFromBase62(roomId?.toString() ?? '');
+            await ChatAPI.UploadChatImageAsync({ chatId: chatId, roomId: roomUUID, userId: user.id, largeData: 'string' == typeof chatLargeImage ? chatLargeImage : '', smallData: 'string' == typeof chatSmallImage ? chatSmallImage : '' });
+            dispatch(sendMessageReq({ id: chatId, type: Defines.ChatType.IMAGE, roomId: roomUUID, message: '' }));
+            hideChatImageInputDialog();
         }
-    }, [webSocket, user, chatImage, chatImageInputRef, roomId, hideChatImageDialog, dispatch]);
+    }, [webSocket, user, chatSmallImage, chatLargeImage, chatImageInputRef, roomId, hideChatImageInputDialog, dispatch]);
 
-    const chatImageDialog = useCallback(() =>  {
+    const chatImageInputDialog = useCallback(() =>  {
         return (
-            <div className={chatImageDialogWrapperClass}>
-                <div className={styles.chatImageDialog}>
-                    <div className={styles.chatImageDialogContent}>
+            <div className={chatImageInputDialogWrapperClass}>
+                <div className={styles.chatImageInputDialog}>
+                    <div className={styles.chatImageInputDialogContent}>
                         {
-                            chatImage
+                            chatLargeImage
                             ?
-                                <img className={styles.chatImageThumb} src={'string' == typeof chatImage ? chatImage : Picture} alt='업로드 파일' />
+                                <img className={styles.chatImageThumb} src={'string' == typeof chatLargeImage ? chatLargeImage : Picture} alt='업로드 이미지' />
                             :
                                 <></>
                         }
                     </div>
-                    <div className={styles.chatImageDialogButtons}>
-                        <button className={styles.chatImageDialogButton} onClick={onSendImage}>전송</button>
-                        <button className={styles.chatImageDialogButton} onClick={hideChatImageDialog}>취소</button>
+                    <div className={styles.chatImageInputDialogButtons}>
+                        <button className={styles.chatImageInputDialogButton} onClick={onSendImage}>전송</button>
+                        <button className={styles.chatImageInputDialogButton} onClick={hideChatImageInputDialog}>취소</button>
                     </div>
                 </div>
-                <div className={styles.chatImageDialogPane} onClick={hideChatImageDialog}></div>
+                <div className={styles.chatImageInputDialogPane} onClick={hideChatImageInputDialog}></div>
             </div>
         );
-    }, [chatImageDialogWrapperClass, chatImage, hideChatImageDialog, onSendImage]);
+    }, [chatImageInputDialogWrapperClass, chatLargeImage, hideChatImageInputDialog, onSendImage]);
+
+    const chatImageDetailDialog = useCallback(() =>  {
+        return (
+            <div className={chatImageDetailDialogWrapperClass}>
+                <div className={styles.chatImageDetailDialog}>
+                    <div className={styles.chatImageDetailDialogContent}>
+                        {
+                            chatDetailImageId
+                                ?
+                                <img className={styles.chatImageDetail} src={(chatDetailImageId ? `${serverHost}/api/chatImage/${chatDetailImageId}` : Picture)} alt='상세 이미지' />
+                                :
+                                <></>
+                        }
+                    </div>
+                    <div className={styles.chatImageDetailDialogButtons}>
+                        <button className={styles.chatImageDetailDialogButton} onClick={hideChatImageDetailDialog}><Image className={styles.chatImageDetailDialogButtonCloseIcon} src={CloseIcon} alt='닫기' fill={true} priority={true} /></button>
+                    </div>
+                </div>
+                <div className={styles.chatImageDetailDialogPane} onClick={hideChatImageDetailDialog}></div>
+            </div>
+        );
+    }, [chatImageDetailDialogWrapperClass, serverHost, chatDetailImageId, hideChatImageDetailDialog]);
 
     return (
         <>
@@ -453,7 +501,8 @@ function ChatRoom({isProd, roomId, roomName}: ChatRoomProps) {
                 <meta name="twitter:description" content={'채팅방 - ' + roomName}/>
             </Head>
             <main className={styles.main}>
-                {chatImageDialog()}
+                {chatImageDetailDialog()}
+                {chatImageInputDialog()}
                 {contents()}
             </main>
         </>
@@ -482,8 +531,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     let roomNameProp: string = '';
     const serverHost = process.env.SERVER_HOST ?? 'localhost:8080';
+    const serverHostProp = ('production' === process.env.NODE_ENV ? 'https://' : 'http://') + serverHost;
 
-    const url = ('production' === process.env.NODE_ENV ? 'https://' : 'http://') + serverHost + "/api/room/" + Helpers.getUUIDFromBase62(roomId as string ?? '');
+    const url = serverHostProp + "/api/room/" + Helpers.getUUIDFromBase62(roomId as string ?? '');
     try {
         const response = await fetch(`${url}`, {
             method: 'POST',
@@ -504,7 +554,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         props: {
             isProd: ("production" === process.env.NODE_ENV),
             roomId: roomId,
-            roomName: roomNameProp
+            roomName: roomNameProp,
+            serverHost: serverHostProp
         }
     };
 }
