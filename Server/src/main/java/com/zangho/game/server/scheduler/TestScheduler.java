@@ -1,6 +1,6 @@
 package com.zangho.game.server.scheduler;
 
-import com.zangho.game.server.service.ChatService;
+import com.zangho.game.server.service.ChatRoomService;
 import com.zangho.game.server.socketHandler.GameSocketHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 public class TestScheduler {
     private final Logger logger = LoggerFactory.getLogger(TestScheduler.class);
     private final GameSocketHandler chatSocketHandler;
-    private final ChatService chatService;
-    public TestScheduler(GameSocketHandler chatSocketHandler, ChatService chatService) {
+    private final ChatRoomService chatRoomService;
+    public TestScheduler(GameSocketHandler chatSocketHandler, ChatRoomService chatRoomService) {
         this.chatSocketHandler = chatSocketHandler;
-        this.chatService = chatService;
+        this.chatRoomService = chatRoomService;
     }
 
 //    @Scheduled(fixedDelay = 3000)

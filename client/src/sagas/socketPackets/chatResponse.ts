@@ -2,8 +2,8 @@ import {Domains} from "@/domains";
 import {Errors} from "@/defines/errors";
 import {Helpers} from "@/helpers";
 import {
-    addChatRoom,
-    removeChatRoom,
+    addChatRooms,
+    removeChatRooms,
     setChatRoomList,
     addChatRoomUser,
     removeChatRoomUser,
@@ -18,11 +18,10 @@ import {
     setUserName
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
-import {RootState} from "@/stores/reducers";
 import {Defines} from "@/defines";
 import {v4 as uuid} from "uuid";
-import deepmerge from "deepmerge";
 import {push} from "connected-next-router";
+import isEmpty from "lodash/isEmpty";
 
 export function* checkAuthenticationRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -74,6 +73,10 @@ export function* createChatRoomRes(data: Uint8Array) {
 
             break;
 
+        case Errors.CreateChatRoom.NOT_ALLOWED_OPEN_TYPE:
+            alert('채팅방 공개 범위가 잘못 설되었습니다.');
+            break;
+
         case Errors.CreateChatRoom.EXISTS_ROOM:
             alert('이미 개설된 채팅방 이름입니다.');
             break;
@@ -82,13 +85,52 @@ export function* createChatRoomRes(data: Uint8Array) {
     return response;
 }
 
-export function* updateChatRoomsRes(data: Uint8Array) {
-    const response = Domains.UpdateChatRoomsRes.decode(data);
-    yield put(setChatRoomList([]));
+export function* addChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - createChatRoom`);
+
+    const response = Domains.AddChatRoomRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    if (isEmpty(response.roomId)) {
+        return null;
+    }
+
+    if (isEmpty(response.roomName)) {
+        return null;
+    }
+
+    yield put(addChatRooms([new Domains.ChatRoom(response.roomId, response.roomName, response.roomOpenType, response.roomUserCount)]));
+
+    return response;
+}
+
+export function* removeChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - createChatRoom`);
+
+    const response = Domains.RemoveChatRoomRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    if (!isEmpty(response.roomId))
+        yield put(removeChatRooms([response.roomId]));
+
+    return response;
+}
+
+export function* updatePublicChatRoomsRes(data: Uint8Array) {
+    const response = Domains.UpdatePublicChatRoomsRes.decode(data);
+    // yield put(setChatRoomList([]));
     if (response && 0 < response.roomIds.length) {
         const list: Domains.ChatRoom[] = [];
         for (let i = 0; i < response.roomIds.length; i++) {
-            list.push(new Domains.ChatRoom(response.roomIds[i], response.roomNames[i], response.roomUserCounts[i]));
+            list.push(new Domains.ChatRoom(response.roomIds[i], response.roomNames[i], Defines.RoomOpenType.PRIVATE, response.roomUserCounts[i]));
 
         }
         yield put(setChatRoomList(list));
@@ -168,6 +210,7 @@ export function* exitChatRoomRes(data: Uint8Array) {
             alert('채팅방 나가기 실패.');
             break;
     }
+    console.log(data)
     yield put(setChatDatas([]));
     yield put(setChatRoomUserList([]));
     yield put(push('/'));
@@ -205,5 +248,14 @@ export function* talkChatRoomRes(data: Uint8Array) {
         return null;
 
     yield put(addChatData(response.getChatData()));
+    return response;
+}
+
+export function* historyChatRoomRes(data: Uint8Array) {
+    const response = Domains.HistoryChatRoomRes.decode(data);
+    if (!response)
+        return null;
+
+    yield put(setChatDatas(response.getChatHistories()));
     return response;
 }

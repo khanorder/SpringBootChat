@@ -7,36 +7,44 @@ interface ChatState {
     roomList: Domains.ChatRoom[];
     roomUserList: Domains.ChatRoomUser[];
     chatDatas: Domains.Chat[];
+    latestUpdate: Date;
 }
 
 const initialState: ChatState = {
     roomList: [],
     roomUserList: [],
-    chatDatas: []
+    chatDatas: [],
+    latestUpdate: new Date()
 }
 
 const chatSlice = createSlice({
     name: 'Chat',
     initialState,
     reducers: {
-        addChatRoom: (state, action: PayloadAction<Domains.ChatRoom>) => {
+        addChatRooms: (state, action: PayloadAction<Domains.ChatRoom[]>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - addRoom: ${JSON.stringify(action.payload)}`);
 
-            if (!action || !action.payload)
+            if (!action || !action.payload || 1 > action.payload.length)
                 return;
 
-            state.roomList.push(action.payload);
-            state.roomList = deepmerge([], state.roomList);
+            const addChatRoomList: Domains.ChatRoom[] = [];
+            for (let chatRoom of action.payload) {
+                if (0 <= state.roomList.findIndex(_ => _.roomId == chatRoom.roomId))
+                    continue;
+
+                addChatRoomList.push(chatRoom);
+            }
+            state.roomList = deepmerge(state.roomList, addChatRoomList);
         },
-        removeChatRoom: (state, action: PayloadAction<Domains.ChatRoom>) => {
+        removeChatRooms: (state, action: PayloadAction<string[]>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - removeRoom: ${JSON.stringify(action.payload)}`);
 
-            if (!action || !action.payload || isEmpty(action.payload.roomId))
+            if (!action || !action.payload || 1 > action.payload.length)
                 return;
 
-            const filterList = state.roomList.filter(_ => _.roomId != action.payload.roomId)
+            const filterList = state.roomList.filter(_ => !action.payload.includes(_.roomId));
             state.roomList = deepmerge([], filterList);
         },
         setChatRoomList: (state, action: PayloadAction<Domains.ChatRoom[]>) => {
@@ -95,21 +103,20 @@ const chatSlice = createSlice({
                 return;
 
             state.chatDatas = action.payload;
-        }
+        },
     }
 });
 
 export type { ChatState };
 export const {
-    addChatRoom,
-    removeChatRoom,
+    addChatRooms,
+    removeChatRooms,
     setChatRoomList,
     addChatRoomUser,
     removeChatRoomUser,
     setChatRoomUserList,
     addChatData,
-    setChatDatas
-
+    setChatDatas,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

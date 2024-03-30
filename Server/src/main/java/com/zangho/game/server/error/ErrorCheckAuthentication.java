@@ -1,4 +1,4 @@
-package com.zangho.game.server.define;
+package com.zangho.game.server.error;
 
 public enum ErrorCheckAuthentication {
     NONE(0),

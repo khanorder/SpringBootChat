@@ -1,14 +1,18 @@
-package com.zangho.game.server.define;
+package com.zangho.game.server.error;
 
-public enum ErrorExitChatRoom {
+import lombok.Getter;
+
+@Getter
+public enum ErrorEnterChatRoom {
     NONE(0),
     ROOM_REMOVED(1),
     NO_EXISTS_ROOM(2),
-    NOT_IN_ROOM(3),
-    FAILED_TO_EXIT(4);
+    NOT_FOUND_USER(3),
+    ALREADY_IN_ROOM(4),
+    FAILED_TO_ENTER(5);
 
     private final int number;
-    private ErrorExitChatRoom(int number) {
+    ErrorEnterChatRoom(int number) {
         this.number = number;
     }
 

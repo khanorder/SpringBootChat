@@ -1,8 +1,23 @@
 import base from "base-x";
-const base62 = base('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+const base62 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
 const base64 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
 
 export namespace Helpers {
+
+    export function mergeBytesPacket(packets: Uint8Array[]): Uint8Array {
+        if (1 > packets.length)
+            return new Uint8Array(0);
+
+        let mergedPackets = new Uint8Array(0);
+        packets.forEach(packet => {
+            const combinedPacket = new Uint8Array(mergedPackets.byteLength + packet.byteLength);
+            combinedPacket.set(mergedPackets);
+            combinedPacket.set(packet, mergedPackets.byteLength);
+            mergedPackets = combinedPacket;
+        });
+
+        return mergedPackets;
+    }
 
     export function getUUIDFromByteArray(bytes: Uint8Array): string {
         if (16 != bytes.length)

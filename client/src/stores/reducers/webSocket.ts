@@ -49,7 +49,7 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - startReconnecting`);
         },
-        createChatRoomReq: (state, action: PayloadAction<string>) => {
+        createChatRoomReq: (state, action: PayloadAction<Domains.CreateChatRoomReq>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - createChatRoomReq`);
         },

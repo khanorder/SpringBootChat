@@ -19,20 +19,20 @@ import java.util.HashMap;
 public class APIController {
 
     private final Logger logger = LoggerFactory.getLogger(APIController.class);
-    private final ChatService chatService;
+    private final ChatRoomService chatRoomService;
     private final VisitService visitService;
     private final UserService userService;
     private final ChatImageService chatImageService;
     private final MessageService messageService;
 
     public APIController(
-            ChatService chatService,
+            ChatRoomService chatRoomService,
             VisitService visitService,
             UserService userService,
             ChatImageService chatImageService,
             MessageService messageService
     ) {
-        this.chatService = chatService;
+        this.chatRoomService = chatRoomService;
         this.visitService = visitService;
         this.userService = userService;
         this.chatImageService = chatImageService;
@@ -42,16 +42,22 @@ public class APIController {
     @PostMapping(value = "/api/room/{id}")
     @ResponseBody
     public String room(@PathVariable("id") String id) throws Exception {
-        if (id.isEmpty()) {
-            return "";
-        }
+        if (id.isEmpty())
+            return "{}";
 
         try {
-            var chatRoom = chatService.findRoomById(id);
+            var chatRoom = chatRoomService.findPrivateRoomById(id);
+            if (chatRoom.isEmpty())
+                chatRoom = chatRoomService.findPublicRoomById(id);
+
             if (chatRoom.isEmpty())
                 return "{}";
 
-            return (new ObjectMapper()).writeValueAsString(chatRoom.get().getInfo());
+            var result = new HashMap<String, Object>();
+            result.put("roomId", chatRoom.get().getRoomId());
+            result.put("roomName", chatRoom.get().getRoomName());
+            result.put("roomOpenType", chatRoom.get().getOpenType());
+            return (new ObjectMapper()).writeValueAsString(result);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -65,7 +71,6 @@ public class APIController {
         var result = false;
 
         try {
-            visit.session = Helpers.getBase62FromUUID(visit.session);
             visit.ip = Helpers.getRemoteIP(request);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -85,11 +90,10 @@ public class APIController {
     @PostMapping(value = "/api/getPublicKey")
     @ResponseBody
     public String getPublicKey(HttpServletRequest request) throws Exception {
-        var publicKey = messageService.getPublicKey();
-        var response = """
-            {"publicKey":"%s"}
-        """;
-        return String.format(response, publicKey);
+        var response = new HashMap<String, Object>();
+        response.put("publicKey", messageService.getPublicKey());
+
+        return (new ObjectMapper()).writeValueAsString(response);
     }
 
     @PostMapping(value = "/api/subscription")

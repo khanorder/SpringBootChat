@@ -1,4 +1,3 @@
-import {ChatState} from "@/stores/reducers/chat";
 import {select} from "redux-saga/effects";
 import {RootState} from "@/stores/reducers";
 import {UserState} from "@/stores/reducers/user";
@@ -7,9 +6,8 @@ import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {PayloadAction} from "@reduxjs/toolkit";
 import {Domains} from "@/domains";
-import ChatType = Defines.ChatType;
 
-export function* callCreateChatRoomReq(action: PayloadAction<string>) {
+export function* callCreateChatRoomReq(action: PayloadAction<Domains.CreateChatRoomReq>) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callCreateChatRoomReq`);
 
@@ -22,14 +20,11 @@ export function* callCreateChatRoomReq(action: PayloadAction<string>) {
         return;
     }
 
-    const flag = new Uint8Array(1);
-    flag[0] = Defines.PacketType.CREATE_CHAT_ROOM;
+    const flag = new Uint8Array([Defines.PacketType.CREATE_CHAT_ROOM]);
+    const bytesRoomOpenType = new Uint8Array([action.payload.openType]);
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const bytesChatRoomName = new Uint8Array(Buffer.from(action.payload.trim(), 'utf-8'));
-    const packet = new Uint8Array(flag.byteLength + bytesUserId.byteLength + bytesChatRoomName.byteLength);
-    packet.set(flag);
-    packet.set(bytesUserId, flag.byteLength);
-    packet.set(bytesChatRoomName, flag.byteLength + bytesUserId.byteLength);
+    const bytesChatRoomName = new Uint8Array(Buffer.from(action.payload.roomName.trim(), 'utf-8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesRoomOpenType, bytesUserId, bytesChatRoomName]);
     webSocketState.socket.send(packet);
 }
 
@@ -46,14 +41,10 @@ export function* callEnterChatRoomReq(action: PayloadAction<string>) {
         return;
     }
 
-    const flag = new Uint8Array(1);
-    flag[0] = Defines.PacketType.ENTER_CHAT_ROOM;
+    const flag = new Uint8Array([Defines.PacketType.ENTER_CHAT_ROOM]);
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.trim());
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const packet = new Uint8Array(flag.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
-    packet.set(flag);
-    packet.set(bytesChatRoomId, flag.byteLength);
-    packet.set(bytesUserId, flag.byteLength + bytesChatRoomId.byteLength);
+    const packet = Helpers.mergeBytesPacket([flag, bytesChatRoomId, bytesUserId]);
     webSocketState.socket.send(packet);
 }
 
@@ -61,7 +52,6 @@ export function* callExitChatRoomReq(action: PayloadAction<string>) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callExitChatRoomReq`);
 
-    const chatState: ChatState = yield select((state: RootState) => state.chat);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
@@ -70,12 +60,9 @@ export function* callExitChatRoomReq(action: PayloadAction<string>) {
         return;
     }
 
-    const flag = new Uint8Array(1);
-    flag[0] = Defines.PacketType.EXIT_CHAT_ROOM;
-    const message = Helpers.getByteArrayFromUUID(action.payload);
-    const packet = new Uint8Array(flag.byteLength + message.byteLength);
-    packet.set(flag);
-    packet.set(message, flag.byteLength);
+    const flag = new Uint8Array([Defines.PacketType.EXIT_CHAT_ROOM]);
+    const bytesRoomId = Helpers.getByteArrayFromUUID(action.payload);
+    const packet = Helpers.mergeBytesPacket([flag, bytesRoomId]);
     webSocketState.socket.send(packet);
 }
 
@@ -84,10 +71,10 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
         console.log(`saga - callSendMessageReq`);
 
     switch (action.payload.type) {
-        case ChatType.TALK:
+        case Defines.ChatType.TALK:
             break;
 
-        case ChatType.IMAGE:
+        case Defines.ChatType.IMAGE:
             break;
 
         default:
@@ -105,24 +92,14 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
         return;
     }
 
-    const flag = new Uint8Array(1);
-    flag[0] = Defines.PacketType.TALK_CHAT_ROOM;
-    const chatType = new Uint8Array(1);
-    chatType[0] = action.payload.type;
-    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
+    const flag = new Uint8Array([Defines.PacketType.TALK_CHAT_ROOM]);
+    const bytesChatType = new Uint8Array([action.payload.type]);
+    const bytesChatId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.roomId.trim());
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesMessage = new Uint8Array(Buffer.from(action.payload.message.trim(), 'utf8'));
-    const bytesMessageByteLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
-
-    const packet = new Uint8Array(flag.byteLength + bytesId.byteLength + chatType.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length + bytesMessage.byteLength);
-    packet.set(flag);
-    packet.set(chatType, flag.byteLength);
-    packet.set(bytesId, flag.byteLength + chatType.byteLength);
-    packet.set(bytesChatRoomId, flag.byteLength + chatType.byteLength + bytesId.byteLength);
-    packet.set(bytesUserId, flag.byteLength + chatType.byteLength + bytesId.byteLength + bytesChatRoomId.byteLength);
-    packet.set(bytesMessageByteLength, flag.byteLength + chatType.byteLength + bytesId.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength);
-    packet.set(bytesMessage, flag.byteLength + chatType.byteLength + bytesId.byteLength + bytesChatRoomId.byteLength + bytesUserId.byteLength + bytesMessageByteLength.length);
+    const bytesMessageLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
+    const packet = Helpers.mergeBytesPacket([flag, bytesChatType, bytesChatId, bytesChatRoomId, bytesUserId, bytesMessageLength, bytesMessage]);
     webSocketState.socket.send(packet);
 }
 
@@ -153,14 +130,9 @@ export function* callSaveUserNameReq() {
         return;
     }
 
-    const flag = new Uint8Array(1);
-    flag[0] = Defines.PacketType.CHANGE_USER_NAME;
+    const flag = new Uint8Array([Defines.PacketType.CHANGE_USER_NAME]);
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
-
-    const packet = new Uint8Array(flag.byteLength + bytesUserId.byteLength + bytesUserName.byteLength);
-    packet.set(flag);
-    packet.set(bytesUserId, flag.byteLength);
-    packet.set(bytesUserName, flag.byteLength + bytesUserId.byteLength);
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserName]);
     webSocketState.socket.send(packet);
 }

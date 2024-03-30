@@ -1,13 +1,15 @@
-package com.zangho.game.server.define;
+package com.zangho.game.server.error;
 
-public enum ErrorCreateChatRoom {
+public enum ErrorExitChatRoom {
     NONE(0),
     NOT_FOUND_USER(1),
-    EXISTS_ROOM(2),
-    REQUIRED_ROOM_ID(3);
+    ROOM_REMOVED(2),
+    NO_EXISTS_ROOM(3),
+    NOT_IN_ROOM(4),
+    FAILED_TO_EXIT(5);
 
     private final int number;
-    private ErrorCreateChatRoom(int number) {
+    private ErrorExitChatRoom(int number) {
         this.number = number;
     }
 

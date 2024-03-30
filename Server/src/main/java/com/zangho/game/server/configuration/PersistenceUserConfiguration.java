@@ -27,12 +27,6 @@ public class PersistenceUserConfiguration {
     @Value("${rds.jpa.properties.hibernate.dialect}")
     private String dialect;
 
-//    private final Environment env;
-//
-//    public PersistenceUserConfiguration(Environment env) {
-//        this.env = env;
-//    }
-
     @Bean(name = "userDataSource")
     @ConfigurationProperties(prefix = "rds.user.datasource")
     public DataSource userDataSource() {

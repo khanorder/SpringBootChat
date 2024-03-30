@@ -1,6 +1,7 @@
 package com.zangho.game.server.domain.user;
 
 import com.zangho.game.server.domain.chat.ChatRoomInfo;
+import com.zangho.game.server.domain.chat.UserRoom;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Entity
 @Table(name = "users")
@@ -27,9 +29,12 @@ public class User {
     private String name;
 
     @Transient
-    private Optional<ChatRoomInfo> chatRoom;
+    private Optional<ChatRoomInfo> currentChatRoom = Optional.empty();
 
-    public UserInRoom getUserInRoom() {
-        return new UserInRoom(this.id, this.name);
+    @Transient
+    private ConcurrentLinkedQueue<ChatRoomInfo> chatRoomList = new ConcurrentLinkedQueue<>();
+
+    public UserRoom getUserRoom(String roomId) {
+        return new UserRoom(roomId, this.id);
     }
 }

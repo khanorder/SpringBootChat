@@ -27,12 +27,6 @@ public class PersistenceChatConfiguration {
     @Value("${rds.jpa.properties.hibernate.dialect}")
     private String dialect;
 
-//    private final Environment env;
-//
-//    public PersistenceChatConfiguration(Environment env) {
-//        this.env = env;
-//    }
-
     @Bean(name = "chatDataSource")
     @ConfigurationProperties(prefix = "rds.chat.datasource")
     public DataSource chatDataSource() {

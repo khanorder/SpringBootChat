@@ -1,72 +1,49 @@
 package com.zangho.game.server.service;
 
-import com.zangho.game.server.domain.chat.ChatRoom;
-import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.define.ChatType;
+import com.zangho.game.server.domain.UploadChatImageRequest;
+import com.zangho.game.server.domain.chat.Chat;
+import com.zangho.game.server.domain.chat.ChatImage;
+import com.zangho.game.server.repository.chat.ChatImageRepository;
+import com.zangho.game.server.repository.chat.ChatRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.socket.WebSocketSession;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Date;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 public class ChatService {
 
     private final Logger logger = LoggerFactory.getLogger(ChatService.class);
-    private final Map<String, ChatRoom> chatRooms;
+    private final ChatRepository chatRepostory;
 
-    public ChatService() {
-        this.chatRooms = new ConcurrentHashMap<>();
+    public ChatService(ChatRepository chatRepostory) {
+        this.chatRepostory = chatRepostory;
     }
 
-    public List<ChatRoom> findAllRoom() throws Exception {
-        return new ArrayList<>(chatRooms.values());
+    public Optional<Chat> saveChat(Chat chat) throws Exception {
+        if (chat.getChatId().isEmpty())
+            return Optional.empty();
+
+        if (chat.getRoomId().isEmpty())
+            return Optional.empty();
+
+        if (chat.getUserId().isEmpty())
+            return Optional.empty();
+
+        if (chat.getUserName().isEmpty())
+            return Optional.empty();
+
+        if (ChatType.IMAGE != chat.getType() && chat.getMessage().isEmpty())
+            return Optional.empty();
+
+        var resultChat = chatRepostory.save(chat);
+        return Optional.ofNullable(resultChat);
     }
 
-    public Optional<ChatRoom> findRoomById(String roomId) throws Exception {
-        return Optional.ofNullable(chatRooms.get(roomId));
-    }
-
-    public Optional<ChatRoom> findRoomByName(String name) throws Exception {
-        return chatRooms.values().stream().filter(chatRoom -> chatRoom.getRoomName().equals(name)).findAny();
-    }
-
-    public ChatRoom createRoom(String name, WebSocketSession session, User user) throws Exception {
-        var randomId = UUID.randomUUID().toString();
-        var chatRoom = ChatRoom.builder()
-                .roomId(randomId)
-                .roomName(name)
-                .build();
-
-        chatRoom.getSessions().put(session, user.getUserInRoom());
-        chatRooms.put(randomId, chatRoom);
-        return chatRoom;
-    }
-
-    public boolean exitRoom(String roomId, WebSocketSession session) throws Exception {
-        var existsRoom = findRoomById(roomId);
-        if (existsRoom.isEmpty())
-            return false;
-
-        if (existsRoom.get().getSessions().isEmpty()) {
-            removeRoom(roomId);
-            return false;
-        }
-
-        if (!existsRoom.get().getSessions().containsKey(session)) {
-            return false;
-        }
-
-        existsRoom.get().getSessions().remove(session);
-
-        if (existsRoom.get().getSessions().isEmpty()) {
-            removeRoom(roomId);
-        }
-
-        return true;
-    }
-
-    public void removeRoom(String roomId) throws Exception {
-        chatRooms.remove(roomId);
+    public Optional<Chat> saveChat(String chatId, String roomId, String userId, String userName, ChatType chatType, String message, Date sendAt) throws Exception {
+        return saveChat(new Chat(chatId, roomId, userId, userName, chatType, message, sendAt));
     }
 
 }

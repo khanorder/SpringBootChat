@@ -1,6 +1,8 @@
 package com.zangho.game.server.repository;
 
 import com.zangho.game.server.domain.Visit;
+import com.zangho.game.server.helper.Base62;
+import com.zangho.game.server.helper.Helpers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -65,6 +67,19 @@ public class VisitRepository {
         } finally {
             close(conn, pstmt, rs);
         }
+    }
+
+    private void logBytePackets(byte[] packet, String name) throws Exception {
+
+        var packetString = new StringBuilder();
+        packetString.append(name).append("[").append(packet.length).append("]").append(":");
+
+        for (var i = 0; i < packet.length; i++) {
+            var b = packet[i];
+            packetString.append(" (").append(i).append(")").append(b);
+        }
+
+        logger.info(packetString.toString());
     }
 
     private Connection getConnection() {

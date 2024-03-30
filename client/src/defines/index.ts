@@ -5,15 +5,18 @@ export namespace Defines {
         CHECK_AUTHENTICATION = 2,
         CHANGE_USER_NAME = 3,
         CREATE_CHAT_ROOM = 11,
-        UPDATE_CHAT_ROOMS = 12,
-        ENTER_CHAT_ROOM = 13,
-        EXIT_CHAT_ROOM = 14,
-        UPDATE_CHAT_ROOM = 15,
-        NOTICE_ENTER_CHAT_ROOM = 16,
-        NOTICE_EXIT_CHAT_ROOM = 17,
-        NOTICE_CHANGE_NAME_CHAT_ROOM = 18,
-        NOTICE_CHAT_ROOM = 19,
-        TALK_CHAT_ROOM = 20,
+        ADD_CHAT_ROOM = 12,
+        REMOTE_CHAT_ROOM = 13,
+        UPDATE_PUBLIC_CHAT_ROOMS = 14,
+        ENTER_CHAT_ROOM = 15,
+        EXIT_CHAT_ROOM = 16,
+        UPDATE_CHAT_ROOM = 17,
+        NOTICE_ENTER_CHAT_ROOM = 18,
+        NOTICE_EXIT_CHAT_ROOM = 19,
+        NOTICE_CHANGE_NAME_CHAT_ROOM = 20,
+        NOTICE_CHAT_ROOM = 21,
+        TALK_CHAT_ROOM = 22,
+        HISTORY_CHAT_ROOM = 23,
         TEST = 255,
     }
 
@@ -27,5 +30,11 @@ export namespace Defines {
         TALK = 0,
         IMAGE = 1,
         NOTICE = 2,
+    }
+
+    export enum RoomOpenType {
+        PRIVATE = 0,
+        PUBLIC = 1,
+        FRIEND = 2,
     }
 }

@@ -1,23 +1,50 @@
 package com.zangho.game.server.domain.chat;
 
 import com.zangho.game.server.define.ChatType;
+import com.zangho.game.server.domain.user.User;
+import jakarta.annotation.Nonnull;
+import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
+import java.util.Date;
+
+@Entity
+@Table(name = "chats")
 @Data
+@NoArgsConstructor
+@RequiredArgsConstructor
 public class Chat {
-    String roomId;
-    ChatType type;
+    @Id
+    @Nonnull
+    @Column(length = 36, unique = true, nullable = false)
     String chatId;
-    int time;
+
+    @Nonnull
+    @Column(length = 36, nullable = false)
+    String roomId;
+
+    @Nonnull
+    @Column(length = 36, nullable = false)
+    String userId;
+
+    @Nonnull
+    @Column(length = 10, nullable = false)
     String userName;
+
+    @Nonnull
+    @Enumerated(EnumType.ORDINAL)
+    @Column(nullable = false)
+    ChatType type;
+
+    @Nonnull
+    @ColumnDefault("''")
+    @Column(length = 300, nullable = false)
     String message;
 
-    public Chat(String roomId, ChatType type, String chatId, int time, String userName, String message) {
-        this.roomId = roomId;
-        this.type = type;
-        this.chatId = chatId;
-        this.time = time;
-        this.userName = userName;
-        this.message = message;
-    }
+    @Nonnull
+    @Column(length = 6, nullable = false)
+    Date sendAt;
 }

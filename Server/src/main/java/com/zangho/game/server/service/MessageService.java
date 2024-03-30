@@ -3,14 +3,10 @@ package com.zangho.game.server.service;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Security;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
-import com.zangho.game.server.define.ErrorSubscribeChatRoom;
+import com.zangho.game.server.error.ErrorSubscribeChatRoom;
 import lombok.Getter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jose4j.lang.JoseException;
@@ -33,9 +29,9 @@ public class MessageService {
 
     private Logger logger = LoggerFactory.getLogger(MessageService.class);
     private PushService pushService;
-    private final ChatService chatService;
-    public MessageService(ChatService chatService) {
-        this.chatService = chatService;
+    private final ChatRoomService chatRoomService;
+    public MessageService(ChatRoomService chatRoomService) {
+        this.chatRoomService = chatRoomService;
     }
 
     @PostConstruct
@@ -57,14 +53,14 @@ public class MessageService {
         if (userId.isEmpty())
             return ErrorSubscribeChatRoom.REQUIRED_USER_ID;
 
-        var chatRoom = chatService.findRoomById(roomId);
+        var chatRoom = chatRoomService.findPublicRoomById(roomId);
         if (chatRoom.isEmpty())
             return ErrorSubscribeChatRoom.NOT_FOUND_CHAT_ROOM;
 
         if (chatRoom.get().getSessions().isEmpty())
             return ErrorSubscribeChatRoom.EMPTY_USER_IN_ROOM;
 
-        var user = chatRoom.get().getSessions().values().stream().filter(userInRoom -> userInRoom.getId().equals(userId)).findAny();
+        var user = chatRoom.get().getSessions().values().stream().filter(userRoom -> userRoom.getUserId().equals(userId)).findAny();
 
         if (user.isEmpty())
             return ErrorSubscribeChatRoom.NOT_FOUND_USER_IN_ROOM;

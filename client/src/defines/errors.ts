@@ -7,17 +7,19 @@ export namespace Errors {
 
     export enum CreateChatRoom {
         NONE = 0,
-        NOT_FOUND_USER = 1,
-        EXISTS_ROOM = 2,
-        REQUIRED_ROOM_ID = 3,
+        NOT_ALLOWED_OPEN_TYPE = 1,
+        NOT_FOUND_USER = 2,
+        EXISTS_ROOM = 3,
+        REQUIRED_ROOM_ID = 4,
     }
 
     export enum ExitChatRoom {
         NONE = 0,
-        ROOM_REMOVED = 1,
-        NO_EXISTS_ROOM = 2,
-        NOT_IN_ROOM = 3,
-        FAILED_TO_EXIT = 4,
+        NOT_FOUND_USER = 1,
+        ROOM_REMOVED = 2,
+        NO_EXISTS_ROOM = 3,
+        NOT_IN_ROOM = 4,
+        FAILED_TO_EXIT = 5,
     }
 
     export enum EnterChatRoom {

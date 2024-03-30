@@ -13,15 +13,17 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final ChatService chatService;
     private final UserService userService;
+    private final ChatRoomService chatRoomService;
+    private final ChatService chatService;
     private final ChatImageService chatImageService;
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
 
-    public WebSocketConfig (ChatService chatService, UserService userService, ChatImageService chatImageService, LineNotifyService lineNotifyService, MessageService messageService) {
-        this.chatService = chatService;
+    public WebSocketConfig (UserService userService, ChatRoomService chatRoomService, ChatService chatService, ChatImageService chatImageService, LineNotifyService lineNotifyService, MessageService messageService) {
         this.userService = userService;
+        this.chatRoomService = chatRoomService;
+        this.chatService = chatService;
         this.chatImageService = chatImageService;
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
@@ -34,7 +36,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public GameSocketHandler chatSocketHandler() {
-        return new GameSocketHandler(userService, chatImageService, chatService, lineNotifyService, messageService);
+        return new GameSocketHandler(userService, chatService, chatImageService, chatRoomService, lineNotifyService, messageService);
     }
 
     @Bean

@@ -16,6 +16,7 @@ import {
     enterChatRoomReq
 } from "@/stores/reducers/webSocket";
 import Layout from "@/components/layouts";
+import {Defines} from "@/defines";
 
 interface HomeProps {
     isProd: boolean;
@@ -27,6 +28,7 @@ function Home({isProd}: HomeProps) {
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
     const [chatRoomName, setChatRoomName] = useState<string>('');
+    const [chatRoomOpenType, setChatRoomOpenType] = useState<Defines.RoomOpenType>(Defines.RoomOpenType.PRIVATE);
     const dispatch = useAppDispatch();
     const firstRender = useRef(true);
 
@@ -50,10 +52,12 @@ function Home({isProd}: HomeProps) {
             alert('대화명을 입력해주세요.');
         } else if (10 < user.name.length) {
             alert('대화명은 10글자 이내로 입력해주세요.');
+        } else if (Defines.RoomOpenType.PRIVATE != chatRoomOpenType && Defines.RoomOpenType.PUBLIC != chatRoomOpenType) {
+            alert('개설할 채팅방의 공개범위를 선택해주세요.');
         } else {
-            dispatch(createChatRoomReq(chatRoomName));
-        }
-    }, [webSocket, user, chatRoomName, dispatch]);
+            dispatch(createChatRoomReq({openType: chatRoomOpenType, roomName: chatRoomName}));
+        } 
+    }, [webSocket, user, chatRoomName, chatRoomOpenType, dispatch]);
 
     const enterChatRoom = useCallback((enterChatRoomId: string) => {
         if (!webSocket.socket) {
@@ -115,6 +119,10 @@ function Home({isProd}: HomeProps) {
         }
     }, [chat, enterChatRoom, isProd]);
 
+    const onChangeChatRoomOpenType = useCallback((type: Defines.RoomOpenType) => {
+        setChatRoomOpenType(type);
+    }, [setChatRoomOpenType]);
+
     const contents = useCallback(() => {
         if (!webSocket || WebSocket.OPEN !== webSocket.connectionState)
             return (
@@ -124,6 +132,34 @@ function Home({isProd}: HomeProps) {
         return (
             <>
                 <div className={styles.chatRoomInputWrapper}>
+                    <div className={styles.chatRoomOpenTypeInputWrapper}>
+                        <input
+                            className={styles.chatRoomOpenTypeInput}
+                            type="radio"
+                            name="chatRoomOpenType"
+                            id='publicChatRoom'
+                            checked={Defines.RoomOpenType.PUBLIC == chatRoomOpenType}
+                            onChange={e => {console.log(e)}}
+                            // onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PUBLIC)}
+                        />
+                        <label className={styles.chatRoomOpenTypeInputLabel} htmlFor="publicChatRoom" onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PUBLIC)}>
+                            공개
+                        </label>
+                    </div>
+                    <div className={styles.chatRoomOpenTypeInputWrapper}>
+                        <input
+                            className={styles.chatRoomOpenTypeInput}
+                            type="radio"
+                            name="chatRoomOpenType"
+                            id="privateChatRoom"
+                            checked={Defines.RoomOpenType.PRIVATE == chatRoomOpenType}
+                            onChange={e => {console.log(e)}}
+                            // onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PRIVATE)}
+                        />
+                        <label className={styles.chatRoomOpenTypeInputLabel} htmlFor="privateChatRoom" onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PRIVATE)}>
+                            비공개
+                        </label>
+                    </div>
                     <input className={styles.roomNameInput} value={chatRoomName}
                            onKeyUp={e => onKeyUpChatRoomName(e)}
                            onChange={e => changeChatRoomName(e)}
@@ -144,7 +180,9 @@ function Home({isProd}: HomeProps) {
         createChatRoom,
         chatRooms,
         onKeyUpChatRoomName,
-        appConfigs
+        appConfigs,
+        onChangeChatRoomOpenType,
+        chatRoomOpenType
     ]);
 
     return (

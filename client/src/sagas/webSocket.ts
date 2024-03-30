@@ -10,7 +10,8 @@ import {
     createChatRoomReq,
     enterChatRoomReq,
     exitChatRoomReq,
-    sendMessageReq, saveUserNameReq
+    sendMessageReq,
+    saveUserNameReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -20,20 +21,24 @@ import {eventChannel, EventChannel, Unsubscribe} from "redux-saga";
 import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {
+    addChatRoomRes,
     checkAuthenticationRes,
     createChatRoomRes,
     enterChatRoomRes,
-    exitChatRoomRes, noticeChangeNameChatRoomRes,
+    exitChatRoomRes,
+    historyChatRoomRes,
+    noticeChangeNameChatRoomRes,
     noticeEnterChatRoomRes,
-    noticeExitChatRoomRes,
+    noticeExitChatRoomRes, removeChatRoomRes,
     talkChatRoomRes,
     updateChatRoomRes,
-    updateChatRoomsRes
+    updatePublicChatRoomsRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callCreateChatRoomReq,
     callEnterChatRoomReq,
-    callExitChatRoomReq, callSaveUserNameReq,
+    callExitChatRoomReq,
+    callSaveUserNameReq,
     callSendMessageReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
@@ -260,8 +265,16 @@ function* onMessage (socket: WebSocket) {
                             yield call(createChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.UPDATE_CHAT_ROOMS:
-                            yield call(updateChatRoomsRes, packetData);
+                        case Defines.PacketType.ADD_CHAT_ROOM:
+                            yield call(addChatRoomRes, packetData);
+                            break;
+
+                        case Defines.PacketType.REMOTE_CHAT_ROOM:
+                            yield call(removeChatRoomRes, packetData);
+                            break;
+
+                        case Defines.PacketType.UPDATE_PUBLIC_CHAT_ROOMS:
+                            yield call(updatePublicChatRoomsRes, packetData);
                             break;
 
                         case Defines.PacketType.UPDATE_CHAT_ROOM:
@@ -290,6 +303,10 @@ function* onMessage (socket: WebSocket) {
 
                         case Defines.PacketType.TALK_CHAT_ROOM:
                             yield call(talkChatRoomRes, packetData);
+                            break;
+
+                        case Defines.PacketType.HISTORY_CHAT_ROOM:
+                            yield call(historyChatRoomRes, packetData);
                             break;
                     }
                 } catch (innerError) {
