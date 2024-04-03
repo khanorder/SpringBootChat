@@ -1,8 +1,6 @@
-package com.zangho.game.server.repository;
+package com.zangho.game.server.repository.visit;
 
 import com.zangho.game.server.domain.Visit;
-import com.zangho.game.server.helper.Base62;
-import com.zangho.game.server.helper.Helpers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;

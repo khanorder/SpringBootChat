@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
-public enum PacketType {
+public enum PacketType implements Types {
     NONE(0),
     CHECK_CONNECTION(1),
     CHECK_AUTHENTICATION(2),

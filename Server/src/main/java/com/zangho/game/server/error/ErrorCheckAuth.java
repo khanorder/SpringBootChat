@@ -1,12 +1,14 @@
 package com.zangho.game.server.error;
 
-public enum ErrorCheckAuthentication {
+import com.zangho.game.server.define.Types;
+
+public enum ErrorCheckAuth implements Types {
     NONE(0),
     ALREADY_SIGN_IN_USER(1),
     FAILED_TO_CREATE_USER(2);
 
     private final int number;
-    private ErrorCheckAuthentication(int number) {
+    private ErrorCheckAuth(int number) {
         this.number = number;
     }
 

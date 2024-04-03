@@ -3,66 +3,90 @@
     flex-direction: column
     justify-content: flex-start
     align-items: center
-    padding: 1rem
-    min-height: 100vh
-    max-width: 100%
+    margin: 0 auto
+    height: 100%
+    width: 100%
+    overflow: hidden
+
 
     .title
         font-size: 18px
         font-weight: 700
         margin-bottom: 20px
 
-    .chatroomInputNotice
+
+    .chatRoomInputNotice
         text-align: center
         margin-bottom: 20px
 
-    .chatRoomInputWrapper
-        width: 80vw
-        display: flex
-        justify-content: center
 
-        .userNameInput
-            padding: 5px
+    .chatRoomInputWrapper
+        display: flex
+        flex-direction: column
+        width: 100%
+        padding: 0 10px
 
         .roomNameInput
+            margin-top: 10px
             padding: 5px
-            margin-left: 10px
 
         .createChatRoomButton
             border: 1px solid #d9d9d9
             border-radius: 8px
             padding: 5px
-            margin-left: 10px
+            margin-top: 10px
             background: #ffffff
 
             &:hover
                 cursor: pointer
 
-        .enterChatRoomButton
-            border: 1px solid #d9d9d9
-            border-radius: 8px
-            padding: 5px
-            margin-left: 10px
-            background: #ffffff
+        .chatRoomOpenTypeWrapper
+            display: flex
+            justify-content: center
 
-            &:hover
-                cursor: pointer
+            .chatRoomOpenTypeInputWrapper
+                margin-left: 10px
+
+                &:first-child
+                    margin-left: 0
+
+                .chatRoomOpenTypeInput
+
+                    &:hover
+                        cursor: pointer
+
+                .chatRoomOpenTypeInputLabel
+                    margin-left: 5px
+
+                    &:hover
+                        cursor: pointer
 
 
-    .chatRoomOpenTypeInputWrapper
-        margin-left: 10px
+    .chatRoomEnterWrapper
+        margin-top: 20px
 
-        &:first-child
-            margin-left: 0
+        .chatRoomInputNotice
+            text-align: center
+            margin-bottom: 20px
 
-        .chatRoomOpenTypeInput
+        .enterChatRoomButtonWrapper
+            display: flex
+            justify-content: center
 
-        .chatRoomOpenTypeInputLabel
-            margin-left: 5px
+            .enterChatRoomButton
+                border: 1px solid #d9d9d9
+                border-radius: 8px
+                padding: 5px
+                margin-left: 10px
+                background: #ffffff
+
+                &:hover
+                    cursor: pointer
+
 
     .chatRoomListWrapper
-        width: 80vw
         margin-top: 20px
+        width: 100%
 
         .chatRoomList
             width: 100%
@@ -73,16 +97,17 @@
                 list-style: none
                 text-align: center
                 margin-top: 10px
+                border-top: 1px solid #e5e5e5
 
                 &:first-child
                     margin-top: 0
+                    border-top: 0
 
                 .chatRoomEnterButton
                     display: flex
                     align-items: center
                     width: 50vw
-                    border: 1px solid #d9d9d9
-                    border-radius: 5px
+                    border: 0
                     padding: 10px 5px
                     background: white
 
@@ -111,61 +136,170 @@
                             line-height: 20px
                             font-weight: 700
 
-                    .chatRoomName
+                    .chatRoomInfoWrapper
+                        flex: 1 1 auto
+                        display: flex
+                        flex-direction: column
                         margin-left: 10px
-                        font-size: 14px
 
-    .chatRoomTitleWrapper
-        display: flex
-        justify-content: center
-        margin-bottom: 10px
-        border: 1px solid #d9d9d9
-        border-radius: 8px
-        padding: 10px
-        width: 80vw
-        text-align: center
-        font-size: 18px
-        font-weight: 700
+                        .chatRoomNameWrapper
+                            display: flex
+                            align-items: center
 
-        .chatRoomTitle
-            flex: 1 1 auto
+                            .chatRoomName
+                                font-size: 18px
+                                font-weight: 700
 
-        .chatRoomShare
-            background: #ffffff
-            border: 1px solid #d9d9d9
-            border-radius: 8px
-            padding: 5px
-            font-size: 11px
-            margin-right: 10px
+                            .chatRoomUserCount
+                                font-size: 11px
+                                margin-left: 15px
+                                background: #d9d9d9
+                                padding: 3px 8px
+                                border-radius: 15px
 
-            &:hover
-                cursor: pointer
+                        .chatRoomPreviewWrapper
+                            text-align: left
 
-        .chatRoomNotify
-            background: #ffffff
-            border: 1px solid #d9d9d9
-            border-radius: 8px
-            padding: 5px
-            font-size: 11px
-            margin-right: 10px
+                            .chatRoomPreview
+                                font-size: 14px
 
-            &:hover
-                cursor: pointer
+                    .chatRoomOpenType
+                        flex: 0 0 auto
+                        margin-right: 10px
 
-        .chatRoomExit
-            background: #ffffff
-            border: 1px solid #d9d9d9
-            border-radius: 8px
-            padding: 5px
-            font-size: 11px
-            margin-left: 10px
 
-            &:hover
-                cursor: pointer
+    .chatRoomHeaderWrapper
+        width: 100%
+        max-height: 30%
+
+        .chatRoomTitleWrapper
+            display: flex
+            justify-content: center
+            border: 0
+            padding: 10px
+            width: 100%
+            text-align: center
+            font-size: 18px
+            font-weight: 700
+
+            .chatRoomTitle
+                flex: 1 1 auto
+
+            .chatRoomShare
+                background: #ffffff
+                border: 1px solid #d9d9d9
+                border-radius: 8px
+                padding: 5px
+                font-size: 11px
+                margin-right: 10px
+
+                &:hover
+                    cursor: pointer
+
+            .chatRoomNotify
+                background: #ffffff
+                border: 1px solid #d9d9d9
+                border-radius: 8px
+                padding: 5px
+                font-size: 11px
+                margin-right: 10px
+
+                &:hover
+                    cursor: pointer
+
+            .chatRoomExit
+                background: #ffffff
+                border: 1px solid #d9d9d9
+                border-radius: 8px
+                padding: 5px
+                font-size: 11px
+                margin-left: 10px
+
+                &:hover
+                    cursor: pointer
+
+
+        .chatRoomUserListWrapper
+            width: 100%
+
+            .chatUserList
+                list-style: none
+                width: 100%
+                margin-right: 10px
+                margin-bottom: 10px
+                border-top: 1px solid #d9d9d9
+                padding: 10px
+                background: #ffffff
+
+                .chatRoomUserCount
+                    font-size: 12px
+                    text-align: center
+
+                    &:hover
+                        cursor: pointer
+
+                .chatRoomUser
+                    display: flex
+                    justify-content: flex-start
+                    font-size: 12px
+                    padding: 2px 3px
+                    margin-top: 5px
+                    border-top: 1px solid #d9d9d9
+                    padding-top: 10px
+
+                    .chatRoomUserIcon
+                        position: relative
+                        flex: 0 0 auto
+                        width: 20px
+                        height: 20px
+                        border-radius: 10px
+
+                        .chatRoomUserIconImage
+                            object-fit: contain
+
+
+                    .chatRoomUserName
+                        position: relative
+                        flex: 1 1 auto
+                        display: block
+                        margin-left: 5px
+
+                        .currentUserName
+                            position: absolute
+                            top: 0
+                            left: 0
+                            width: 100%
+
+                        .userNameInput
+                            position: absolute
+                            top: 0
+                            left: 0
+                            width: 100%
+                            border: 1px solid #ffffff00
+                            font-size: 12px
+                            opacity: 0
+
+                            &:focus
+                                opacity: 1
+
+                    &.mine
+                        .chatRoomUserIcon
+                            color: #ffffff
+                            background-color: #66bbff
+
+                        .chatRoomUserName
+                            font-weight: 700
+                            background: right center / contain no-repeat url("/images/modify-icon.svg")
+
+                .chatRoomUser:nth-child(2)
+                    margin-top: 10px
+
 
     .chatContentsWrapper
+        flex: 1 1 auto
         display: flex
-        width: 80vw
+        width: 100%
+        height: 50%
 
         .chatRoomNone
             display: flex
@@ -173,9 +307,8 @@
             justify-content: center
             align-items: center
             border: 1px solid #d9d9d9
-            border-radius: 8px
             padding: 10px
-            width: 80vw
+            width: 100%
             text-align: center
             font-size: 14px
 
@@ -187,87 +320,14 @@
                 padding: 5px
                 width: 100px
 
-        .chatUserList
-            list-style: none
-            flex: 1 1 auto
-            max-width: 200px
-            margin-right: 10px
-            margin-bottom: 10px
-            border: 1px solid #d9d9d9
-            padding: 10px
-            background: #ffffff
-            border-radius: 8px
-
-            .chatRoomUserCount
-                font-size: 12px
-                text-align: center
-                border-bottom: 1px solid #d9d9d9
-                padding-bottom: 10px
-
-                &:hover
-                    cursor: pointer
-
-            .chatRoomUser
-                display: flex
-                justify-content: flex-start
-                font-size: 12px
-                padding: 2px 3px
-                margin-top: 5px
-
-                .chatRoomUserIcon
-                    position: relative
-                    flex: 0 0 auto
-                    width: 20px
-                    height: 20px
-                    border-radius: 10px
-
-                    .chatRoomUserIconImage
-                        object-fit: contain
-
-
-                .chatRoomUserName
-                    position: relative
-                    flex: 1 1 auto
-                    display: block
-                    margin-left: 5px
-
-                    .currentUserName
-                        position: absolute
-                        top: 0
-                        left: 0
-                        width: 100%
-
-                    .userNameInput
-                        position: absolute
-                        top: 0
-                        left: 0
-                        width: 100%
-                        border: 1px solid #ffffff00
-                        font-size: 12px
-                        opacity: 0
-
-                        &:focus
-                            opacity: 1
-
-                &.mine
-                    .chatRoomUserIcon
-                        color: #ffffff
-                        background-color: #66bbff
-
-                    .chatRoomUserName
-                        font-weight: 700
-                        background: right center / contain no-repeat url("/images/modify-icon.svg")
-
-            .chatRoomUser:nth-child(2)
-                margin-top: 10px
 
         .chatContentsList
-            flex: 1 1 auto
+            width: 100%
+            height: 100%
+            flex: 0 1 auto
             margin-top: 0
-            margin-bottom: 10px
-            border: 1px solid #d9d9d9
-            border-radius: 8px
-            max-height: 300px
+            border-top: 1px solid #d9d9d9
+            border-bottom: 1px solid #d9d9d9
             overflow-y: scroll
             padding: 10px
             background: white
@@ -342,9 +402,13 @@
                         font-size: 12px
                         text-align: right
 
+
     .chatMessageInputArea
         position: relative
-        width: 80vw
+        padding-top: 10px
+        padding-bottom: 10px
+        width: 100%
+        max-height: 20%
 
         .chatMessageInputTopWrapper
             display: flex
@@ -391,6 +455,7 @@
                     position: absolute
                     top: 85px
                     left: -70px
+
 
         .chatMessageInputWrapper
             display: flex
@@ -565,17 +630,11 @@
             width: 100%
             flex-direction: column
 
-            //.userNameInput
-
             .roomNameInput
-                margin-top: 10px
-                margin-left: 0
 
             .createChatRoomButton
                 border: 1px solid #d9d9d9
                 border-radius: 8px
-                margin-top: 10px
-                margin-left: 0
                 background: #ffffff
 
             .enterChatRoomButton
@@ -595,18 +654,12 @@
         .chatRoomTitleWrapper
             width: 100%
 
-        .chatContentsWrapper
-            width: 100%
-            flex-direction: column
-
-            .chatRoomNone
-                width: 100%
-
+        .chatRoomUserListWrapper
             .chatUserList
                 overflow-y: hidden
-                max-width: 100%
+                width: 100%
                 margin-right: 0
-                max-height: 40px
+                max-height: 30px
 
                 .chatRoomUserCount
                     border-bottom: 0
@@ -615,17 +668,16 @@
                 max-height: 100px
                 overflow-y: scroll
 
-                .chatRoomUserCount
-                    border-bottom: 1px solid #d9d9d9
+        .chatContentsWrapper
+            width: 100%
+            flex-direction: column
 
-
-            .chatContentsList
-                max-height: 200px
+            .chatRoomNone
+                width: 100%
 
         .chatMessageInputArea
-            position: fixed
-            bottom: 0
             padding: 1rem
+            margin-bottom: 65px
             width: 100%
 
             .chatMessageInputTopWrapper
@@ -639,3 +691,7 @@
 
             .chatMessageInputWrapper
                 width: 100%
+
+@media (min-width: 640px)
+    .main
+        max-width: 24rem

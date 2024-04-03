@@ -1,10 +1,8 @@
 package com.zangho.game.server.configuration;
 
 import com.zangho.game.server.repository.chat.ChatImageRepository;
-import com.zangho.game.server.repository.user.UserRepository;
-import com.zangho.game.server.repository.VisitRepository;
+import com.zangho.game.server.repository.visit.VisitRepository;
 import com.zangho.game.server.service.ChatImageService;
-import com.zangho.game.server.service.UserService;
 import com.zangho.game.server.service.VisitService;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -20,11 +18,6 @@ public class DatabaseConfiguration {
     @Bean
     public ChatImageService chatImageService (ChatImageRepository chatImageRepository) {
         return new ChatImageService(chatImageRepository);
-    }
-
-    @Bean
-    public UserService userService (UserRepository userRepository) {
-        return new UserService(userRepository);
     }
 
     @Bean

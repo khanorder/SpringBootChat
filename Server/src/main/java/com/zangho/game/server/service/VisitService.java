@@ -1,7 +1,7 @@
 package com.zangho.game.server.service;
 
 import com.zangho.game.server.domain.Visit;
-import com.zangho.game.server.repository.VisitRepository;
+import com.zangho.game.server.repository.visit.VisitRepository;
 
 public class VisitService {
 

@@ -1,6 +1,8 @@
 package com.zangho.game.server.error;
 
-public enum ErrorSubscribeChatRoom {
+import com.zangho.game.server.define.Types;
+
+public enum ErrorSubscribeChatRoom implements Types {
     NONE(0),
     REQUIRED_ROOM_ID(1),
     REQUIRED_USER_ID(2),

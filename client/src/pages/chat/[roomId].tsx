@@ -178,14 +178,14 @@ function ChatRoom({isProd, roomId, roomName, roomOpenType, serverHost}: ChatRoom
 
     const enterUser = useCallback(() => {
         return (
-            <>
-                <div className={styles.chatroomInputNotice}>
-                    {isProd ? `'${roomName}' 대화방에 입장하시겠습니까?.` : ''}
+            <div className={styles.chatRoomEnterWrapper}>
+                <div className={styles.chatRoomInputNotice}>
+                    {isProd ? `'${roomName}' 대화방에 입장하시겠습니까?` : ''}
                 </div>
-                <div className={styles.chatRoomInputWrapper}>
+                <div className={styles.enterChatRoomButtonWrapper}>
                     <button className={styles.enterChatRoomButton} onClick={enterChatRoom}>입장</button>
                 </div>
-            </>
+            </div>
         );
     }, [isProd, roomName, enterChatRoom]);
 
@@ -220,16 +220,20 @@ function ChatRoom({isProd, roomId, roomName, roomOpenType, serverHost}: ChatRoom
 
         return (
             <>
-                <div className={styles.chatRoomTitleWrapper}>
-                    <button className={styles.chatRoomShare} onClick={copyShareLink}>공유</button>
-                    <button className={styles.chatRoomNotify} onClick={subscribeChatRoomNotify}>알림</button>
-                    <span className={styles.chatRoomTitle}>{roomName}</span>
-                    <button className={styles.chatRoomExit} onClick={exitChatRoom}>나가기</button>
+                <div className={styles.chatRoomHeaderWrapper}>
+                    <div className={styles.chatRoomTitleWrapper}>
+                        <button className={styles.chatRoomShare} onClick={copyShareLink}>공유</button>
+                        <button className={styles.chatRoomNotify} onClick={subscribeChatRoomNotify}>알림</button>
+                        <span className={styles.chatRoomTitle}>{roomName}</span>
+                        <button className={styles.chatRoomExit} onClick={exitChatRoom}>나가기</button>
+                    </div>
+                    <div className={styles.chatRoomUserListWrapper}>
+                        <ul className={chatRoomUserListClass}>
+                            {chatRoomUsers()}
+                        </ul>
+                    </div>
                 </div>
                 <div className={styles.chatContentsWrapper}>
-                    <ul className={chatRoomUserListClass}>
-                        {chatRoomUsers()}
-                    </ul>
                     <ChatContents isProd={isProd} serverHost={serverHost} setChatDetailImageId={setChatDetailImageId} />
                 </div>
                 <ChatInput

@@ -15,13 +15,14 @@ import {
 import {
     setAuthState,
     setUserId,
-    setUserName
+    setUserName, UserState
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
 import {v4 as uuid} from "uuid";
 import {push} from "connected-next-router";
 import isEmpty from "lodash/isEmpty";
+import {RootState} from "@/stores/reducers";
 
 export function* checkAuthenticationRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -39,7 +40,8 @@ export function* checkAuthenticationRes(data: Uint8Array) {
             yield put(setChatDatas([]));
             yield put(setUserId(response.userId));
             yield put(setUserName(response.userName));
-            Helpers.setCookie("userId", response.userId);
+            yield put(setChatRoomList(response.chatRooms));
+            Helpers.setCookie("userId", response.userId, 3650);
 
             break;
 
@@ -103,6 +105,12 @@ export function* addChatRoomRes(data: Uint8Array) {
         return null;
     }
 
+    const chatState: ChatState = yield select((state: RootState) => state.chat);
+    const existsRoom = chatState.roomList.find(_ => _.roomId == response.roomId);
+
+    if ('undefined' != typeof existsRoom && null != existsRoom)
+        return response;
+
     yield put(addChatRooms([new Domains.ChatRoom(response.roomId, response.roomName, response.roomOpenType, response.roomUserCount)]));
 
     return response;
@@ -118,8 +126,16 @@ export function* removeChatRoomRes(data: Uint8Array) {
         return null;
     }
 
-    if (!isEmpty(response.roomId))
-        yield put(removeChatRooms([response.roomId]));
+    if (isEmpty(response.roomId))
+        return response;
+
+    const chatState: ChatState = yield select((state: RootState) => state.chat);
+    const existsRoom = chatState.roomList.find(_ => _.roomId == response.roomId);
+
+    if (null == existsRoom || 'undefined' == typeof existsRoom)
+        return response;
+
+    yield put(removeChatRooms([response.roomId]));
 
     return response;
 }
@@ -210,7 +226,7 @@ export function* exitChatRoomRes(data: Uint8Array) {
             alert('채팅방 나가기 실패.');
             break;
     }
-    console.log(data)
+
     yield put(setChatDatas([]));
     yield put(setChatRoomUserList([]));
     yield put(push('/'));

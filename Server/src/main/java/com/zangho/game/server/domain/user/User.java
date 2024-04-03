@@ -34,7 +34,8 @@ public class User {
     @Transient
     private ConcurrentLinkedQueue<ChatRoomInfo> chatRoomList = new ConcurrentLinkedQueue<>();
 
+    @Transient
     public UserRoom getUserRoom(String roomId) {
-        return new UserRoom(roomId, this.id);
+        return new UserRoom(this.id, roomId);
     }
 }

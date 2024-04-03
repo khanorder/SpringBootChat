@@ -30,6 +30,9 @@ public class ChatRoom {
     private RoomOpenType openType;
 
     @Transient
+    private int userCount;
+
+    @Transient
     private ConcurrentHashMap<WebSocketSession, UserRoom> sessions;
 
     @Transient

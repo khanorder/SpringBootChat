@@ -17,6 +17,7 @@ import {
 } from "@/stores/reducers/webSocket";
 import Layout from "@/components/layouts";
 import {Defines} from "@/defines";
+import {Helpers} from "@/helpers";
 
 interface HomeProps {
     isProd: boolean;
@@ -107,7 +108,22 @@ function Home({isProd}: HomeProps) {
                                     {chat.roomList[i].roomName.substring(0, 1)}
                                 </div>
                             </div>
-                            <div className={styles.chatRoomName}>{isProd ? `${chat.roomList[i].roomName}[${chat.roomList[i].userCount}] 채팅방 입장` : ''}</div>
+                            <div className={styles.chatRoomInfoWrapper}>
+                                <div className={styles.chatRoomNameWrapper}>
+                                    <div className={styles.chatRoomName}>{chat.roomList[i].roomName}</div>
+                                    {
+                                        chat.roomList[i].userCount > 0
+                                            ?
+                                            <div className={styles.chatRoomUserCount}>{chat.roomList[i].userCount}</div>
+                                            :
+                                            <></>
+                                    }
+                                </div>
+                                <div className={styles.chatRoomPreviewWrapper}>
+                                    <div className={styles.chatRoomPreview}></div>
+                                </div>
+                            </div>
+                            <div className={styles.chatRoomOpenType}>{Helpers.getChatRoomOpenTypeName(chat.roomList[i].openType)}</div>
                         </button>
                     </li>
                 );
@@ -132,40 +148,41 @@ function Home({isProd}: HomeProps) {
         return (
             <>
                 <div className={styles.chatRoomInputWrapper}>
-                    <div className={styles.chatRoomOpenTypeInputWrapper}>
-                        <input
-                            className={styles.chatRoomOpenTypeInput}
-                            type="radio"
-                            name="chatRoomOpenType"
-                            id='publicChatRoom'
-                            checked={Defines.RoomOpenType.PUBLIC == chatRoomOpenType}
-                            onChange={e => {console.log(e)}}
-                            // onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PUBLIC)}
-                        />
-                        <label className={styles.chatRoomOpenTypeInputLabel} htmlFor="publicChatRoom" onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PUBLIC)}>
-                            공개
-                        </label>
-                    </div>
-                    <div className={styles.chatRoomOpenTypeInputWrapper}>
-                        <input
-                            className={styles.chatRoomOpenTypeInput}
-                            type="radio"
-                            name="chatRoomOpenType"
-                            id="privateChatRoom"
-                            checked={Defines.RoomOpenType.PRIVATE == chatRoomOpenType}
-                            onChange={e => {console.log(e)}}
-                            // onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PRIVATE)}
-                        />
-                        <label className={styles.chatRoomOpenTypeInputLabel} htmlFor="privateChatRoom" onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PRIVATE)}>
-                            비공개
-                        </label>
+                    <div className={styles.chatRoomOpenTypeWrapper}>
+                        <div className={styles.chatRoomOpenTypeInputWrapper}>
+                            <input
+                                className={styles.chatRoomOpenTypeInput}
+                                type="radio"
+                                name="chatRoomOpenType"
+                                id='publicChatRoom'
+                                checked={Defines.RoomOpenType.PUBLIC == chatRoomOpenType}
+                                onChange={e => {}}
+                                onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PUBLIC)}
+                            />
+                            <label className={styles.chatRoomOpenTypeInputLabel} htmlFor="publicChatRoom" onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PUBLIC)}>
+                                공개
+                            </label>
+                        </div>
+                        <div className={styles.chatRoomOpenTypeInputWrapper}>
+                            <input
+                                className={styles.chatRoomOpenTypeInput}
+                                type="radio"
+                                name="chatRoomOpenType"
+                                id="privateChatRoom"
+                                checked={Defines.RoomOpenType.PRIVATE == chatRoomOpenType}
+                                onChange={e => {}}
+                                onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PRIVATE)}
+                            />
+                            <label className={styles.chatRoomOpenTypeInputLabel} htmlFor="privateChatRoom" onClick={e => onChangeChatRoomOpenType(Defines.RoomOpenType.PRIVATE)}>
+                                비공개
+                            </label>
+                        </div>
                     </div>
                     <input className={styles.roomNameInput} value={chatRoomName}
                            onKeyUp={e => onKeyUpChatRoomName(e)}
                            onChange={e => changeChatRoomName(e)}
                            placeholder={isProd ? '채팅방 이름' : ''}/>
-                    <button className={styles.createChatRoomButton} onClick={createChatRoom}>만들기
-                    </button>
+                    <button className={styles.createChatRoomButton} onClick={createChatRoom}>만들기</button>
                 </div>
                 <div className={styles.chatRoomListWrapper}>
                     {chatRooms()}

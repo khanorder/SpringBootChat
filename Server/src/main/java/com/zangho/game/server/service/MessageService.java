@@ -65,10 +65,10 @@ public class MessageService {
         if (user.isEmpty())
             return ErrorSubscribeChatRoom.NOT_FOUND_USER_IN_ROOM;
 
-        if (user.get().getSubscription().isPresent())
+        if (null != user.get().getSubscription())
             return ErrorSubscribeChatRoom.ALREADY_SUBSCRIBE_ROOM;
 
-        user.get().setSubscription(Optional.of(subscription));
+        user.get().setSubscription(subscription);
         return ErrorSubscribeChatRoom.NONE;
     }
 

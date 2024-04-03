@@ -1,4 +1,5 @@
 import base from "base-x";
+import {Defines} from "@/defines";
 const base62 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
 const base64 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
 
@@ -273,5 +274,21 @@ export namespace Helpers {
                 resolve(canvas.toDataURL(fileType ?? 'image/jpeg'));
             }
         })
+    }
+
+    export function getChatRoomOpenTypeName(openType: Defines.RoomOpenType) {
+        switch (openType) {
+            case Defines.RoomOpenType.PRIVATE:
+                return "비공개";
+
+            case Defines.RoomOpenType.PUBLIC:
+                return "공개";
+
+            case Defines.RoomOpenType.FRIEND:
+                return "친구 공개";
+
+            default:
+                return "";
+        }
     }
 }

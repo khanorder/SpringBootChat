@@ -1,9 +1,10 @@
 package com.zangho.game.server.error;
 
+import com.zangho.game.server.define.Types;
 import lombok.Getter;
 
 @Getter
-public enum ErrorTalkChatRoom {
+public enum ErrorTalkChatRoom implements Types {
     NONE(0),
     ROOM_REMOVED(1),
     NO_EXISTS_ROOM(2),

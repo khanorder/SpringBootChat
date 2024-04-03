@@ -3,10 +3,14 @@ package com.zangho.game.server.service;
 import com.zangho.game.server.define.RoomOpenType;
 import com.zangho.game.server.domain.chat.Chat;
 import com.zangho.game.server.domain.chat.ChatRoom;
+import com.zangho.game.server.domain.chat.UserRoom;
 import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.error.ErrorExitChatRoom;
 import com.zangho.game.server.repository.chat.ChatRepository;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
+import com.zangho.game.server.repository.chat.UserRoomRepository;
+import com.zangho.game.server.repository.user.UserRepository;
+import nl.martijndwars.webpush.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
@@ -19,14 +23,20 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ChatRoomService {
 
     private final Logger logger = LoggerFactory.getLogger(ChatRoomService.class);
+    private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRepository chatRepository;
+    private final UserRoomRepository userRoomRepository;
+    private final UserService userService;
     private final ConcurrentHashMap<String, ChatRoom> publicChatRooms;
     private final ConcurrentHashMap<String, ChatRoom> privateChatRooms;
 
-    public ChatRoomService(ChatRoomRepository chatRoomRepository, ChatRepository chatRepository) {
+    public ChatRoomService(UserRepository userRepository, ChatRoomRepository chatRoomRepository, ChatRepository chatRepository, UserRoomRepository userRoomRepository, UserService userService) {
+        this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.chatRepository = chatRepository;
+        this.userRoomRepository = userRoomRepository;
+        this.userService = userService;
         this.publicChatRooms = new ConcurrentHashMap<>();
         this.privateChatRooms = new ConcurrentHashMap<>();
     }
@@ -90,6 +100,8 @@ public class ChatRoomService {
                 break;
         }
         chatRoomRepository.save(chatRoom);
+
+        userService.addUserChatRoomInfo(session, chatRoom);
         return chatRoom;
     }
 
@@ -147,6 +159,17 @@ public class ChatRoomService {
 
         optChatRoom.get().getChats().add(chat);
         chatRepository.save(chat);
+    }
+
+    public void subscribeUserRoom(Subscription subscription, String userId, String roomId) {
+        var userRoom = userRoomRepository.findUserRoomByUserIdAndRoomId(userId, roomId);
+        if (userRoom.isEmpty()) {
+            userRoom = Optional.of(new UserRoom(userId, roomId, subscription));
+        } else {
+            userRoom.get().setSubscription(subscription);
+        }
+
+        userRoomRepository.save(userRoom.get());
     }
 
 }

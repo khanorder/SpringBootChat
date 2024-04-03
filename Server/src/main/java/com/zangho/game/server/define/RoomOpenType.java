@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
-public enum RoomOpenType {
+public enum RoomOpenType implements Types {
     PRIVATE(0),
     PUBLIC(1),
     FRIEND(2);

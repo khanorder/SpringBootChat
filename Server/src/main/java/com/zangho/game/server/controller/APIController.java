@@ -100,6 +100,7 @@ public class APIController {
     @ResponseBody
     public String subscription(@RequestBody SubscriptionRequest subscriptionRequest) throws Exception {
         var response = new HashMap<String, Object>();
+        chatRoomService.subscribeUserRoom(subscriptionRequest.getSubscription(), subscriptionRequest.getRoomId(), subscriptionRequest.getUserId());
         var result = messageService.subscribeChatRoom(subscriptionRequest.getSubscription(), subscriptionRequest.getRoomId(), subscriptionRequest.getUserId());
         response.put("result", result.getNumber());
 

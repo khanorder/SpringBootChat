@@ -242,20 +242,45 @@ export namespace Domains {
         public result: Errors.CheckAuthentication;
         public userId: string;
         public userName: string;
+        public chatRooms: Domains.ChatRoom[];
 
-        constructor(result: Errors.CheckAuthentication, userId: string, userName: string) {
+        constructor(result: Errors.CheckAuthentication, userId: string, userName: string, chatRooms?: Domains.ChatRoom[]) {
             this.result = result;
             this.userId = userId;
             this.userName = userName;
+            this.chatRooms = 'undefined' != typeof chatRooms && null != chatRooms ? chatRooms : [];
         }
 
         public static decode(bytes: Uint8Array) {
             try {
                 const bytesUserId = bytes.slice(1, 17);
                 const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                const bytesUserName = bytes.slice(17, bytes.byteLength);
+                const userNameLength = bytes[17];
+                const bytesUserName = bytes.slice(18, 18 + userNameLength);
                 const userName = new TextDecoder().decode(bytesUserName);
-                return new CheckAuthenticationRes(bytes[0], userId, userName);
+                const offsetUserInfo = 18 + userNameLength;
+                const offsetChatRoomCount = offsetUserInfo + 4;
+                const bytesChatRoomCount = bytes.slice(offsetUserInfo, offsetChatRoomCount);
+                const chatRoomCount = Helpers.getIntFromByteArray(bytesChatRoomCount);
+                const offsetChatRoomId = offsetChatRoomCount + (chatRoomCount * 16);
+                const offsetChatRoomOpenType = offsetChatRoomId + chatRoomCount;
+                const offsetChatRoomUserCount = offsetChatRoomOpenType + (chatRoomCount * 4);
+                const offsetChatRoomNameLength = offsetChatRoomUserCount + chatRoomCount;
+                let offsetChatRoomName = offsetChatRoomNameLength;
+                const chatRooms: Domains.ChatRoom[] = [];
+                for (let i = 0; i < chatRoomCount; i++) {
+                    let bytesChatRoomId = bytes.slice(offsetChatRoomCount + (i * 16), offsetChatRoomCount + ((i + 1) * 16))
+                    let chatRoomId = Helpers.getUUIDFromByteArray(bytesChatRoomId);
+                    let chatRoomOpenType = bytes[offsetChatRoomId + i];
+                    let bytesChatRoomUserCount = bytes.slice(offsetChatRoomOpenType + (i * 4), offsetChatRoomOpenType + ((i + 1) * 4));
+                    let chatRoomUserCount = Helpers.getIntFromByteArray(bytesChatRoomUserCount);
+                    let chatRoomNameLength = bytes[offsetChatRoomUserCount + i];
+                    let bytseChatRoomName = bytes.slice(offsetChatRoomName, offsetChatRoomName + chatRoomNameLength);
+                    let chatRoomName = new TextDecoder().decode(bytseChatRoomName);
+                    offsetChatRoomName += chatRoomNameLength;
+                    chatRooms.push(new Domains.ChatRoom(chatRoomId, chatRoomName, chatRoomOpenType, chatRoomUserCount));
+                }
+                return new CheckAuthenticationRes(bytes[0], userId, userName, chatRooms);
             } catch (error) {
                 console.error(error);
                 return null;

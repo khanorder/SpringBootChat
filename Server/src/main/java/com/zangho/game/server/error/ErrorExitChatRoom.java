@@ -1,6 +1,8 @@
 package com.zangho.game.server.error;
 
-public enum ErrorExitChatRoom {
+import com.zangho.game.server.define.Types;
+
+public enum ErrorExitChatRoom implements Types {
     NONE(0),
     NOT_FOUND_USER(1),
     ROOM_REMOVED(2),

@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
-public enum ChatType {
+public enum ChatType implements Types {
     TALK(0),
     IMAGE(1),
     NOTICE(2);
