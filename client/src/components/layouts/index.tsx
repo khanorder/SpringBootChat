@@ -1,5 +1,5 @@
 import type {Metadata} from 'next'
-import {ReactNode, useEffect, useRef} from "react";
+import {createRef, ReactNode, useCallback, useEffect, useRef} from "react";
 import {useAppSelector} from "@/hooks";
 import style from "@/styles/layout.module.sass";
 import {Defines} from "@/defines";
@@ -13,41 +13,45 @@ export default function Layout({children}: { children: ReactNode }) {
     const firstRender = useRef(true);
     const webSocket = useAppSelector(state => state.webSocket);
     const user = useAppSelector(state => state.user);
+    const mainWrapper = createRef<HTMLDivElement>();
+
+    const handleResize = useCallback(() => {
+        if (mainWrapper.current)
+            mainWrapper.current.style.height = `${window.innerHeight}px`;
+
+    }, [mainWrapper]);
 
     //#region OnRender
     useEffect(() => {
-        if (firstRender.current)
+        if (firstRender.current) {
             firstRender.current = false;
+        }
+        window.addEventListener('resize', handleResize);
 
-    }, [firstRender]);
-    //#endregion
-
-    useEffect(() => {
-        if (!firstRender.current) {
-
+        return () => {
+            window.removeEventListener("resize", handleResize);
         }
 
-    }, [firstRender]);
+    }, [firstRender, handleResize]);
+    //#endregion
 
     if (Defines.AuthStateType.ALREADY_SIGN_IN == user.authState) {
         return <></>;
     }
 
     return (
-        <>
-            {
-                webSocket
-                    ?
+        webSocket
+            ?
+            <main className={WebSocket.OPEN === webSocket.connectionState ? style.main : style.loaderWrapper} ref={mainWrapper}>
+                {
                     WebSocket.OPEN === webSocket.connectionState
                         ?
                         children
                         :
-                        <div className={style.loaderWrapper}>
-                            <div className={style.loader}></div>
-                        </div>
-                    :
-                    <></>
-            }
-        </>
+                        <div className={style.loader}></div>
+                }
+            </main>
+            :
+            <></>
     )
 }

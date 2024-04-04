@@ -1,5 +1,6 @@
 import {ChangeEvent, Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
 import styles from "@/styles/chat.module.sass";
+import stylesCommon from "@/styles/common.module.sass";
 import Image from "next/image";
 import Picture from "public/images/Picture_icon_BLACK.svg";
 import EmojiPicker from "emoji-picker-react";
@@ -9,6 +10,7 @@ import {sendMessageReq} from "@/stores/reducers/webSocket";
 import {v4 as uuid} from "uuid";
 import {Defines} from "@/defines";
 import {useAppDispatch, useAppSelector} from "@/hooks";
+import {setIsActiveChatImageInput} from "@/stores/reducers/dialog";
 
 
 export interface ChatInputProps {
@@ -18,12 +20,11 @@ export interface ChatInputProps {
     chatMessageInputRef: RefObject<HTMLTextAreaElement>;
     message: string;
     setMessage: Dispatch<SetStateAction<string>>;
-    setChatImageInputDialogWrapperClass: Dispatch<SetStateAction<string>>;
     setChatSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     setChatLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
 }
 
-export default function ChatInput ({roomId, isProd, message, setMessage, chatImageInputRef, chatMessageInputRef, setChatImageInputDialogWrapperClass, setChatSmallImage, setChatLargeImage}: ChatInputProps) {
+export default function ChatInput ({roomId, isProd, message, setMessage, chatImageInputRef, chatMessageInputRef, setChatSmallImage, setChatLargeImage}: ChatInputProps) {
     const firstRender = useRef(true);
     const webSocket = useAppSelector(state => state.webSocket);
     const user = useAppSelector(state => state.user);
@@ -101,9 +102,9 @@ export default function ChatInput ({roomId, isProd, message, setMessage, chatIma
                 }
                 reader.readAsDataURL(file);
             }
-            setChatImageInputDialogWrapperClass(`${styles.chatImageInputDialogWrapper} ${styles.active}`);
+            dispatch(setIsActiveChatImageInput(true));
         }
-    }, [chatImageInputRef, setChatSmallImage, setChatLargeImage, setChatImageInputDialogWrapperClass]);
+    }, [chatImageInputRef, setChatSmallImage, setChatLargeImage, dispatch]);
     
     const inputContents = useCallback(() => {
         return (
@@ -111,14 +112,14 @@ export default function ChatInput ({roomId, isProd, message, setMessage, chatIma
                 <div className={styles.chatMessageInputTopWrapper}>
                     <div className={styles.chatMessageLength}>{message.length}/300</div>
                     <div className={styles.chatImageButtonWrapper}>
-                        <label className={styles.chatImageButton} htmlFor='chatImageInput'>
+                        <label className={`${styles.chatImageButton} ${stylesCommon.button}`} htmlFor='chatImageInput'>
                             <Image src={Picture} alt={'이미지 전송'} width={20} height={20}/>
                         </label>
                         <input ref={chatImageInputRef} onChange={onChangeChatImageFile}
                                className={styles.chatImageInput} id='chatImageInput' type='file' accept='image/*'/>
                     </div>
                     <div className={styles.emojiWrapper}>
-                        <button className={styles.emojiToggleButton + (emojiPickerState ? ' ' + styles.active : '')} onClick={toggleEmojiPicker}>😊</button>
+                        <button className={`${styles.emojiToggleButton} ${stylesCommon.button}` + (emojiPickerState ? ' ' + styles.active : '')} onClick={toggleEmojiPicker}>😊</button>
                         <EmojiPicker
                             className={styles.emojiPicker}
                             open={emojiPickerState}
@@ -137,7 +138,7 @@ export default function ChatInput ({roomId, isProd, message, setMessage, chatIma
                               placeholder={isProd ? '메세지를 입력해 주세요.' : ''}>
                         {message}
                     </textarea>
-                    <button className={styles.chatSendButton} onClick={sendMessage}>전송</button>
+                    <button className={`${styles.chatSendButton} ${stylesCommon.button}`} onClick={sendMessage}>전송</button>
                 </div>
             </div>
         );

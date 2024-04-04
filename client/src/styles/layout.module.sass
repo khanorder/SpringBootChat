@@ -20,6 +20,20 @@
         mask-composite: subtract
         animation: l3 1s infinite linear
 
+.main
+    display: flex
+    flex-direction: column
+    justify-content: flex-start
+    align-items: center
+    margin: 0 auto
+    height: 100vh
+    width: 100%
+    overflow: hidden
+
+@media (min-width: 640px)
+    .main
+        max-width: 24rem
+
 @keyframes l3
     to
         transform: rotate(1turn)

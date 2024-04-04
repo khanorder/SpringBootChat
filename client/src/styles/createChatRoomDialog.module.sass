@@ -1,0 +1,98 @@
+.dialogWrapper
+    display: none
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    background: #00000066
+    z-index: 1000
+
+    .dialog
+        position: absolute
+        top: calc(50% - 20vh)
+        left: calc(50% - 20vw)
+        display: flex
+        flex-direction: column
+        border: 1px solid #d9d9d9
+        border-radius: 8px
+        padding: 10px
+        width: 40vw
+        height: 40vh
+        background: #ffffff
+        z-index: 1002
+
+        .dialogContent
+            position: relative
+            display: flex
+            justify-content: center
+            align-items: flex-end
+            flex: 1 1 auto
+            overflow: hidden
+
+            .chatRoomInputWrapper
+                display: flex
+                flex-direction: column
+                width: 100%
+                padding: 0 10px
+
+                .roomNameInput
+                    margin-top: 10px
+                    padding: 5px
+
+                .chatRoomOpenTypeWrapper
+                    display: flex
+                    justify-content: center
+
+                    .chatRoomOpenTypeInputWrapper
+                        margin-left: 10px
+
+                        &:first-child
+                            margin-left: 0
+
+                        .chatRoomOpenTypeInput
+
+                            &:hover
+                                cursor: pointer
+
+                        .chatRoomOpenTypeInputLabel
+                            margin-left: 5px
+
+                            &:hover
+                                cursor: pointer
+
+        .dialogButtons
+            display: flex
+            justify-content: center
+            align-items: flex-start
+            flex: 1 1 auto
+            margin-top: 10px
+
+            .dialogButton
+                margin-left: 10px
+                padding: 5px
+                width: 70px
+
+                &:first-child
+                    margin-left: 0
+
+    .dialogPane
+        width: 100%
+        height: 100%
+        z-index: 1001
+
+    &.active
+        display: block
+
+@media (max-width: 700px)
+    .dialogWrapper
+
+        .dialog
+            left: calc(50% - 40vw)
+            width: 80vw
+
+            .dialogContent
+
+                .chatRoomInputWrapper
+                    width: 100%
+                    flex-direction: column

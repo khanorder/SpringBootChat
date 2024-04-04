@@ -1,0 +1,76 @@
+.dialogWrapper
+    display: none
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    background: #00000066
+    z-index: 1000
+
+    .dialog
+        flex: 1 1 auto
+        display: flex
+        border: 0
+        border-radius: 0
+        padding: 10px
+        background: none
+        z-index: 1002
+
+        .dialogContent
+            position: relative
+            display: flex
+            border-radius: 8px
+            justify-content: center
+            align-items: center
+            flex: 1 1 auto
+            overflow: hidden
+
+            .chatImageDetail
+                position: unset !important
+                display: block
+                max-width: 1024px
+                max-height: 1024px
+                width: 100%
+                height: 100%
+                object-fit: contain
+
+            .chatImageDetailEmpty
+                flex: 1 1 auto
+                height: 100%
+
+        .dialogButtons
+            position: absolute
+            top: 10px
+            right: 10px
+            display: flex
+            justify-content: center
+            align-items: center
+            flex: 1 1 auto
+
+            .dialogButton
+                margin-left: 10px
+                border: 0
+                border-radius: 15px
+                padding: 5px
+                width: 30px
+                height: 30px
+                background: #ffffff
+
+                .dialogButtonCloseIcon
+                    object-fit: contain
+
+                &:hover
+                    cursor: pointer
+
+                &:first-child
+                    margin-left: 0
+
+    .dialogPane
+        width: 100%
+        height: 100%
+        z-index: 1001
+
+    &.active
+        display: flex
+        flex-direction: column

@@ -1,22 +1,19 @@
 import {
-    createElement,
     createRef,
     Dispatch,
     ReactElement,
-    RefObject,
     SetStateAction,
     useCallback,
     useEffect,
-    useRef,
-    useState
+    useRef
 } from "react";
 import styles from "@/styles/chat.module.sass";
 import {Defines} from "@/defines";
 import {dayjs} from "@/helpers/localizedDayjs";
-import {useAppSelector} from "@/hooks";
+import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
-import * as DOMPurify from "dompurify";
 import NL2BR from "@/components/common/NL2BR";
+import {setIsActiveChatImageDetail} from "@/stores/reducers/dialog";
 
 export interface ChatContentsProps {
     isProd: boolean;
@@ -29,6 +26,7 @@ export default function ChatContents({isProd, serverHost, setChatDetailImageId}:
     const chatContentsRef = createRef<HTMLUListElement>();
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
+    const dispatch = useAppDispatch();
 
     //#region OnRender
     useEffect(() => {
@@ -51,7 +49,8 @@ export default function ChatContents({isProd, serverHost, setChatDetailImageId}:
             return;
 
         setChatDetailImageId(chatId);
-    }, [setChatDetailImageId]);
+        dispatch(setIsActiveChatImageDetail(true));
+    }, [setChatDetailImageId, dispatch]);
 
     const list = useCallback(() => {
         const contents: ReactElement[] = [];
@@ -113,6 +112,10 @@ export default function ChatContents({isProd, serverHost, setChatDetailImageId}:
         );
     }, [chat, isProd, openChatImageDetailDialog, serverHost, user, chatContentsRef]);
 
-    return list();
+    return (
+        <div className={styles.chatContentsWrapper}>
+            {list()}
+        </div>
+    );
 
 }
