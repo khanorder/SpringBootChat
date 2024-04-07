@@ -37,4 +37,9 @@ export namespace Defines {
         PUBLIC = 1,
         FRIEND = 2,
     }
+
+    export enum ActiveTab {
+        Friend = 0,
+        Chat = 1
+    }
 }

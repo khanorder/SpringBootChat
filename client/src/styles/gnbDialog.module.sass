@@ -1,0 +1,65 @@
+.dialogWrapper
+    transition: transform 0.5s
+    position: absolute
+    top: 0
+    left: 0
+    width: 100%
+    height: 100%
+    z-index: 2000
+    transform: translateX(-100vw)
+
+    .dialog
+        position: absolute
+        display: flex
+        flex-direction: column
+        border: 0
+        border-right: 1px solid #d9d9d9
+        width: 80vw
+        height: 100vh
+        background: #ffffff
+        z-index: 1002
+        box-shadow: 0 0 100vw #00000000
+
+        .dialogContent
+            position: relative
+            display: flex
+            justify-content: center
+            align-items: flex-start
+            flex: 1 1 auto
+            overflow: hidden
+
+        .dialogButtons
+            display: flex
+            justify-content: center
+            align-items: flex-start
+            flex: 0 1 auto
+            margin: 10px 0
+
+            .dialogButton
+                margin-left: 10px
+                padding: 5px
+                width: 70px
+
+                &:first-child
+                    margin-left: 0
+
+    .dialogPane
+        transition: opacity 0.5s
+        width: 100%
+        height: 100%
+        z-index: 1001
+        opacity: 0
+
+    &.active
+        transition: transform 0.5s
+        transform: translateX(0vw)
+
+        .dialog
+            transition: all 0.5s
+            box-shadow: 10px 0 100vw #00000088
+
+        .dialogPane
+            transition: opacity 0.5s
+            opacity: 1
+
+@media (max-width: 700px)

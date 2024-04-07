@@ -99,8 +99,8 @@ const chatSlice = createSlice({
             state.chatRooms = deepmerge([], state.chatRooms);
         },
         setChatDatas: (state, action: PayloadAction<SetChatDatasProps>) => {
-            if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setChatDatas: ${JSON.stringify(action.payload)}`);
+            // if ('production' !== process.env.NODE_ENV)
+            //     console.log(`reducer - setChatDatas: ${JSON.stringify(action.payload)}`);
 
             if (!action || !action.payload || isEmpty(action.payload.roomId) || !action.payload.chatDatas)
                 return;

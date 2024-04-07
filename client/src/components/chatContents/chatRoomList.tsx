@@ -5,6 +5,11 @@ import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
+import Image from "next/image";
+import PlusIcon from "../../../public/images/plus-svgrepo-com.svg";
+import {toggleIsActiveCreateChatRoom} from "@/stores/reducers/dialog";
+import dynamic from "next/dynamic";
+const CreateChatRoomDialog = dynamic(() => import("@/components/dialogs/createChatRoomDialog"), { ssr: false });
 
 export default function ChatRoomList() {
     const appConfigs = useAppSelector(state => state.appConfigs);
@@ -51,7 +56,7 @@ export default function ChatRoomList() {
 
                 list.push(
                     <li key={i} className={styles.chatRoomListItem}>
-                        <button className={styles.chatRoomEnterButton} onClick={e => enterChatRoom(room.roomId)}>
+                        <button className={styles.chatRoomEnterButton} onClick={e => enterChatRoom(room.roomId)} title={`'${room.roomName}' 채팅방 입장`}>
                             <div className={roomNameIconClass}>
                                 <div className={styles.chatRoomNameIconText}>
                                     {room.roomName.substring(0, 1)}
@@ -82,11 +87,23 @@ export default function ChatRoomList() {
         }
     }, [appConfigs, chat, enterChatRoom]);
 
+    const toggleCreateChatRoomDialog = useCallback(() => {
+        dispatch(toggleIsActiveCreateChatRoom());
+    }, [dispatch]);
+
     return (
-        <div className={styles.chatRoomListWrapper}>
-            <ul className={styles.chatRoomList}>
-                {list()}
-            </ul>
-        </div>
+        <>
+            <CreateChatRoomDialog />
+            <div className={styles.chatRoomListWrapper}>
+                <ul className={styles.chatRoomList}>
+                    {list()}
+                </ul>
+            </div>
+            <div className={styles.toggleCreateChatRoomDialogWrapper}>
+                <button className={styles.toggleCreateChatRoomDialogButton} onClick={toggleCreateChatRoomDialog}>
+                    <Image className={styles.toggleCreateChatRoomDialogIcon} src={PlusIcon} alt='채팅방 생성' width={30} height={30}/>
+                </button>
+            </div>
+        </>
     );
 }

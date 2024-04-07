@@ -3,6 +3,9 @@ import {createRef, ReactNode, useCallback, useEffect, useRef} from "react";
 import {useAppSelector} from "@/hooks";
 import style from "@/styles/layout.module.sass";
 import {Defines} from "@/defines";
+import dynamic from "next/dynamic";
+const GNBDialog = dynamic(() => import("@/components/dialogs/gnbDialog"), { ssr: false });
+const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), { ssr: false });
 
 export const metadata: Metadata = {
     title: 'chat client',
@@ -43,6 +46,8 @@ export default function Layout({children}: { children: ReactNode }) {
         webSocket
             ?
             <main className={WebSocket.OPEN === webSocket.connectionState ? style.main : style.loaderWrapper} ref={mainWrapper}>
+                <GNBDialog />
+                <ChatHeader />
                 {
                     WebSocket.OPEN === webSocket.connectionState
                         ?

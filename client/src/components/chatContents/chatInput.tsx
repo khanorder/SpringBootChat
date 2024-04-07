@@ -120,7 +120,7 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
                 <div className={styles.chatMessageInputTopWrapper}>
                     <div className={styles.chatMessageLength}>{message.length}/300</div>
                     <div className={styles.chatImageButtonWrapper}>
-                        <label className={`${styles.chatImageButton} ${stylesCommon.button}`} htmlFor='chatImageInput'>
+                        <label className={`${styles.chatImageButton} ${stylesCommon.button}`} htmlFor='chatImageInput' title='이미지 전송'>
                             <Image src={Picture} alt={'이미지 전송'} width={20} height={20}/>
                         </label>
                         <input ref={chatImageInputRef} onChange={onChangeChatImageFile}

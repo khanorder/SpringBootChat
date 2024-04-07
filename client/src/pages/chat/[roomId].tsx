@@ -14,7 +14,7 @@ import dynamic from "next/dynamic";
 import {setIsProd} from "@/stores/reducers/appConfigs";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const ChatRoomLayout = dynamic(() => import("@/components/layouts/chatRoom"), { ssr: false });
-const ChatRoomHeader = dynamic(() => import("@/components/chatContents/chatRoomHeader"), { ssr: false });
+const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), { ssr: false });
 const ChatInput = dynamic(() => import("@/components/chatContents/chatInput"), { ssr: false });
 const ChatImageInputDialog = dynamic(() => import("@/components/dialogs/chatImageInputDialog"), { ssr: false });
 const NotFoundChatRoom = dynamic(() => import("@/components/chatContents/notFoundChatRoom"), { ssr: false });
@@ -94,7 +94,6 @@ function ChatRoom({isProd, roomId, roomIdBase62, roomName, roomOpenType, serverH
 
         return (
             <>
-                <ChatRoomHeader chatMessageInputRef={chatMessageInputRef} />
                 <ChatContents serverHost={serverHost} setChatDetailImageId={setChatDetailImageId} />
                 <ChatInput
                     chatImageInputRef={chatImageInputRef}
