@@ -29,6 +29,9 @@ public class User {
     private String name;
 
     @Transient
+    private String sessionId = "";
+
+    @Transient
     private Optional<ChatRoomInfo> currentChatRoom = Optional.empty();
 
     @Transient
@@ -36,6 +39,6 @@ public class User {
 
     @Transient
     public UserRoom getUserRoom(String roomId) {
-        return new UserRoom(this.id, roomId);
+        return new UserRoom(this.id, roomId, this.sessionId);
     }
 }

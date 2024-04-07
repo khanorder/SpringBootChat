@@ -4,13 +4,11 @@ import {Helpers} from "@/helpers";
 import {
     addChatRooms,
     removeChatRooms,
-    setChatRoomList,
-    addChatRoomUser,
-    removeChatRoomUser,
-    setChatRoomUserList,
+    setChatRooms,
+    setChatRoomUsers,
     addChatData,
     setChatDatas,
-    ChatState
+    ChatState, exitChatRoom, enterChatRoom
 } from '@/stores/reducers/chat';
 import {
     setAuthState,
@@ -37,10 +35,9 @@ export function* checkAuthenticationRes(data: Uint8Array) {
     switch (response.result) {
         case Errors.CheckAuthentication.NONE:
             yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
-            yield put(setChatDatas([]));
             yield put(setUserId(response.userId));
             yield put(setUserName(response.userName));
-            yield put(setChatRoomList(response.chatRooms));
+            yield put(setChatRooms(response.chatRooms));
             Helpers.setCookie("userId", response.userId, 3650);
 
             break;
@@ -70,7 +67,7 @@ export function* createChatRoomRes(data: Uint8Array) {
 
     switch (response.result) {
         case Errors.CreateChatRoom.NONE:
-            yield put(setChatDatas([]));
+            yield put(enterChatRoom(response.roomId));
             yield put(push(`/chat/${Helpers.getBase62FromUUID(response.roomId)}`));
 
             break;
@@ -106,19 +103,19 @@ export function* addChatRoomRes(data: Uint8Array) {
     }
 
     const chatState: ChatState = yield select((state: RootState) => state.chat);
-    const existsRoom = chatState.roomList.find(_ => _.roomId == response.roomId);
+    const existsRoom = chatState.chatRooms.find(_ => _.roomId == response.roomId);
 
     if ('undefined' != typeof existsRoom && null != existsRoom)
         return response;
 
-    yield put(addChatRooms([new Domains.ChatRoom(response.roomId, response.roomName, response.roomOpenType, response.roomUserCount)]));
+    yield put(addChatRooms([new Domains.ChatRoom(response.roomId, response.roomName, response.roomOpenType, [], [])]));
 
     return response;
 }
 
 export function* removeChatRoomRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - createChatRoom`);
+        console.log(`packet - removeChatRoomRes`);
 
     const response = Domains.RemoveChatRoomRes.decode(data);
     if (null == response) {
@@ -130,7 +127,7 @@ export function* removeChatRoomRes(data: Uint8Array) {
         return response;
 
     const chatState: ChatState = yield select((state: RootState) => state.chat);
-    const existsRoom = chatState.roomList.find(_ => _.roomId == response.roomId);
+    const existsRoom = chatState.chatRooms.find(_ => _.roomId == response.roomId);
 
     if (null == existsRoom || 'undefined' == typeof existsRoom)
         return response;
@@ -140,30 +137,28 @@ export function* removeChatRoomRes(data: Uint8Array) {
     return response;
 }
 
-export function* updatePublicChatRoomsRes(data: Uint8Array) {
-    const response = Domains.UpdatePublicChatRoomsRes.decode(data);
-    // yield put(setChatRoomList([]));
+export function* updateChatRoomsRes(data: Uint8Array) {
+    const response = Domains.UpdateChatRoomsRes.decode(data);
     if (response && 0 < response.roomIds.length) {
         const list: Domains.ChatRoom[] = [];
         for (let i = 0; i < response.roomIds.length; i++) {
-            list.push(new Domains.ChatRoom(response.roomIds[i], response.roomNames[i], Defines.RoomOpenType.PRIVATE, response.roomUserCounts[i]));
+            list.push(new Domains.ChatRoom(response.roomIds[i], response.roomNames[i], Defines.RoomOpenType.PRIVATE, [], []));
 
         }
-        yield put(setChatRoomList(list));
+        yield put(setChatRooms(list));
     }
     return response;
 }
 
 export function* updateChatRoomRes(data: Uint8Array) {
     const response = Domains.UpdateChatRoomUsersRes.decode(data);
-    yield put(setChatRoomUserList([]));
+    yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: []}));
     if (response && 0 < response.userIds.length) {
         const list: Domains.ChatRoomUser[] = [];
-        for (let i = 0; i < response.userIds.length; i++) {
+        for (let i = 0; i < response.userIds.length; i++)
             list.push(new Domains.ChatRoomUser(response.userIds[i], response.userNames[i]));
 
-        }
-        yield put(setChatRoomUserList(list));
+        yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: list}));
     }
     return response;
 }
@@ -178,7 +173,7 @@ export function* enterChatRoomRes(data: Uint8Array) {
 
     switch (response.result) {
         case Errors.EnterChatRoom.NONE:
-            yield put(setChatDatas([]));
+            yield put(enterChatRoom(response.roomId));
             yield put(push(`/chat/${Helpers.getBase62FromUUID(response.roomId)}`));
             break;
 
@@ -227,8 +222,7 @@ export function* exitChatRoomRes(data: Uint8Array) {
             break;
     }
 
-    yield put(setChatDatas([]));
-    yield put(setChatRoomUserList([]));
+    yield put(exitChatRoom());
     yield put(push('/'));
 
     return response;
@@ -238,7 +232,7 @@ export function* noticeEnterChatRoomRes(data: Uint8Array) {
     const response = Domains.NoticeEnterChatRoomRes.decode(data);
 
     const enterNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.userName}'님이 입장했습니다.`);
-    yield put(addChatData(enterNotice));
+    yield put(addChatData({roomId: response?.roomId ?? '', chatData: enterNotice}));
     return response;
 }
 
@@ -246,15 +240,15 @@ export function* noticeExitChatRoomRes(data: Uint8Array) {
     const response = Domains.NoticeExitChatRoomRes.decode(data);
 
     const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.userName}'님이 퇴장했습니다.`);
-    yield put(addChatData(exitNotice));
+    yield put(addChatData({roomId: response?.roomId ?? '', chatData: exitNotice}));
     return response;
 }
 
 export function* noticeChangeNameChatRoomRes(data: Uint8Array) {
     const response = Domains.NoticeChangeNameChatRoomRes.decode(data);
 
-    const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.oldUserName}'님이 '${response?.newUserName}'으로 대화명을 변경했습니다.`);
-    yield put(addChatData(exitNotice));
+    const changeNameNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.oldUserName}'님이 '${response?.newUserName}'으로 대화명을 변경했습니다.`);
+    yield put(addChatData({roomId: response?.roomId ?? '', chatData: changeNameNotice}));
     return response;
 }
 
@@ -263,7 +257,7 @@ export function* talkChatRoomRes(data: Uint8Array) {
     if (!response)
         return null;
 
-    yield put(addChatData(response.getChatData()));
+    yield put(addChatData({roomId: response.roomId ?? '', chatData: response.getChatData()}));
     return response;
 }
 
@@ -272,6 +266,6 @@ export function* historyChatRoomRes(data: Uint8Array) {
     if (!response)
         return null;
 
-    yield put(setChatDatas(response.getChatHistories()));
+    yield put(setChatDatas({ roomId: response.roomId ?? '', chatDatas: response.getChatHistories()}));
     return response;
 }

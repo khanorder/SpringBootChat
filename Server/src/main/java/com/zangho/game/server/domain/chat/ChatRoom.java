@@ -1,6 +1,7 @@
 package com.zangho.game.server.domain.chat;
 
 import com.zangho.game.server.define.RoomOpenType;
+import com.zangho.game.server.domain.user.User;
 import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,10 +31,7 @@ public class ChatRoom {
     private RoomOpenType openType;
 
     @Transient
-    private int userCount;
-
-    @Transient
-    private ConcurrentHashMap<WebSocketSession, UserRoom> sessions;
+    private ConcurrentHashMap<String, UserRoom> users;
 
     @Transient
     private ConcurrentLinkedQueue<Chat> chats;
@@ -42,7 +40,7 @@ public class ChatRoom {
         this.roomId = roomId;
         this.roomName = roomName;
         this.openType = openType;
-        this.sessions = new ConcurrentHashMap<>();
+        this.users = new ConcurrentHashMap<>();
         this.chats = new ConcurrentLinkedQueue<>();
     }
 
@@ -50,7 +48,7 @@ public class ChatRoom {
         this.roomId = "";
         this.roomName = "";
         this.openType = RoomOpenType.PRIVATE;
-        this.sessions = new ConcurrentHashMap<>();
+        this.users = new ConcurrentHashMap<>();
         this.chats = new ConcurrentLinkedQueue<>();
     }
 
@@ -60,8 +58,21 @@ public class ChatRoom {
     }
 
     @Transient
+    public void addUserToRoom(User user) {
+        if (checkUserInRoom(user.getId()))
+            return;
+
+        this.getUsers().put(user.getId(), user.getUserRoom(this.roomId));
+    }
+
+    @Transient
     public boolean checkUserInRoom(String userId) {
-        return sessions.values().stream().anyMatch(user -> user.getUserId().equals(userId));
+        return users.containsKey(userId);
+    }
+
+    @Transient
+    public UserRoom getUserRoom(User user) {
+        return this.getUsers().get(user.getId());
     }
 
 }

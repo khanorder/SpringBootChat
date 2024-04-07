@@ -5,6 +5,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import nl.martijndwars.webpush.Subscription;
 import org.hibernate.annotations.ColumnDefault;
@@ -33,10 +34,28 @@ public class UserRoom {
     @Column(length = 1023)
     private Subscription subscription;
 
+    @Transient
+    private String sessionId;
+
     public UserRoom() {
-        this.roomId = "";
         this.userId = "";
+        this.roomId = "";
         this.subscription = null;
+        this.sessionId = "";
+    }
+
+    public UserRoom(@NonNull String userId, @NonNull String roomId, Subscription subscription) {
+        this.userId = userId;
+        this.roomId = roomId;
+        this.subscription = subscription;
+        this.sessionId = "";
+    }
+
+    public UserRoom(@NonNull String userId, @NonNull String roomId, String sessionId) {
+        this.userId = userId;
+        this.roomId = roomId;
+        this.subscription = null;
+        this.sessionId = sessionId;
     }
 
 }

@@ -8,13 +8,37 @@ export namespace Domains {
         roomId: string;
         roomName: string;
         openType: Defines.RoomOpenType;
-        userCount: number;
+        users: Domains.ChatRoomUser[];
+        chatDatas: Domains.Chat[];
 
-        constructor(roomId: string, roomName: string, openType: Defines.RoomOpenType, userCount: number) {
+
+        constructor(roomId: string, roomName: string, openType: Defines.RoomOpenType, chatRoomUsers: Domains.ChatRoomUser[], chatDatas: Domains.Chat[]) {
             this.roomId = roomId;
             this.roomName = roomName;
             this.openType = openType;
-            this.userCount = userCount;
+            this.users = chatRoomUsers;
+            this.chatDatas = chatDatas;
+        }
+
+        addUser(user: ChatRoomUser) {
+            if (0 <= this.users.findIndex(_ => _.userId == user.userId))
+                return;
+
+            this.users.push(user);
+        }
+
+        removeUser(userId: string) {
+            if (0 > this.users.findIndex(_ => _.userId == userId))
+                return;
+
+            this.users = this.users.filter(_ => _.userId != userId);
+        }
+
+        addChatData(chatData: Domains.Chat) {
+            if (0 <= this.chatDatas.findIndex(_ => _.id == chatData.id))
+                return;
+
+            this.chatDatas.push(chatData);
         }
     }
 
@@ -61,7 +85,7 @@ export namespace Domains {
             this.message = message;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const type = bytes[0];
                 const bytesRoomId= bytes.slice(1, 17);
@@ -109,7 +133,7 @@ export namespace Domains {
             this.message = message;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const result = bytes[0];
                 if (1 == bytes.length)
@@ -139,7 +163,7 @@ export namespace Domains {
             }
         }
 
-        public getChatData() {
+        getChatData() {
             return new Chat(this.type, this.roomId, this.userId, this.id, this.time, this.userName, this.message);
         }
     }
@@ -163,7 +187,7 @@ export namespace Domains {
             this.messages = messages;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const count = Helpers.getIntFromByteArray(bytes.slice(0, 4));
                 const roomId: string = Helpers.getUUIDFromByteArray(bytes.slice(4, 20));
@@ -225,7 +249,7 @@ export namespace Domains {
             }
         }
 
-        public getChatHistories(): Domains.Chat[] {
+        getChatHistories(): Domains.Chat[] {
             const histories: Domains.Chat[] = [];
             try {
                 for (let i = 0; i < this.chatIds.length; i++) {
@@ -239,10 +263,10 @@ export namespace Domains {
     }
 
     export class CheckAuthenticationRes {
-        public result: Errors.CheckAuthentication;
-        public userId: string;
-        public userName: string;
-        public chatRooms: Domains.ChatRoom[];
+        result: Errors.CheckAuthentication;
+        userId: string;
+        userName: string;
+        chatRooms: Domains.ChatRoom[];
 
         constructor(result: Errors.CheckAuthentication, userId: string, userName: string, chatRooms?: Domains.ChatRoom[]) {
             this.result = result;
@@ -251,7 +275,7 @@ export namespace Domains {
             this.chatRooms = 'undefined' != typeof chatRooms && null != chatRooms ? chatRooms : [];
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesUserId = bytes.slice(1, 17);
                 const userId = Helpers.getUUIDFromByteArray(bytesUserId);
@@ -278,7 +302,7 @@ export namespace Domains {
                     let bytseChatRoomName = bytes.slice(offsetChatRoomName, offsetChatRoomName + chatRoomNameLength);
                     let chatRoomName = new TextDecoder().decode(bytseChatRoomName);
                     offsetChatRoomName += chatRoomNameLength;
-                    chatRooms.push(new Domains.ChatRoom(chatRoomId, chatRoomName, chatRoomOpenType, chatRoomUserCount));
+                    chatRooms.push(new Domains.ChatRoom(chatRoomId, chatRoomName, chatRoomOpenType, [], []));
                 }
                 return new CheckAuthenticationRes(bytes[0], userId, userName, chatRooms);
             } catch (error) {
@@ -289,8 +313,8 @@ export namespace Domains {
     }
 
     export class CreateChatRoomReq {
-        public openType: Defines.RoomOpenType;
-        public roomName: string;
+        openType: Defines.RoomOpenType;
+        roomName: string;
 
         constructor(openType: Defines.RoomOpenType, roomName: string) {
             this.openType = openType;
@@ -299,15 +323,15 @@ export namespace Domains {
     }
 
     export class CreateChatRoomRes {
-        public result: Errors.CreateChatRoom;
-        public roomId: string;
+        result: Errors.CreateChatRoom;
+        roomId: string;
 
         constructor(result: Errors.CreateChatRoom, roomId: string) {
             this.result = result;
             this.roomId = roomId;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(1, 17);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
@@ -320,10 +344,10 @@ export namespace Domains {
     }
 
     export class AddChatRoomRes {
-        public roomId: string;
-        public roomOpenType: Defines.RoomOpenType;
-        public roomUserCount: number;
-        public roomName: string;
+        roomId: string;
+        roomOpenType: Defines.RoomOpenType;
+        roomUserCount: number;
+        roomName: string;
 
         constructor(roomId: string, roomOpenType: Defines.RoomOpenType, roomUserCount: number, roomName: string) {
             this.roomId = roomId;
@@ -332,7 +356,7 @@ export namespace Domains {
             this.roomUserCount = roomUserCount;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId= bytes.slice(0, 16);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
@@ -351,13 +375,13 @@ export namespace Domains {
     }
 
     export class RemoveChatRoomRes {
-        public roomId: string;
+        roomId: string;
 
         constructor(roomId: string) {
             this.roomId = roomId;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId= bytes.slice(0, 16);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
@@ -371,13 +395,13 @@ export namespace Domains {
     }
 
     export class ExitChatRoomRes {
-        public result: Errors.ExitChatRoom;
+        result: Errors.ExitChatRoom;
 
         constructor(result: Errors.ExitChatRoom) {
             this.result = result;
         }
 
-        public static decode(bytes: Uint8Array): ExitChatRoomRes|null {
+        static decode(bytes: Uint8Array): ExitChatRoomRes|null {
             try {
                 return new ExitChatRoomRes(bytes[0]);
             } catch (error) {
@@ -388,15 +412,15 @@ export namespace Domains {
     }
 
     export class EnterChatRoomRes {
-        public result: Errors.EnterChatRoom;
-        public roomId: string;
+        result: Errors.EnterChatRoom;
+        roomId: string;
 
         constructor(result: Errors.EnterChatRoom, roomId: string) {
             this.result = result;
             this.roomId = roomId;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(1, 17);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
@@ -409,10 +433,10 @@ export namespace Domains {
         }
     }
 
-    export class UpdatePublicChatRoomsRes {
-        public roomIds: string[];
-        public roomNames: string[];
-        public roomUserCounts: number[];
+    export class UpdateChatRoomsRes {
+        roomIds: string[];
+        roomNames: string[];
+        roomUserCounts: number[];
 
         constructor(roomIds: string[], roomNames: string[], roomuserCounts: number[]) {
             this.roomIds = roomIds;
@@ -420,7 +444,7 @@ export namespace Domains {
             this.roomUserCounts = roomuserCounts;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomCount= bytes.slice(0, 4);
                 const roomCount= Helpers.getIntFromByteArray(bytesRoomCount);
@@ -454,7 +478,7 @@ export namespace Domains {
                     roomNames.push(roomName);
                 }
 
-                return new UpdatePublicChatRoomsRes(roomIds, roomNames, roomUserCounts);
+                return new UpdateChatRoomsRes(roomIds, roomNames, roomUserCounts);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -463,27 +487,31 @@ export namespace Domains {
     }
 
     export class UpdateChatRoomUsersRes {
-        public userIds: string[];
-        public userNames: string[];
+        roomId: string;
+        userIds: string[];
+        userNames: string[];
 
-        constructor(userIds: string[], userNames: string[]) {
+        constructor(roomId: string, userIds: string[], userNames: string[]) {
+            this.roomId = roomId;
             this.userIds = userIds;
             this.userNames = userNames;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
-                const bytesUserCount= bytes.slice(0, 4);
+                const bytesRoomId= bytes.slice(0, 16);
+                const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
+                const bytesUserCount= bytes.slice(16, 20);
                 const userCount= Helpers.getIntFromByteArray(bytesUserCount);
                 const userIds: string[] = [];
                 const userNames: string[] = [];
                 const userNameLengths: number[] = [];
                 for (let i = 0; i < userCount; i++) {
-                    let userIdOffset= 4 + (i * 16);
+                    let userIdOffset= 20 + (i * 16);
                     let bytesUserId= bytes.slice(userIdOffset, userIdOffset + 16);
                     let userId = Helpers.getUUIDFromByteArray(bytesUserId);
                     userIds.push(userId);
-                    let userNameLengthOffset= (4 + userCount * 16) + i;
+                    let userNameLengthOffset= (20 + userCount * 16) + i;
                     let bytesUserNameLength= bytes.slice(userNameLengthOffset, userNameLengthOffset + 1);
                     userNameLengths.push(bytesUserNameLength[0]);
                     let bytesUserNameOffset= 0;
@@ -492,13 +520,13 @@ export namespace Domains {
                         if (0 < prevUserNameLengths.length)
                             bytesUserNameOffset = prevUserNameLengths.reduce((p, c) => p + c);
                     }
-                    let userNameOffset = 4 + (userCount * 16) + userCount + bytesUserNameOffset;
+                    let userNameOffset = 20 + (userCount * 16) + userCount + bytesUserNameOffset;
                     let bytesUserName = bytes.slice(userNameOffset, userNameOffset + userNameLengths[i]);
                     let userName =  new TextDecoder().decode(bytesUserName);
                     userNames.push(userName);
                 }
 
-                return new UpdateChatRoomUsersRes(userIds, userNames);
+                return new UpdateChatRoomUsersRes(roomId, userIds, userNames);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -507,15 +535,15 @@ export namespace Domains {
     }
 
     export class NoticeEnterChatRoomRes {
-        public roomId: string;
-        public userName: string;
+        roomId: string;
+        userName: string;
 
         constructor(roomId: string, userName: string) {
             this.roomId = roomId;
             this.userName = userName;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(0, 16);
                 const bytesUserName = bytes.slice(16, bytes.byteLength);
@@ -530,15 +558,15 @@ export namespace Domains {
     }
 
     export class NoticeExitChatRoomRes {
-        public roomId: string;
-        public userName: string;
+        roomId: string;
+        userName: string;
 
         constructor(roomId: string, userName: string) {
             this.roomId = roomId;
             this.userName = userName;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(0, 16);
                 const bytesUserName = bytes.slice(16, bytes.byteLength);
@@ -553,9 +581,9 @@ export namespace Domains {
     }
 
     export class NoticeChangeNameChatRoomRes {
-        public roomId: string;
-        public oldUserName: string;
-        public newUserName: string;
+        roomId: string;
+        oldUserName: string;
+        newUserName: string;
 
         constructor(roomId: string, oldUserName: string, newUserName: string) {
             this.roomId = roomId;
@@ -563,7 +591,7 @@ export namespace Domains {
             this.newUserName = newUserName;
         }
 
-        public static decode(bytes: Uint8Array) {
+        static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(0, 16);
                 const oldUserNameLength = bytes[16];

@@ -3,7 +3,6 @@ import styles from "@/styles/chat.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import Image from "next/image";
 import Picture from "public/images/Picture_icon_BLACK.svg";
-import EmojiPicker from "emoji-picker-react";
 import {Helpers} from "@/helpers";
 import isEmpty from "lodash/isEmpty";
 import {sendMessageReq} from "@/stores/reducers/webSocket";
@@ -11,11 +10,11 @@ import {v4 as uuid} from "uuid";
 import {Defines} from "@/defines";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveChatImageInput} from "@/stores/reducers/dialog";
+import dynamic from "next/dynamic";
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
 
 export interface ChatInputProps {
-    roomId: string;
-    isProd: boolean;
     chatImageInputRef: RefObject<HTMLInputElement>;
     chatMessageInputRef: RefObject<HTMLTextAreaElement>;
     message: string;
@@ -24,8 +23,10 @@ export interface ChatInputProps {
     setChatLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
 }
 
-export default function ChatInput ({roomId, isProd, message, setMessage, chatImageInputRef, chatMessageInputRef, setChatSmallImage, setChatLargeImage}: ChatInputProps) {
+export default function ChatInput ({message, setMessage, chatImageInputRef, chatMessageInputRef, setChatSmallImage, setChatLargeImage}: ChatInputProps) {
     const firstRender = useRef(true);
+    const appConfigs = useAppSelector(state => state.appConfigs);
+    const chat = useAppSelector(state => state.chat);
     const webSocket = useAppSelector(state => state.webSocket);
     const user = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
@@ -42,20 +43,27 @@ export default function ChatInput ({roomId, isProd, message, setMessage, chatIma
     const sendMessage = useCallback(() => {
         if (!webSocket.socket) {
             alert('연결 안됨');
+            return;
         } else if (isEmpty(user.id)) {
-            alert('채팅방에 입장해 주세요.');
+            alert('로그인 후 이용해 주세요.');
+            return;
         } else if (isEmpty(user.name)) {
             alert('대화명을 입력해 주세요.');
+            return;
+        } else if (!chat || isEmpty(chat.currentChatRoomId)) {
+            alert('채팅방에 입장해 주세요.');
+            return;
         } else if (isEmpty(message.trim())) {
             alert('메세지를 입력해 주세요.');
             setMessage(message.trim())
+            return;
         } else if (300 < message.trim().length) {
             alert(`채팅내용은 300글자 이내로 입력해주세요.`);
-        } else {
-            dispatch(sendMessageReq({id: uuid(), type: Defines.ChatType.TALK, roomId: Helpers.getUUIDFromBase62(roomId?.toString() ?? ''), message: message}));
-            setMessage('');
+            return;
         }
-    }, [webSocket, user, message, setMessage, roomId, dispatch]);
+        dispatch(sendMessageReq({id: uuid(), type: Defines.ChatType.TALK, roomId: chat.currentChatRoomId, message: message}));
+        setMessage('');
+    }, [chat, webSocket, user, message, setMessage, dispatch]);
 
     const changeMessage = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(prev => {
@@ -135,14 +143,14 @@ export default function ChatInput ({roomId, isProd, message, setMessage, chatIma
                               className={styles.chatMessageInput}
                               onKeyUp={e => onKeyUpMessage(e)}
                               onChange={e => changeMessage(e)}
-                              placeholder={isProd ? '메세지를 입력해 주세요.' : ''}>
+                              placeholder={appConfigs.isProd ? '메세지를 입력해 주세요.' : ''}>
                         {message}
                     </textarea>
                     <button className={`${styles.chatSendButton} ${stylesCommon.button}`} onClick={sendMessage}>전송</button>
                 </div>
             </div>
         );
-    }, [addEmoji, changeMessage, chatImageInputRef, chatMessageInputRef, emojiPickerState, isProd, message, onChangeChatImageFile, onKeyUpMessage, sendMessage, toggleEmojiPicker]);
+    }, [appConfigs, addEmoji, changeMessage, chatImageInputRef, chatMessageInputRef, emojiPickerState, message, onChangeChatImageFile, onKeyUpMessage, sendMessage, toggleEmojiPicker]);
 
     return inputContents();
 }

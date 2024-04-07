@@ -10,6 +10,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserRoomId implements Serializable {
-    private String roomId;
     private String userId;
+    private String roomId;
 }

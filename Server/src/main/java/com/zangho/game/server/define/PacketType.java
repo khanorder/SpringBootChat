@@ -14,7 +14,7 @@ public enum PacketType implements Types {
     CREATE_CHAT_ROOM(11),
     ADD_CHAT_ROOM(12),
     REMOVE_CHAT_ROOM(13),
-    UPDATE_PUBLIC_CHAT_ROOMS(14),
+    UPDATE_CHAT_ROOMS(14),
     ENTER_CHAT_ROOM(15),
     EXIT_CHAT_ROOM(16),
     UPDATE_CHAT_ROOM(17),

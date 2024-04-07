@@ -1,7 +1,19 @@
 .chatRoomListWrapper
     position: relative
-    margin-top: 5px
     width: 100%
+    overflow-y: auto
+    &::-webkit-scrollbar
+        display: block
+        width: 8px
+        background: rgba(255, 255, 255, 0.25)
+
+    &::-webkit-scrollbar-thumb
+        border-radius: 5px
+        background: rgba(200, 200, 200, 0.8)
+
+    &::-webkit-scrollbar-track
+        &:hover
+            background: rgba(255, 255, 255, 0.25)
 
     .chatRoomList
         width: 100%
@@ -35,20 +47,20 @@
                     margin-left: 10px
                     width: 40px
                     height: 40px
-                    vertical-align: center
+                    vertical-align: middle
                     border-radius: 20px
-                    padding: 3px 5px
                     color: #ffffff
                     background: #3399dd
 
                     .chatRoomNameIconText
-                        width: 20px
-                        height: 20px
                         margin: 0
                         padding: 0
                         font-size: 20px
-                        line-height: 20px
+                        line-height: 0
                         font-weight: 700
+
+                    &.privateRoom
+                        background-color: #989898
 
                 .chatRoomInfoWrapper
                     flex: 1 1 auto
@@ -86,6 +98,9 @@
 
                     .chatRoomNameIcon
                         background-color: #66bbff
+
+                        &.privateRoom
+                            background-color: #cfcfcf
 
 
 .toggleCreateChatRoomDialogWrapper

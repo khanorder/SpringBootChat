@@ -1,11 +1,41 @@
 package com.zangho.game.server.helper;
 
+import com.zangho.game.server.define.Types;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class Helpers {
+
+    public static byte[] mergeBytePacket(byte[]... packets) throws Exception {
+        if (1 > packets.length)
+            return new byte[0];
+
+        var mergedLength = 0;
+        for (byte[] packet : packets)
+            mergedLength += packet.length;
+
+        var buffer = ByteBuffer.allocate(mergedLength);
+        for (byte[] packet : packets)
+            buffer.put(packet);
+
+        return buffer.array();
+    }
+
+    public static byte[] getPacketFlag(Types... flags) throws Exception {
+        if (1 > flags.length)
+            return new byte[0];
+
+        var flagBytes = new byte[flags.length];
+        for (int i = 0; i < flags.length; i++) {
+            var flag = flags[i];
+            flagBytes[i] = flag.getByte();
+        }
+
+        return flagBytes;
+    }
 
     public static byte[] getByteArrayFromInt(int value) {
         byte[] byteArray = new byte[4];

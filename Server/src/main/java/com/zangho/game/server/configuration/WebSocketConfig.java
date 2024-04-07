@@ -1,7 +1,10 @@
 package com.zangho.game.server.configuration;
 
 import com.zangho.game.server.service.*;
-import com.zangho.game.server.socketHandler.GameSocketHandler;
+import com.zangho.game.server.socketHandler.chat.ReceiveHandler;
+import com.zangho.game.server.socketHandler.chat.SendHandler;
+import com.zangho.game.server.socketHandler.chat.SocketHandler;
+import com.zangho.game.server.socketHandler.chat.SessionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -15,18 +18,29 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final UserService userService;
     private final ChatRoomService chatRoomService;
-    private final ChatService chatService;
-    private final ChatImageService chatImageService;
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
 
-    public WebSocketConfig (UserService userService, ChatRoomService chatRoomService, ChatService chatService, ChatImageService chatImageService, LineNotifyService lineNotifyService, MessageService messageService) {
+    public WebSocketConfig (UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService) {
         this.userService = userService;
         this.chatRoomService = chatRoomService;
-        this.chatService = chatService;
-        this.chatImageService = chatImageService;
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
+    }
+
+    @Bean
+    public SessionHandler sessionHandler() {
+        return new SessionHandler();
+    }
+
+    @Bean
+    public SendHandler sendHandler() {
+        return new SendHandler(sessionHandler(), userService);
+    }
+
+    @Bean
+    public ReceiveHandler receiveHandler() {
+        return new ReceiveHandler(sessionHandler(), sendHandler(), userService, chatRoomService, lineNotifyService, messageService);
     }
 
     @Override
@@ -35,8 +49,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     @Bean
-    public GameSocketHandler chatSocketHandler() {
-        return new GameSocketHandler(userService, chatService, chatImageService, chatRoomService, lineNotifyService, messageService);
+    public SocketHandler chatSocketHandler() {
+        return new SocketHandler(sessionHandler(), receiveHandler(), userService);
     }
 
     @Bean

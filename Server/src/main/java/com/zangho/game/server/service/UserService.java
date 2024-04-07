@@ -1,11 +1,7 @@
 package com.zangho.game.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.RoomOpenType;
-import com.zangho.game.server.domain.chat.ChatRoom;
-import com.zangho.game.server.domain.chat.ChatRoomInfo;
-import com.zangho.game.server.domain.chat.ChatRoomInfoInterface;
-import com.zangho.game.server.domain.chat.UserRoom;
+import com.zangho.game.server.domain.chat.*;
 import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
@@ -25,70 +21,51 @@ public class UserService {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRoomRepository userRoomRepository;
-    private ConcurrentHashMap<WebSocketSession, Optional<User>> connectedSessions;
+    private final ConcurrentHashMap<String, User> connectedUsers;
 
     public UserService(UserRepository userRepository, ChatRoomRepository chatRoomRepository, UserRoomRepository userRoomRepository) {
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.userRoomRepository = userRoomRepository;
-        this.connectedSessions = new ConcurrentHashMap<>();
-    }
-
-    public Set<WebSocketSession> getAllConnectedSessions() {
-        return connectedSessions.keySet();
-    }
-
-    public void addEmptySession(WebSocketSession session) {
-        connectedSessions.put(session, Optional.empty());
+        this.connectedUsers = new ConcurrentHashMap<>();
     }
 
     public Optional<User> getConnectedUser(WebSocketSession session) {
-        return connectedSessions.get(session);
+        return connectedUsers.values().stream().filter(user -> !user.getSessionId().isEmpty() && user.getSessionId().equals(session.getId())).findAny();
     }
 
     public Optional<User> getConnectedUserByUserId(String userId) {
-        var optUser = connectedSessions.values().stream().filter(user -> user.isPresent() && user.get().getId().equals(userId)).findFirst();
-        return optUser.orElseGet(Optional::empty);
+        return Optional.ofNullable(connectedUsers.get(userId));
     }
 
-    public Collection<Optional<User>> getAllConnectedUsers() {
-        return connectedSessions.values();
-    }
-
-    public void removeConnectedUserSession(WebSocketSession session) {
-        connectedSessions.remove(session);
+    public void removeConnectedUser(String userId) {
+        connectedUsers.remove(userId);
     }
 
     public boolean isConnectedUser(String userId) {
-        return connectedSessions.values().stream().anyMatch(user -> user.isPresent() && user.get().getId().equals(userId));
+        return connectedUsers.values().stream().anyMatch(user -> user.getId().equals(userId));
     }
 
-    public void setUserSession(WebSocketSession session, User user) {
-        connectedSessions.computeIfPresent(session, (key, old) -> Optional.of(user));
-    }
-
-    public void addUserChatRoomInfo(WebSocketSession session, ChatRoom chatRoom) {
-        var currentUser = connectedSessions.get(session);
-        if (currentUser.isEmpty())
+    public void addUserChatRoomInfo(String userId, ChatRoom chatRoom) {
+        if (userId.isEmpty())
             return;
 
-        logger.info("has roomInfo: " + currentUser.get().getChatRoomList().stream().anyMatch(chatRoomInfo -> chatRoomInfo.getRoomId().equals(chatRoom.getRoomId())));
-        if (currentUser.get().getChatRoomList().stream().anyMatch(chatRoomInfo -> chatRoomInfo.getRoomId().equals(chatRoom.getRoomId())))
+        var currentUser = connectedUsers.get(userId);
+        if (null == currentUser)
             return;
 
-        currentUser.get().getChatRoomList().add(chatRoom.getInfo());
-        logger.info("userId: " + currentUser.get().getId() + ", roomId: " + chatRoom.getRoomId());
-        userRoomRepository.save(new UserRoom(currentUser.get().getId(), chatRoom.getRoomId()));
+        if (currentUser.getChatRoomList().stream().anyMatch(chatRoomInfo -> chatRoomInfo.getRoomId().equals(chatRoom.getRoomId())))
+            return;
+
+        currentUser.getChatRoomList().add(chatRoom.getInfo());
+        userRoomRepository.save(new UserRoom(currentUser.getId(), chatRoom.getRoomId()));
     }
 
-    public int getConnectionCount() {
-        return connectedSessions.size();
-    }
-
-    public Optional<User> createNewUser() throws Exception {
+    public Optional<User> createTempUser(WebSocketSession session) throws Exception {
         var count = userRepository.count();
-        var newUser = new User("user-" + (count + 1));
-        var result = userRepository.save(newUser);
+        var tempUser = new User("user-" + (count + 1));
+        var result = userRepository.save(tempUser);
+        result.setSessionId(session.getId());
         return Optional.ofNullable(result);
     }
 
@@ -101,7 +78,7 @@ public class UserService {
         return user;
     }
 
-    public Pair<Optional<User>, List<ChatRoomInfoInterface>> findUserWithChatRooms(String userId) throws Exception {
+    public Pair<Optional<User>, List<ChatRoomInfoInterface>> authenticateUser(String userId, WebSocketSession session) throws Exception {
         var user = userRepository.findById(userId);
         List<ChatRoomInfoInterface> availableChatRooms = new ArrayList<>();
         if (user.isPresent()) {
@@ -111,6 +88,8 @@ public class UserService {
             // 입장했던 채팅방만
             var userChatRooms = chatRoomRepository.findInUserChatRoomInfos(userId);
             user.get().setChatRoomList(new ConcurrentLinkedQueue<>(getRoomInfosByUserId(userChatRooms)));
+            user.get().setSessionId(session.getId());
+            connectedUsers.computeIfAbsent(user.get().getId(), key -> user.get());
         }
 
         return Pair.of(user, availableChatRooms);

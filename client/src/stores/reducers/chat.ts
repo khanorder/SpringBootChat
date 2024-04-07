@@ -4,117 +4,150 @@ import deepmerge from "deepmerge";
 import isEmpty from "lodash/isEmpty";
 
 interface ChatState {
-    roomList: Domains.ChatRoom[];
-    roomUserList: Domains.ChatRoomUser[];
-    chatDatas: Domains.Chat[];
-    latestUpdate: Date;
+    currentChatRoomId: string;
+    chatRooms: Domains.ChatRoom[];
 }
 
 const initialState: ChatState = {
-    roomList: [],
-    roomUserList: [],
-    chatDatas: [],
-    latestUpdate: new Date()
+    currentChatRoomId: "",
+    chatRooms: []
 }
 
 const chatSlice = createSlice({
     name: 'Chat',
     initialState,
     reducers: {
+        enterChatRoom: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - enterChatRoom: ${JSON.stringify(action.payload)}`);
+
+            if (!action || !action.payload || 1 > action.payload.length)
+                return;
+
+            state.currentChatRoomId = action.payload;
+        },
+        exitChatRoom: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - exitChatRoom`);
+
+            state.currentChatRoomId = '';
+        },
         addChatRooms: (state, action: PayloadAction<Domains.ChatRoom[]>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - addRoom: ${JSON.stringify(action.payload)}`);
+                console.log(`reducer - addChatRooms: ${JSON.stringify(action.payload)}`);
 
             if (!action || !action.payload || 1 > action.payload.length)
                 return;
 
             const addChatRoomList: Domains.ChatRoom[] = [];
             for (let chatRoom of action.payload) {
-                if (0 <= state.roomList.findIndex(_ => _.roomId == chatRoom.roomId))
+                if (0 <= state.chatRooms.findIndex(_ => _.roomId == chatRoom.roomId))
                     continue;
 
                 addChatRoomList.push(chatRoom);
             }
-            state.roomList = deepmerge(state.roomList, addChatRoomList);
+            state.chatRooms = deepmerge(state.chatRooms, addChatRoomList);
         },
         removeChatRooms: (state, action: PayloadAction<string[]>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - removeRoom: ${JSON.stringify(action.payload)}`);
+                console.log(`reducer - removeChatRooms: ${JSON.stringify(action.payload)}`);
 
             if (!action || !action.payload || 1 > action.payload.length)
                 return;
 
-            const filterList = state.roomList.filter(_ => !action.payload.includes(_.roomId));
-            state.roomList = deepmerge([], filterList);
+            const filterList = state.chatRooms.filter(_ => !action.payload.includes(_.roomId));
+            state.chatRooms = deepmerge([], filterList);
         },
-        setChatRoomList: (state, action: PayloadAction<Domains.ChatRoom[]>) => {
+        setChatRooms: (state, action: PayloadAction<Domains.ChatRoom[]>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setRoomList: ${JSON.stringify(action.payload)}`);
+                console.log(`reducer - setChatRooms: ${JSON.stringify(action.payload)}`);
 
             if (!action || !action.payload)
                 return;
 
-            state.roomList = action.payload;
+            state.chatRooms = action.payload;
         },
-        addChatRoomUser: (state, action: PayloadAction<Domains.ChatRoomUser>) => {
+        setChatRoomUsers: (state, action: PayloadAction<SetChatRoomUsersProps>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - addRoomUser: ${JSON.stringify(action.payload)}`);
+                console.log(`reducer - setChatRoomUsers: ${JSON.stringify(action.payload)}`);
 
-            if (!action || !action.payload)
+            if (!action || !action.payload || isEmpty(action.payload.roomId) || !action.payload.chatRoomUsers)
                 return;
 
-            state.roomUserList.push(action.payload);
-            state.roomUserList = deepmerge([], state.roomUserList);
-        },
-        removeChatRoomUser: (state, action: PayloadAction<Domains.ChatRoomUser>) => {
-            if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - removeRoomUser: ${JSON.stringify(action.payload)}`);
-
-            if (!action || !action.payload || isEmpty(action.payload.userId))
+            const chatRoom = state.chatRooms.find(_ => _.roomId == action.payload.roomId);
+            if (!chatRoom)
                 return;
 
-            const filterList = state.roomUserList.filter(_ => _.userId != action.payload.userId)
-            state.roomUserList = deepmerge([], filterList);
+            chatRoom.users = action.payload.chatRoomUsers;
+            state.chatRooms = deepmerge([], state.chatRooms);
         },
-        setChatRoomUserList: (state, action: PayloadAction<Domains.ChatRoomUser[]>) => {
-            if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setRoomUserList: ${JSON.stringify(action.payload)}`);
-
-            if (!action || !action.payload)
-                return;
-
-            state.roomUserList = action.payload;
-        },
-        addChatData: (state, action: PayloadAction<Domains.Chat>) => {
+        addChatData: (state, action: PayloadAction<AddChatDataProps>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - addChatData: ${JSON.stringify(action.payload)}`);
 
-            if (!action || !action.payload)
+            if (!action || !action.payload || isEmpty(action.payload.roomId) || !action.payload.chatData)
                 return;
 
-            state.chatDatas.push(action.payload);
-            state.chatDatas = deepmerge([], state.chatDatas);
+            const chatRoom = state.chatRooms.find(_ => _.roomId == action.payload.roomId);
+            if (!chatRoom)
+                return;
+
+            if (0 <= chatRoom.chatDatas.findIndex(_ => _.id == action.payload.chatData.id))
+                return;
+
+            chatRoom.chatDatas.push(action.payload.chatData);
+            state.chatRooms = deepmerge([], state.chatRooms);
         },
-        setChatDatas: (state, action: PayloadAction<Domains.Chat[]>) => {
+        setChatDatas: (state, action: PayloadAction<SetChatDatasProps>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setChatDatas: ${JSON.stringify(action.payload)}`);
 
-            if (!action || !action.payload)
+            if (!action || !action.payload || isEmpty(action.payload.roomId) || !action.payload.chatDatas)
                 return;
 
-            state.chatDatas = action.payload;
+            const chatRoom = state.chatRooms.find(_ => _.roomId == action.payload.roomId);
+            if (!chatRoom)
+                return;
+
+            chatRoom.chatDatas = action.payload.chatDatas;
+            state.chatRooms = deepmerge([], state.chatRooms);
         },
     }
 });
 
+export interface AddChatRoomUserProps {
+    roomId: string;
+    chatRoomUser: Domains.ChatRoomUser;
+}
+
+export interface RemoveChatRoomUserProps {
+    roomId: string;
+    chatRoomUser: Domains.ChatRoomUser;
+}
+
+export interface SetChatRoomUsersProps {
+    roomId: string;
+    chatRoomUsers: Domains.ChatRoomUser[];
+}
+
+export interface AddChatDataProps {
+    roomId: string;
+    chatData: Domains.Chat;
+}
+
+export interface SetChatDatasProps {
+    roomId: string;
+    chatDatas: Domains.Chat[];
+}
+
 export type { ChatState };
 export const {
+    enterChatRoom,
+    exitChatRoom,
     addChatRooms,
     removeChatRooms,
-    setChatRoomList,
-    addChatRoomUser,
-    removeChatRoomUser,
-    setChatRoomUserList,
+    setChatRooms,
+    setChatRoomUsers,
     addChatData,
     setChatDatas,
 } = chatSlice.actions;

@@ -24,8 +24,8 @@ public class PersistenceUserConfiguration {
     @Value("${rds.jpa.hibernate.ddl-auto}")
     private String ddlAuto;
 
-    @Value("${rds.jpa.properties.hibernate.dialect}")
-    private String dialect;
+//    @Value("${rds.jpa.properties.hibernate.dialect}")
+//    private String dialect;
 
     @Bean(name = "userDataSource")
     @ConfigurationProperties(prefix = "rds.user.datasource")
@@ -45,8 +45,8 @@ public class PersistenceUserConfiguration {
         if (!ddlAuto.isEmpty())
             properties.put("hibernate.hbm2ddl.auto", ddlAuto);
 
-        if (!dialect.isEmpty())
-            properties.put("hibernate.dialect", dialect);
+//        if (!dialect.isEmpty())
+//            properties.put("hibernate.dialect", dialect);
 
         em.setJpaPropertyMap(properties);
         return em;

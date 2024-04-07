@@ -3,10 +3,15 @@ package com.zangho.game.server.service;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Security;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zangho.game.server.domain.chat.ChatRoom;
 import com.zangho.game.server.error.ErrorSubscribeChatRoom;
+import com.zangho.game.server.repository.chat.UserRoomRepository;
+import com.zangho.game.server.repository.user.UserRepository;
 import lombok.Getter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jose4j.lang.JoseException;
@@ -30,8 +35,10 @@ public class MessageService {
     private Logger logger = LoggerFactory.getLogger(MessageService.class);
     private PushService pushService;
     private final ChatRoomService chatRoomService;
-    public MessageService(ChatRoomService chatRoomService) {
+    private final UserRoomRepository userRoomRepository;
+    public MessageService(ChatRoomService chatRoomService, UserRoomRepository userRoomRepository) {
         this.chatRoomService = chatRoomService;
+        this.userRoomRepository = userRoomRepository;
     }
 
     @PostConstruct
@@ -53,22 +60,23 @@ public class MessageService {
         if (userId.isEmpty())
             return ErrorSubscribeChatRoom.REQUIRED_USER_ID;
 
-        var chatRoom = chatRoomService.findPublicRoomById(roomId);
+        var chatRoom = chatRoomService.findRoomById(roomId);
         if (chatRoom.isEmpty())
             return ErrorSubscribeChatRoom.NOT_FOUND_CHAT_ROOM;
 
-        if (chatRoom.get().getSessions().isEmpty())
+        if (chatRoom.get().getUsers().isEmpty())
             return ErrorSubscribeChatRoom.EMPTY_USER_IN_ROOM;
 
-        var user = chatRoom.get().getSessions().values().stream().filter(userRoom -> userRoom.getUserId().equals(userId)).findAny();
+        var userRoom = chatRoom.get().getUsers().get(userId);
 
-        if (user.isEmpty())
+        if (null == userRoom)
             return ErrorSubscribeChatRoom.NOT_FOUND_USER_IN_ROOM;
 
-        if (null != user.get().getSubscription())
+        if (null != userRoom.getSubscription())
             return ErrorSubscribeChatRoom.ALREADY_SUBSCRIBE_ROOM;
 
-        user.get().setSubscription(subscription);
+        userRoom.setSubscription(subscription);
+        userRoomRepository.save(userRoom);
         return ErrorSubscribeChatRoom.NONE;
     }
 
@@ -83,37 +91,30 @@ public class MessageService {
     }
 
     public void sendNotification(Subscription subscription, String title, String body) {
-        var json = """
-        {
-            "title":"%s",
-            "body":"%s"
+        try {
+            var result = new HashMap<String, Object>();
+            result.put("title", title);
+            result.put("body", body);
+            sendNotificationJson(subscription, (new ObjectMapper()).writeValueAsString(result));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
         }
-        """;
-        sendNotificationJson(subscription, String.format(json, title, body));
     }
 
     public void sendNotificationJson(Subscription subscription, String messageJson) {
         try {
             pushService.send(new Notification(subscription, messageJson));
-        } catch (GeneralSecurityException | IOException | JoseException | ExecutionException
-                 | InterruptedException e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
         }
     }
 
-//    @Scheduled(fixedRate = 15000)
-//    private void sendNotifications() {
-//        logger.info("Sending notifications to all subscribers: " + subscriptions.size());
-//
-//        var json = """
-//        {
-//          "title": "Server says hello!",
-//          "body": "It is now: %s"
-//        }
-//        """;
-//
-//        subscriptions.forEach(subscription -> {
-//            sendNotification(subscription, String.format(json, LocalTime.now()));
-//        });
-//    }
+    public void notifyBrowserUserInRoom(ChatRoom chatRoom, String title, String body) {
+        chatRoom.getUsers().values().forEach(userInRoom -> {
+            if (null == userInRoom.getSubscription())
+                return;
+
+            sendNotification(userInRoom.getSubscription(), title, body);
+        });
+    }
 }

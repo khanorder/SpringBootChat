@@ -16,7 +16,7 @@ export default function MainHeader() {
 
     return (
         <div className={styles.mainHeaderWrapper}>
-            <div className={styles.mainHeaderTitle}>{appConfigs.name}</div>
+            <div className={styles.mainHeaderTitle}>{appConfigs.isProd ? appConfigs.name : ''}</div>
         </div>
     );
 }

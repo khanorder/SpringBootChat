@@ -7,12 +7,9 @@ import {createChatRoomReq} from "@/stores/reducers/webSocket";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveCreateChatRoom} from "@/stores/reducers/dialog";
 
-export interface CreateChatRoomDialogProps {
-    isProd: boolean;
-}
-
-export default function CreateChatRoomDialog({ isProd }: CreateChatRoomDialogProps) {
+export default function CreateChatRoomDialog() {
     const firstRender = useRef(true);
+    const appConfigs = useAppSelector(state => state.appConfigs);
     const dialogState = useAppSelector(state => state.dialog);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
@@ -43,20 +40,25 @@ export default function CreateChatRoomDialog({ isProd }: CreateChatRoomDialogPro
     const createChatRoom = useCallback(() => {
         if (!webSocket.socket) {
             alert('연결 안됨');
+            return;
         } else if (isEmpty(chatRoomName)) {
             alert('채팅방 정보를 입력해주세요.');
+            return;
         } else if (10 < chatRoomName.length) {
             alert('채팅방 이름은 10글자 이내로 입력해주세요.');
+            return;
         } else if (isEmpty(user.name)) {
             alert('대화명을 입력해주세요.');
+            return;
         } else if (10 < user.name.length) {
             alert('대화명은 10글자 이내로 입력해주세요.');
+            return;
         } else if (Defines.RoomOpenType.PRIVATE != chatRoomOpenType && Defines.RoomOpenType.PUBLIC != chatRoomOpenType) {
             alert('개설할 채팅방의 공개범위를 선택해주세요.');
-        } else {
-            dispatch(createChatRoomReq({openType: chatRoomOpenType, roomName: chatRoomName}));
-            dispatch(setIsActiveCreateChatRoom(false));
+            return;
         }
+        dispatch(createChatRoomReq({openType: chatRoomOpenType, roomName: chatRoomName}));
+        dispatch(setIsActiveCreateChatRoom(false));
     }, [webSocket, user, chatRoomName, chatRoomOpenType, dispatch]);
 
     const onKeyUpChatRoomName = useCallback((e: any) => {
@@ -129,7 +131,7 @@ export default function CreateChatRoomDialog({ isProd }: CreateChatRoomDialogPro
                             <input className={styles.roomNameInput} value={chatRoomName}
                                    onKeyUp={e => onKeyUpChatRoomName(e)}
                                    onChange={e => changeChatRoomName(e)}
-                                   placeholder={isProd ? '채팅방 이름' : ''}/>
+                                   placeholder={appConfigs.isProd ? '채팅방 이름' : ''}/>
                         </div>
                     </div>
                     <div className={styles.dialogButtons}>
@@ -140,7 +142,7 @@ export default function CreateChatRoomDialog({ isProd }: CreateChatRoomDialogPro
                 <div className={styles.dialogPane} onClick={hideDialog}></div>
             </div>
         );
-    }, [changeChatRoomName, chatRoomName, chatRoomOpenType, createChatRoom, dialogWrapperClass, hideDialog, isProd, onChangeChatRoomOpenType, onKeyUpChatRoomName]);
+    }, [appConfigs, changeChatRoomName, chatRoomName, chatRoomOpenType, createChatRoom, dialogWrapperClass, hideDialog, onChangeChatRoomOpenType, onKeyUpChatRoomName]);
 
     return dialog();
 }

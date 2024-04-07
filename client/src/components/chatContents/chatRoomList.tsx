@@ -4,12 +4,10 @@ import {Helpers} from "@/helpers";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq} from "@/stores/reducers/webSocket";
+import {Defines} from "@/defines";
 
-export interface ChatRoomListProps {
-    isProd: boolean;
-}
-
-export default function ChatRoomList({ isProd }: ChatRoomListProps) {
+export default function ChatRoomList() {
+    const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
@@ -24,43 +22,48 @@ export default function ChatRoomList({ isProd }: ChatRoomListProps) {
     }, [firstRender]);
     //#endregion
 
-    const enterChatRoom = useCallback((enterChatRoomId: string) => {
+    const enterChatRoom = useCallback((roomId: string) => {
         if (!webSocket.socket) {
             alert('연결 안됨');
-        } else if (isEmpty(enterChatRoomId)) {
+        } else if (isEmpty(roomId)) {
             alert('채팅방 정보 없음');
         } else if (isEmpty(user.name)) {
             alert('대화명을 입력해 주세요.');
         } else if (10 < user.name.length) {
             alert('대화명은 10글자 이내로 입력해주세요.');
         } else {
-            dispatch(enterChatRoomReq(enterChatRoomId));
+            dispatch(enterChatRoomReq(roomId));
         }
     }, [webSocket, user, dispatch]);
 
     const list = useCallback(() => {
-        if (!chat.roomList || 1 > chat.roomList.length) {
+        if (!chat.chatRooms || 1 > chat.chatRooms.length) {
             return (
-                <li className={styles.chatRoomListItem}>{isProd ? '개설된 채팅방이 없습니다.' : ''}</li>
+                <li className={styles.chatRoomListItem}>{appConfigs.isProd ? '개설된 채팅방이 없습니다.' : ''}</li>
             );
         } else {
             const list: ReactElement[] = [];
-            for (let i = 0; i < chat.roomList.length; i++) {
+            for (let i = 0; i < chat.chatRooms.length; i++) {
+                const room = chat.chatRooms[i];
+                let roomNameIconClass = styles.chatRoomNameIcon;
+                if (Defines.RoomOpenType.PRIVATE == room.openType)
+                    roomNameIconClass += ` ${styles.privateRoom}`;
+
                 list.push(
                     <li key={i} className={styles.chatRoomListItem}>
-                        <button className={styles.chatRoomEnterButton} onClick={e => enterChatRoom(chat.roomList[i].roomId)}>
-                            <div className={styles.chatRoomNameIcon}>
+                        <button className={styles.chatRoomEnterButton} onClick={e => enterChatRoom(room.roomId)}>
+                            <div className={roomNameIconClass}>
                                 <div className={styles.chatRoomNameIconText}>
-                                    {chat.roomList[i].roomName.substring(0, 1)}
+                                    {room.roomName.substring(0, 1)}
                                 </div>
                             </div>
                             <div className={styles.chatRoomInfoWrapper}>
                                 <div className={styles.chatRoomNameWrapper}>
-                                    <div className={styles.chatRoomName}>{chat.roomList[i].roomName}</div>
+                                    <div className={styles.chatRoomName}>{room.roomName}</div>
                                     {
-                                        chat.roomList[i].userCount > 0
+                                        room.users.length > 0
                                             ?
-                                            <div className={styles.chatRoomUserCount}>{chat.roomList[i].userCount}</div>
+                                            <div className={styles.chatRoomUserCount}>{room.users.length}</div>
                                             :
                                             <></>
                                     }
@@ -69,7 +72,7 @@ export default function ChatRoomList({ isProd }: ChatRoomListProps) {
                                     <div className={styles.chatRoomPreview}></div>
                                 </div>
                             </div>
-                            <div className={styles.chatRoomOpenType}>{Helpers.getChatRoomOpenTypeName(chat.roomList[i].openType)}</div>
+                            <div className={styles.chatRoomOpenType}>{Helpers.getChatRoomOpenTypeName(room.openType)}</div>
                         </button>
                     </li>
                 );
@@ -77,7 +80,7 @@ export default function ChatRoomList({ isProd }: ChatRoomListProps) {
 
             return list;
         }
-    }, [chat, enterChatRoom, isProd]);
+    }, [appConfigs, chat, enterChatRoom]);
 
     return (
         <div className={styles.chatRoomListWrapper}>

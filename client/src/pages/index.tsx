@@ -6,15 +6,17 @@ import {
     useRef
 } from "react";
 import {NextPageContext} from "next";
-import MainLayout from "@/components/layouts/main";
 import {useAppDispatch} from "@/hooks";
-import Layout from "@/components/layouts";
-import CreateChatRoomDialog from "@/components/dialogs/createChatRoomDialog";
 import PlusIcon from 'public/images/plus-svgrepo-com.svg';
 import Image from "next/image";
-import ChatRoomList from "@/components/chatContents/chatRoomList";
 import {toggleIsActiveCreateChatRoom} from "@/stores/reducers/dialog";
-import MainHeader from "@/components/chatContents/mainHeader";
+import {setIsProd} from "@/stores/reducers/appConfigs";
+import dynamic from "next/dynamic";
+const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
+const MainLayout = dynamic(() => import("@/components/layouts/main"), { ssr: false });
+const MainHeader = dynamic(() => import("@/components/chatContents/mainHeader"), { ssr: false });
+const ChatRoomList = dynamic(() => import("@/components/chatContents/chatRoomList"), { ssr: false });
+const CreateChatRoomDialog = dynamic(() => import("@/components/dialogs/createChatRoomDialog"), { ssr: false });
 
 
 interface MainProps {
@@ -27,10 +29,12 @@ function Main({isProd}: MainProps) {
 
     //#region OnRender
     useEffect(() => {
-        if (firstRender.current)
+        if (firstRender.current) {
             firstRender.current = false;
+            dispatch(setIsProd(isProd))
+        }
 
-    }, [firstRender]);
+    }, [firstRender, dispatch, isProd]);
     //#endregion
 
     const toggleCreateChatRoomDialog = useCallback(() => {
@@ -40,13 +44,13 @@ function Main({isProd}: MainProps) {
     return (
         <>
             <MainHeader />
-            <ChatRoomList isProd={isProd} />
+            <ChatRoomList />
             <div className={styles.toggleCreateChatRoomDialogWrapper}>
                 <button className={styles.toggleCreateChatRoomDialogButton} onClick={toggleCreateChatRoomDialog}>
                     <Image className={styles.toggleCreateChatRoomDialogIcon} src={PlusIcon} alt='채팅방 생성' width={30} height={30} />
                 </button>
             </div>
-            <CreateChatRoomDialog isProd={isProd} />
+            <CreateChatRoomDialog />
         </>
     );
 }

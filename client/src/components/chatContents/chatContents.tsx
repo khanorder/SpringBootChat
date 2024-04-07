@@ -12,18 +12,20 @@ import {Defines} from "@/defines";
 import {dayjs} from "@/helpers/localizedDayjs";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
-import NL2BR from "@/components/common/NL2BR";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/dialog";
+import dynamic from "next/dynamic";
+import {Domains} from "@/domains";
+const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
 export interface ChatContentsProps {
-    isProd: boolean;
     serverHost: string;
     setChatDetailImageId: Dispatch<SetStateAction<string>>;
 } 
 
-export default function ChatContents({isProd, serverHost, setChatDetailImageId}: ChatContentsProps) {
+export default function ChatContents({serverHost, setChatDetailImageId}: ChatContentsProps) {
     const firstRender = useRef(true);
     const chatContentsRef = createRef<HTMLUListElement>();
+    const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
@@ -53,11 +55,17 @@ export default function ChatContents({isProd, serverHost, setChatDetailImageId}:
     }, [setChatDetailImageId, dispatch]);
 
     const list = useCallback(() => {
+        let chatDatas: Domains.Chat[] = [];
+        if (chat && !isEmpty(chat.currentChatRoomId)) {
+            const chatRoom = chat.chatRooms.find(_ => _.roomId == chat.currentChatRoomId);
+            if (chatRoom)
+                chatDatas = chatRoom.chatDatas;
+        }
         const contents: ReactElement[] = [];
 
-        if (0 < chat.chatDatas.length) {
-            for (let i = 0; i < chat.chatDatas.length; i++) {
-                let chatData = chat.chatDatas[i];
+        if (0 < chatDatas.length) {
+            for (let i = 0; i < chatDatas.length; i++) {
+                let chatData = chatDatas[i];
                 const isMine = user.id == chatData.userId;
                 let chatContentsClass = styles.chatContents + (isMine ? ` ${styles.mine}` : '');
                 let chatMessageClass = styles.chatMessage + (isMine ? ` ${styles.mine}` : '');
@@ -102,7 +110,7 @@ export default function ChatContents({isProd, serverHost, setChatDetailImageId}:
                 }
             }
         } else {
-            contents.push(<li key={'none'} className={styles.chatNone}>{isProd ? '채팅 내용이 없습니다.' : ''}</li>);
+            contents.push(<li key={'none'} className={styles.chatNone}>{appConfigs.isProd ? '채팅 내용이 없습니다.' : ''}</li>);
         }
 
         return (
@@ -110,7 +118,7 @@ export default function ChatContents({isProd, serverHost, setChatDetailImageId}:
                 {contents}
             </ul>
         );
-    }, [chat, isProd, openChatImageDetailDialog, serverHost, user, chatContentsRef]);
+    }, [appConfigs, chat, openChatImageDetailDialog, serverHost, user, chatContentsRef]);
 
     return (
         <div className={styles.chatContentsWrapper}>

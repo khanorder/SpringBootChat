@@ -1,7 +1,7 @@
 package com.zangho.game.server.scheduler;
 
 import com.zangho.game.server.service.ChatRoomService;
-import com.zangho.game.server.socketHandler.GameSocketHandler;
+import com.zangho.game.server.socketHandler.chat.SocketHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class TestScheduler {
     private final Logger logger = LoggerFactory.getLogger(TestScheduler.class);
-    private final GameSocketHandler chatSocketHandler;
+    private final SocketHandler socketHandler;
     private final ChatRoomService chatRoomService;
-    public TestScheduler(GameSocketHandler chatSocketHandler, ChatRoomService chatRoomService) {
-        this.chatSocketHandler = chatSocketHandler;
+    public TestScheduler(SocketHandler socketHandler, ChatRoomService chatRoomService) {
+        this.socketHandler = socketHandler;
         this.chatRoomService = chatRoomService;
     }
 

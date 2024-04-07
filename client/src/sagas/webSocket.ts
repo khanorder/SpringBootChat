@@ -32,7 +32,7 @@ import {
     noticeExitChatRoomRes, removeChatRoomRes,
     talkChatRoomRes,
     updateChatRoomRes,
-    updatePublicChatRoomsRes
+    updateChatRoomsRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callCreateChatRoomReq,
@@ -273,8 +273,8 @@ function* onMessage (socket: WebSocket) {
                             yield call(removeChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.UPDATE_PUBLIC_CHAT_ROOMS:
-                            yield call(updatePublicChatRoomsRes, packetData);
+                        case Defines.PacketType.UPDATE_CHAT_ROOMS:
+                            yield call(updateChatRoomsRes, packetData);
                             break;
 
                         case Defines.PacketType.UPDATE_CHAT_ROOM:
