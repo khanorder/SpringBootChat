@@ -1,10 +1,14 @@
 package com.zangho.game.server.service;
 
+import com.zangho.game.server.define.RelationState;
 import com.zangho.game.server.define.RoomOpenType;
 import com.zangho.game.server.domain.chat.*;
+import com.zangho.game.server.domain.user.Relation;
 import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.domain.user.UserInterface;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
+import com.zangho.game.server.repository.user.RelationRepository;
 import com.zangho.game.server.repository.user.UserRepository;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -21,13 +25,19 @@ public class UserService {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRoomRepository userRoomRepository;
+    private final RelationRepository relationRepository;
     private final ConcurrentHashMap<String, User> connectedUsers;
 
-    public UserService(UserRepository userRepository, ChatRoomRepository chatRoomRepository, UserRoomRepository userRoomRepository) {
+    public UserService(UserRepository userRepository, ChatRoomRepository chatRoomRepository, UserRoomRepository userRoomRepository, RelationRepository relationRepository) {
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.userRoomRepository = userRoomRepository;
+        this.relationRepository = relationRepository;
         this.connectedUsers = new ConcurrentHashMap<>();
+    }
+
+    public List<User> getConnectedUsers() {
+        return connectedUsers.values().stream().toList();
     }
 
     public Optional<User> getConnectedUser(WebSocketSession session) {
@@ -38,8 +48,8 @@ public class UserService {
         return Optional.ofNullable(connectedUsers.get(userId));
     }
 
-    public void removeConnectedUser(String userId) {
-        connectedUsers.remove(userId);
+    public void removeConnectedUser(User user) {
+        connectedUsers.remove(user.getId());
     }
 
     public boolean isConnectedUser(String userId) {
@@ -78,6 +88,10 @@ public class UserService {
         return user;
     }
 
+    public Optional<User> findOnlyUser(String userId) throws Exception {
+        return userRepository.findById(userId);
+    }
+
     public Pair<Optional<User>, List<ChatRoomInfoInterface>> authenticateUser(String userId, WebSocketSession session) throws Exception {
         var user = userRepository.findById(userId);
         List<ChatRoomInfoInterface> availableChatRooms = new ArrayList<>();
@@ -89,6 +103,15 @@ public class UserService {
             var userChatRooms = chatRoomRepository.findInUserChatRoomInfos(userId);
             user.get().setChatRoomList(new ConcurrentLinkedQueue<>(getRoomInfosByUserId(userChatRooms)));
             user.get().setSessionId(session.getId());
+
+            var follows = findFollows(user.get());
+            if (!follows.isEmpty())
+                user.get().setFollowList(new ConcurrentLinkedQueue<>(follows));
+
+            var followers = findFollowers(user.get());
+            if (!followers.isEmpty())
+                user.get().setFollowerList(new ConcurrentLinkedQueue<>(followers));
+
             connectedUsers.computeIfAbsent(user.get().getId(), key -> user.get());
         }
 
@@ -120,6 +143,41 @@ public class UserService {
     public boolean updateUser(User user) throws Exception {
         var existsUser = userRepository.save(user);
         return null != existsUser;
+    }
+
+    public Optional<Relation> followUser(User user, User target) {
+        var follower = new Relation(user.getId(), target.getId(), RelationState.FOLLOW);
+        return Optional.ofNullable(relationRepository.save(follower));
+    }
+
+    public boolean unfollowUser(Relation relation) {
+        relationRepository.delete(relation);
+        return !relationRepository.existsById(relation.getId());
+    }
+
+    public Optional<Relation> banUser(User user, User target) {
+        var follower = new Relation(user.getId(), target.getId(), RelationState.FOLLOW);
+        return Optional.ofNullable(relationRepository.save(follower));
+    }
+
+    public Optional<Relation> findFollower(User user, User target) {
+        return relationRepository.findByUserIdAndTargetIdAndRelationState(user.getId(), target.getId(), RelationState.FOLLOW);
+    }
+
+    public List<UserInterface> findFollows(User user) {
+        return relationRepository.findMineRelatedUsers(user.getId(), RelationState.FOLLOW);
+    }
+
+    public List<UserInterface> findFollowers(User user) {
+        return relationRepository.findYourRelatedUsers(user.getId(), RelationState.FOLLOW);
+    }
+
+    public List<UserInterface> findBans(User user) {
+        return relationRepository.findMineRelatedUsers(user.getId(), RelationState.BAN);
+    }
+
+    public List<UserInterface> findBanned(User user) {
+        return relationRepository.findYourRelatedUsers(user.getId(), RelationState.BAN);
     }
 
 }

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 @Getter
 public enum RelationState implements Types {
-    FRIEND(0),
+    FOLLOW(0),
     BAN(1);
 
     private final int number;

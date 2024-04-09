@@ -1,13 +1,13 @@
 import {Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import styles from "@/styles/chatImageInputDialog.module.sass";
-import Picture from "public/images/Picture_icon_BLACK.svg";
+import Picture from "../../../public/images/picture.svg";
 import isEmpty from "lodash/isEmpty";
 import {v4 as uuid} from "uuid";
 import {ChatAPI} from "@/apis/chatAPI";
 import {sendMessageReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
-import {setIsActiveChatImageInput} from "@/stores/reducers/dialog";
+import {setIsActiveChatImageInput} from "@/stores/reducers/ui";
 
 export interface ChatImageInputDialogProps {
     chatImageInputRef: RefObject<HTMLInputElement>;
@@ -22,7 +22,7 @@ export default function ChatImageInputDialog({chatImageInputRef, chatSmallImage,
     const webSocket = useAppSelector(state => state.webSocket);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
-    const dialogState = useAppSelector(state => state.dialog);
+    const ui = useAppSelector(state => state.ui);
     const dispatch = useAppDispatch();
     const [dialogWrapperClass, setDialogWrapperClass] = useState<string>(styles.dialogWrapper)
 
@@ -36,14 +36,14 @@ export default function ChatImageInputDialog({chatImageInputRef, chatSmallImage,
 
     useEffect(() => {
         if (!firstRender.current) {
-            if (dialogState.isActiveChatImageInput) {
+            if (ui.isActiveChatImageInput) {
                 setDialogWrapperClass(`${styles.dialogWrapper} ${styles.active}`);
             } else {
                 setDialogWrapperClass(`${styles.dialogWrapper}`);
             }
         }
 
-    }, [firstRender, dialogState, setDialogWrapperClass]);
+    }, [firstRender, ui, setDialogWrapperClass]);
 
     const hideDialog = useCallback(() => {
         dispatch(setIsActiveChatImageInput(false));

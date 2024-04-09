@@ -12,7 +12,7 @@ import {Defines} from "@/defines";
 import {dayjs} from "@/helpers/localizedDayjs";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
-import {setIsActiveChatImageDetail} from "@/stores/reducers/dialog";
+import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 import {Domains} from "@/domains";
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });

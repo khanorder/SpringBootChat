@@ -5,12 +5,12 @@ import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
 import {createChatRoomReq} from "@/stores/reducers/webSocket";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import {setIsActiveCreateChatRoom} from "@/stores/reducers/dialog";
+import {setIsActiveCreateChatRoom} from "@/stores/reducers/ui";
 
 export default function CreateChatRoomDialog() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
-    const dialogState = useAppSelector(state => state.dialog);
+    const ui = useAppSelector(state => state.ui);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
     const dispatch = useAppDispatch();
@@ -28,14 +28,14 @@ export default function CreateChatRoomDialog() {
 
     useEffect(() => {
         if (!firstRender.current) {
-            if (dialogState.isActiveCreateChatRoom) {
+            if (ui.isActiveCreateChatRoom) {
                 setDialogWrapperClass(`${styles.dialogWrapper} ${styles.active}`);
             } else {
                 setDialogWrapperClass(`${styles.dialogWrapper}`);
             }
         }
 
-    }, [firstRender, dialogState, setDialogWrapperClass]);
+    }, [firstRender, ui, setDialogWrapperClass]);
 
     const createChatRoom = useCallback(() => {
         if (!webSocket.socket) {

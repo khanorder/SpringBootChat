@@ -8,19 +8,19 @@ export namespace Domains {
         roomId: string;
         roomName: string;
         openType: Defines.RoomOpenType;
-        users: Domains.ChatRoomUser[];
+        users: Domains.User[];
         chatDatas: Domains.Chat[];
 
 
-        constructor(roomId: string, roomName: string, openType: Defines.RoomOpenType, chatRoomUsers: Domains.ChatRoomUser[], chatDatas: Domains.Chat[]) {
+        constructor(roomId: string, roomName: string, openType: Defines.RoomOpenType, users: Domains.User[], chatDatas: Domains.Chat[]) {
             this.roomId = roomId;
             this.roomName = roomName;
             this.openType = openType;
-            this.users = chatRoomUsers;
+            this.users = users;
             this.chatDatas = chatDatas;
         }
 
-        addUser(user: ChatRoomUser) {
+        addUser(user: User) {
             if (0 <= this.users.findIndex(_ => _.userId == user.userId))
                 return;
 
@@ -42,7 +42,7 @@ export namespace Domains {
         }
     }
 
-    export class ChatRoomUser {
+    export class User {
         userId: string;
         userName: string;
 
@@ -266,12 +266,16 @@ export namespace Domains {
         result: Errors.CheckAuthentication;
         userId: string;
         userName: string;
+        follows: Domains.User[];
+        followers: Domains.User[];
         chatRooms: Domains.ChatRoom[];
 
-        constructor(result: Errors.CheckAuthentication, userId: string, userName: string, chatRooms?: Domains.ChatRoom[]) {
+        constructor(result: Errors.CheckAuthentication, userId: string, userName: string, follows: Domains.User[], followers: Domains.User[], chatRooms?: Domains.ChatRoom[]) {
             this.result = result;
             this.userId = userId;
             this.userName = userName;
+            this.follows = follows;
+            this.followers = followers;
             this.chatRooms = 'undefined' != typeof chatRooms && null != chatRooms ? chatRooms : [];
         }
 
@@ -283,28 +287,238 @@ export namespace Domains {
                 const bytesUserName = bytes.slice(18, 18 + userNameLength);
                 const userName = new TextDecoder().decode(bytesUserName);
                 const offsetUserInfo = 18 + userNameLength;
-                const offsetChatRoomCount = offsetUserInfo + 4;
-                const bytesChatRoomCount = bytes.slice(offsetUserInfo, offsetChatRoomCount);
+                const offsetFollowCount = offsetUserInfo + 4;
+                const bytesFollowCount = bytes.slice(offsetUserInfo, offsetFollowCount);
+                const followCount = Helpers.getIntFromByteArray(bytesFollowCount);
+                const offsetFollowerCount = offsetFollowCount + 4;
+                const bytesFollowerCount = bytes.slice(offsetFollowCount, offsetFollowerCount);
+                const followerCount = Helpers.getIntFromByteArray(bytesFollowerCount);
+                const offsetChatRoomCount = offsetFollowerCount + 4;
+                const bytesChatRoomCount = bytes.slice(offsetFollowerCount, offsetChatRoomCount);
                 const chatRoomCount = Helpers.getIntFromByteArray(bytesChatRoomCount);
-                const offsetChatRoomId = offsetChatRoomCount + (chatRoomCount * 16);
+                const offsetFollowId = offsetChatRoomCount + (followCount * 16);
+                const offsetFollowNameLength = offsetFollowId + followCount;
+                let offsetFollowName = offsetFollowNameLength;
+                const follows: Domains.User[] = [];
+                for (let i = 0; i < followCount; i++) {
+                    let bytesFollowUserId = bytes.slice(offsetChatRoomCount + (i * 16), offsetChatRoomCount + ((i + 1) * 16));
+                    let followId = Helpers.getUUIDFromByteArray(bytesFollowUserId);
+                    let followNameLength = bytes[offsetFollowId + i];
+                    let bytesFollowName = bytes.slice(offsetFollowName, offsetFollowName + followNameLength);
+                    let followName = new TextDecoder().decode(bytesFollowName);
+                    offsetFollowName += followNameLength;
+                    follows.push(new Domains.User(followId, followName));
+                }
+
+                const offsetFollowerId = offsetFollowName + (followerCount * 16);
+                const offsetFollowerNameLength = offsetFollowerId + followerCount;
+                let offsetFollowerName = offsetFollowerNameLength;
+                const followers: Domains.User[] = [];
+                for (let i = 0; i < followerCount; i++) {
+                    let bytesFollowerUserId = bytes.slice(offsetFollowName + (i * 16), offsetFollowName + ((i + 1) * 16));
+                    let followerId = Helpers.getUUIDFromByteArray(bytesFollowerUserId);
+                    let followerNameLength = bytes[offsetFollowerId + i];
+                    let bytesFollowerName = bytes.slice(offsetFollowerName, offsetFollowerName + followerNameLength);
+                    let followerName = new TextDecoder().decode(bytesFollowerName);
+                    offsetFollowerName += followerNameLength;
+                    followers.push(new Domains.User(followerId, followerName));
+                }
+
+                const offsetChatRoomId = offsetFollowerName + (chatRoomCount * 16);
                 const offsetChatRoomOpenType = offsetChatRoomId + chatRoomCount;
                 const offsetChatRoomUserCount = offsetChatRoomOpenType + (chatRoomCount * 4);
                 const offsetChatRoomNameLength = offsetChatRoomUserCount + chatRoomCount;
                 let offsetChatRoomName = offsetChatRoomNameLength;
                 const chatRooms: Domains.ChatRoom[] = [];
                 for (let i = 0; i < chatRoomCount; i++) {
-                    let bytesChatRoomId = bytes.slice(offsetChatRoomCount + (i * 16), offsetChatRoomCount + ((i + 1) * 16))
+                    let bytesChatRoomId = bytes.slice(offsetFollowerName + (i * 16), offsetFollowerName + ((i + 1) * 16));
                     let chatRoomId = Helpers.getUUIDFromByteArray(bytesChatRoomId);
                     let chatRoomOpenType = bytes[offsetChatRoomId + i];
                     let bytesChatRoomUserCount = bytes.slice(offsetChatRoomOpenType + (i * 4), offsetChatRoomOpenType + ((i + 1) * 4));
                     let chatRoomUserCount = Helpers.getIntFromByteArray(bytesChatRoomUserCount);
                     let chatRoomNameLength = bytes[offsetChatRoomUserCount + i];
-                    let bytseChatRoomName = bytes.slice(offsetChatRoomName, offsetChatRoomName + chatRoomNameLength);
-                    let chatRoomName = new TextDecoder().decode(bytseChatRoomName);
+                    let bytesChatRoomName = bytes.slice(offsetChatRoomName, offsetChatRoomName + chatRoomNameLength);
+                    let chatRoomName = new TextDecoder().decode(bytesChatRoomName);
                     offsetChatRoomName += chatRoomNameLength;
                     chatRooms.push(new Domains.ChatRoom(chatRoomId, chatRoomName, chatRoomOpenType, [], []));
                 }
-                return new CheckAuthenticationRes(bytes[0], userId, userName, chatRooms);
+                return new CheckAuthenticationRes(bytes[0], userId, userName, follows, followers, chatRooms);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class ConnectedUsersRes {
+        users: Domains.User[];
+
+        constructor(users?: Domains.User[]) {
+            this.users = 'undefined' != typeof users && null != users ? users : [];
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const bytesUserCount = bytes.slice(0, 4);
+                const userCount = Helpers.getIntFromByteArray(bytesUserCount);
+                if (1 > userCount)
+                    return null;
+
+                const offsetUserId = 4 + (userCount * 16);
+                const offsetUserNameLength = offsetUserId + userCount;
+                let offsetUserName = offsetUserNameLength;
+                const users: Domains.User[] = [];
+                for (let i = 0; i < userCount; i++) {
+                    let bytesUserId = bytes.slice(4 + (i * 16), 4 + ((i + 1) * 16));
+                    let userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    let userNameLength = bytes[offsetUserId + i];
+                    let bytesUserName = bytes.slice(offsetUserName, offsetUserName + userNameLength);
+                    let userName = new TextDecoder().decode(bytesUserName);
+                    offsetUserName += userNameLength;
+                    users.push(new Domains.User(userId, userName));
+                }
+                return new ConnectedUsersRes(users);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NoticeConnectedUserRes {
+        user: Domains.User|null;
+
+        constructor(user?: Domains.User) {
+            this.user = 'undefined' != typeof user && null != user ? user : null;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const bytesUserId = bytes.slice(0, 16);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                const userNameLength = bytes[16];
+                const bytesUserName = bytes.slice(17, 17 + userNameLength)
+                const userName = new TextDecoder().decode(bytesUserName);
+                return new NoticeConnectedUserRes(new Domains.User(userId, userName));
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NoticeDisconnectedUserRes {
+        userId: string;
+
+        constructor(userId: string) {
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const bytesUserId = bytes.slice(0, 16);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                return new NoticeDisconnectedUserRes(userId);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class FollowRes {
+        result: Errors.Follow;
+        user: Domains.User|null
+
+        constructor(result: Errors.Follow, user: Domains.User|null) {
+            this.result = result;
+            this.user = user ?? null;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                let user: Domains.User|null = null;
+                if (1 < bytes.byteLength) {
+                    const bytesUserId = bytes.slice(1, 17);
+                    const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    const userNameLength = bytes[17];
+                    const bytesUserName = bytes.slice(18, 18 + userNameLength)
+                    const userName = new TextDecoder().decode(bytesUserName);
+                    user = new Domains.User(userId, userName);
+                }
+                return new FollowRes(bytes[0], user);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class UnfollowRes {
+        result: Errors.Unfollow;
+        userId: string
+
+        constructor(result: Errors.Unfollow, userId: string) {
+            this.result = result;
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                let userId: string = "";
+                if (1 < bytes.byteLength) {
+                    const bytesUserId = bytes.slice(1, 17);
+                    userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                }
+                return new UnfollowRes(bytes[0], userId);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class FollowerRes {
+        user: Domains.User|null
+
+        constructor(user: Domains.User|null) {
+            this.user = user ?? null;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                let user: Domains.User|null = null;
+                if (1 < bytes.byteLength) {
+                    const bytesUserId = bytes.slice(0, 16);
+                    const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    const userNameLength = bytes[16];
+                    const bytesUserName = bytes.slice(17, 17 + userNameLength)
+                    const userName = new TextDecoder().decode(bytesUserName);
+                    user = new Domains.User(userId, userName);
+                }
+                return new FollowerRes(user);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class UnfollowerRes {
+        userId: string
+
+        constructor(userId: string) {
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                let userId: string = "";
+                if (1 < bytes.byteLength) {
+                    const bytesUserId = bytes.slice(0, 16);
+                    userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                }
+                return new UnfollowerRes(userId);
             } catch (error) {
                 console.error(error);
                 return null;

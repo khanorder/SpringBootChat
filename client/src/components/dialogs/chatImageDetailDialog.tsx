@@ -1,10 +1,10 @@
 import {Dispatch, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
 import styles from "@/styles/chatImageDetailDialog.module.sass";
-import Picture from "public/images/Picture_icon_BLACK.svg";
+import Picture from "../../../public/images/picture.svg";
 import Image from "next/image";
-import CloseIcon from "public/images/close-circle-svgrepo-com.svg";
+import CloseIcon from "../../../public/images/close-circle.svg";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import {setIsActiveChatImageDetail} from "@/stores/reducers/dialog";
+import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 
 export interface ChatImageDetailDialogProps {
     serverHost: string;
@@ -14,7 +14,7 @@ export interface ChatImageDetailDialogProps {
 
 export default function ChatImageDetailDialog ({ serverHost, chatDetailImageId, setChatDetailImageId }: ChatImageDetailDialogProps) {
     const firstRender = useRef(true);
-    const dialogState = useAppSelector(state => state.dialog);
+    const ui = useAppSelector(state => state.ui);
     const dispatch = useAppDispatch();
     const [dialogWrapperClass, setDialogWrapperClass] = useState<string>(styles.dialogWrapper);
 
@@ -28,14 +28,14 @@ export default function ChatImageDetailDialog ({ serverHost, chatDetailImageId, 
 
     useEffect(() => {
         if (!firstRender.current) {
-            if (dialogState.isActiveChatImageDetail) {
+            if (ui.isActiveChatImageDetail) {
                 setDialogWrapperClass(`${styles.dialogWrapper} ${styles.active}`);
             } else {
                 setDialogWrapperClass(styles.dialogWrapper);
             }
         }
 
-    }, [dialogState, dispatch, setDialogWrapperClass]);
+    }, [ui, dispatch, setDialogWrapperClass]);
 
     const hideDialog = useCallback(() => {
         dispatch(setIsActiveChatImageDetail(false));

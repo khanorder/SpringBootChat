@@ -6,6 +6,91 @@ import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {PayloadAction} from "@reduxjs/toolkit";
 import {Domains} from "@/domains";
+import isEmpty from "lodash/isEmpty";
+
+export function* callConnectedUsersReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callConnectedUsersReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callConnectedUsersReq: socket is not available.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CONNECTED_USERS]);
+    webSocketState.socket.send(flag);
+}
+
+export function* callFollowReq(action: PayloadAction<Domains.User>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callFollowReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callFollowReq: socket is not available.`);
+        return;
+    }
+
+    if (!action || !action.payload || isEmpty(action.payload.userId)) {
+        alert('팔로우할 사용자를 선택해 주세요.');
+        return;
+    }
+    
+    if (userState.id == action.payload.userId) {
+        alert('자신을 팔로우 할 수는 없습니다.');
+        return;
+    }
+    
+    if (null != userState.follows.find(_ => _.userId == action.payload.userId)) {
+        alert('이미 팔로우 한 사용자 입니다!');
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_FOLLOW]);
+    const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.userId.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callUnfollowReq(action: PayloadAction<Domains.User>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callUnfollowReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callUnfollowReq: socket is not available.`);
+        return;
+    }
+
+    if (!action || !action.payload || isEmpty(action.payload.userId)) {
+        alert('언팔로우할 사용자를 선택해 주세요.');
+        return;
+    }
+
+    if (userState.id == action.payload.userId) {
+        alert('자신을 언팔로우 할 수는 없습니다.');
+        return;
+    }
+
+    if (null == userState.follows.find(_ => _.userId == action.payload.userId)) {
+        alert('팔로우 중인 사용자가 아닙다.');
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_UNFOLLOW]);
+    const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.userId.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId]);
+    webSocketState.socket.send(packet);
+}
 
 export function* callCreateChatRoomReq(action: PayloadAction<Domains.CreateChatRoomReq>) {
     if ('production' !== process.env.NODE_ENV)
@@ -20,7 +105,7 @@ export function* callCreateChatRoomReq(action: PayloadAction<Domains.CreateChatR
         return;
     }
 
-    const flag = new Uint8Array([Defines.PacketType.CREATE_CHAT_ROOM]);
+    const flag = new Uint8Array([Defines.ReqType.REQ_CREATE_CHAT_ROOM]);
     const bytesRoomOpenType = new Uint8Array([action.payload.openType]);
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesChatRoomName = new Uint8Array(Buffer.from(action.payload.roomName.trim(), 'utf-8'));
@@ -41,7 +126,7 @@ export function* callEnterChatRoomReq(action: PayloadAction<string>) {
         return;
     }
 
-    const flag = new Uint8Array([Defines.PacketType.ENTER_CHAT_ROOM]);
+    const flag = new Uint8Array([Defines.ReqType.REQ_ENTER_CHAT_ROOM]);
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.trim());
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const packet = Helpers.mergeBytesPacket([flag, bytesChatRoomId, bytesUserId]);
@@ -60,7 +145,7 @@ export function* callExitChatRoomReq(action: PayloadAction<string>) {
         return;
     }
 
-    const flag = new Uint8Array([Defines.PacketType.EXIT_CHAT_ROOM]);
+    const flag = new Uint8Array([Defines.ReqType.REQ_EXIT_CHAT_ROOM]);
     const bytesRoomId = Helpers.getByteArrayFromUUID(action.payload);
     const packet = Helpers.mergeBytesPacket([flag, bytesRoomId]);
     webSocketState.socket.send(packet);
@@ -92,7 +177,7 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
         return;
     }
 
-    const flag = new Uint8Array([Defines.PacketType.TALK_CHAT_ROOM]);
+    const flag = new Uint8Array([Defines.ReqType.REQ_TALK_CHAT_ROOM]);
     const bytesChatType = new Uint8Array([action.payload.type]);
     const bytesChatId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.roomId.trim());
@@ -130,7 +215,7 @@ export function* callSaveUserNameReq() {
         return;
     }
 
-    const flag = new Uint8Array([Defines.PacketType.CHANGE_USER_NAME]);
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_NAME]);
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserName]);

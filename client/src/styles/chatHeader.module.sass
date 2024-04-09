@@ -1,118 +1,118 @@
 .chatHeaderWrapper
-  width: 100%
-  max-height: 30vh
-  border-bottom: 1px solid #d9d9d9
-
-  .chatTitleWrapper
-    display: flex
-    justify-content: center
-    border: 0
-    padding: 10px
     width: 100%
-    text-align: center
-    font-size: 18px
-    font-weight: 700
+    max-height: 30vh
+    border-bottom: 1px solid #d9d9d9
 
-    .chatHeaderGNBButtonWrapper
-      flex: 0 0 30px
-      display: flex
-      justify-content: center
-      align-items: center
-      margin-left: 10px
-
-      .chatHeaderGNBButton
-        position: relative
-        border: 0
-        width: 30px
-        height: 20px
-        background: none
-
-        .gnbLine
-          position: absolute
-          width: 30px
-          height: 2px
-          background: #000000
-
-          &.gnbLine01
-            transition: all 0.5s
-            top: 0
-            transform: rotateZ(0deg)
-
-          &.gnbLine02
-            transition: all 0.5s
-            top: 9px
-            transform: rotateZ(0deg)
-
-          &.gnbLine03
-            transition: all 0.5s
-            bottom: 0
-            transform: rotateZ(0deg)
-
-        &:hover
-          cursor: pointer
-
-      &.active
-        .chatHeaderGNBButton
-          .gnbLine
-            &.gnbLine01
-              transition: all 0.5s
-              top: 9px
-              transform: rotateZ(405deg)
-
-            &.gnbLine02
-              transition: all 0.5s
-              transform: rotateZ(180deg)
-              opacity: 0
-
-            &.gnbLine03
-              transition: all 0.5s
-              bottom: 9px
-              transform: rotateZ(-405deg)
-
-    .chatHeaderLeftButtons
-      flex: 0 1 auto
-      display: flex
-      justify-content: flex-start
-      align-items: center
-
-      .chatRoomExit
+    .chatTitleWrapper
         display: flex
         justify-content: center
-        align-items: center
         border: 0
-        padding: 0 5px
-        font-size: 11px
-        background: none
+        padding: 10px
+        width: 100%
+        text-align: center
+        font-size: 18px
+        font-weight: 700
 
-        .chatRoomExitIcon
-          display: block
+        .chatHeaderLNBButtonWrapper
+            flex: 0 0 30px
+            display: flex
+            justify-content: center
+            align-items: center
+            margin-left: 10px
 
-        &:hover
-          cursor: pointer
+            .chatHeaderLNBButton
+                position: relative
+                border: 0
+                width: 30px
+                height: 20px
+                background: none
 
-    //.chatHeaderRightButtons
-    //  flex: 0 1 auto
-    //  display: flex
-    //  justify-content: flex-end
-    //  align-items: center
-    //
-    //  .chatRoomShare
-    //    padding: 5px
-    //    font-size: 11px
-    //
-    //  .chatRoomNotify
-    //    padding: 5px
-    //    font-size: 11px
+                .lnbLine
+                    position: absolute
+                    width: 30px
+                    height: 2px
+                    background: #000000
 
-    .chatTitle
-      flex: 1 1 auto
-      display: flex
-      justify-content: flex-start
-      align-items: center
-      margin-left: 10px
+                    &.lnbLine01
+                        transition: all 0.5s
+                        top: 0
+                        transform: rotateZ(0deg)
+
+                    &.lnbLine02
+                        transition: all 0.5s
+                        top: 9px
+                        transform: rotateZ(0deg)
+
+                    &.lnbLine03
+                        transition: all 0.5s
+                        bottom: 0
+                        transform: rotateZ(0deg)
+
+                &:hover
+                    cursor: pointer
+
+            &.active
+                .chatHeaderLNBButton
+                    .lnbLine
+                        &.lnbLine01
+                            transition: all 0.5s
+                            top: 9px
+                            transform: rotateZ(405deg)
+
+                        &.lnbLine02
+                            transition: all 0.5s
+                            transform: rotateZ(180deg)
+                            opacity: 0
+
+                        &.lnbLine03
+                            transition: all 0.5s
+                            bottom: 9px
+                            transform: rotateZ(-405deg)
+
+        .chatHeaderLeftButtons
+            flex: 0 1 auto
+            display: flex
+            justify-content: flex-start
+            align-items: center
+
+            .chatRoomExit
+                display: flex
+                justify-content: center
+                align-items: center
+                border: 0
+                padding: 0 5px
+                font-size: 11px
+                background: none
+
+                .chatRoomExitIcon
+                    display: block
+
+                &:hover
+                    cursor: pointer
+
+        //.chatHeaderRightButtons
+        //  flex: 0 1 auto
+        //  display: flex
+        //  justify-content: flex-end
+        //  align-items: center
+        //
+        //  .chatRoomShare
+        //    padding: 5px
+        //    font-size: 11px
+        //
+        //  .chatRoomNotify
+        //    padding: 5px
+        //    font-size: 11px
+
+        .chatTitle
+            flex: 1 1 auto
+            display: flex
+            justify-content: flex-start
+            align-items: center
+            margin-left: 10px
 
 
 @media (max-width: 700px)
-  .chatHeaderWrapper
-    .chatTitleWrapper
-      width: 100%
+    .chatHeaderWrapper
+        .chatTitleWrapper
+            width: 100%

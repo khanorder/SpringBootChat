@@ -2,6 +2,7 @@ package com.zangho.game.server.socketHandler.chat;
 
 import com.zangho.game.server.define.*;
 import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.*;
 import lombok.NonNull;
 import org.slf4j.Logger;
@@ -16,29 +17,32 @@ import java.util.*;
 public class SocketHandler extends TextWebSocketHandler {
 
     private final Logger logger = LoggerFactory.getLogger(SocketHandler.class);
+    private final boolean isDevelopment;
     private final SessionHandler sessionHandler;
-    private final ReceiveHandler receiveHandler;
+    private final ReqHandler reqHandler;
     private final UserService userService;
 
     public SocketHandler(
             SessionHandler sessionHandler,
-            ReceiveHandler receiveHandler,
+            ReqHandler reqHandler,
             UserService userService
     ) {
+        var config = System.getProperty("Config");
+        isDevelopment = null == config || !config.equals("production");
         this.sessionHandler = sessionHandler;
-        this.receiveHandler = receiveHandler;
+        this.reqHandler = reqHandler;
         this.userService = userService;
     }
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
-        receiveHandler.onAfterConnectionEstablished(session);
+        reqHandler.onAfterConnectionEstablished(session);
         super.afterConnectionEstablished(session);
     }
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession closeSession, @NonNull CloseStatus status) throws Exception {
-        receiveHandler.onAfterConnectionClosed(closeSession, status);
+        reqHandler.onAfterConnectionClosed(closeSession, status);
         super.afterConnectionClosed(closeSession, status);
     }
 
@@ -54,43 +58,58 @@ public class SocketHandler extends TextWebSocketHandler {
         if (1 > packet.length)
             return;
 
-        var optType = PacketType.getType(packet[0]);
+        var optType = ReqType.getType(packet[0]);
         if (optType.isEmpty())
             return;
 
         var type = optType.get();
         Optional<User> connectedUser = switch (type) {
-            case CHECK_CONNECTION -> Optional.empty();
+            case REQ_CHECK_CONNECTION -> Optional.empty();
             default -> userService.getConnectedUser(session);
         };
 
+        if (isDevelopment)
+            logger.info(type.name() + ": " + Helpers.getSessionIP(session));
+
         switch (type) {
-            case CHECK_CONNECTION:
-                receiveHandler.onCheckConnection(type, session, packet);
+            case REQ_CHECK_CONNECTION:
+                reqHandler.onCheckConnection(type, session, packet);
                 break;
 
-            case CHECK_AUTHENTICATION:
-                receiveHandler.onCheckAuthentication(type, session, connectedUser, packet);
+            case REQ_CHECK_AUTHENTICATION:
+                reqHandler.onCheckAuthentication(session, connectedUser, packet);
                 break;
 
-            case CHANGE_USER_NAME:
-                receiveHandler.onChangeUserName(type, session, connectedUser, packet);
+            case REQ_CONNECTED_USERS:
+                reqHandler.onConnectedUsers(session);
                 break;
 
-            case CREATE_CHAT_ROOM:
-                receiveHandler.onCreateChatRoom(type, session, connectedUser, packet);
+            case REQ_FOLLOW:
+                reqHandler.onFollow(session, connectedUser, packet);
                 break;
 
-            case EXIT_CHAT_ROOM:
-                receiveHandler.onExitChatRoom(type, session, connectedUser, packet);
+            case REQ_UNFOLLOW:
+                reqHandler.onUnfollow(session, connectedUser, packet);
                 break;
 
-            case ENTER_CHAT_ROOM:
-                receiveHandler.onEnterChatRoom(type, session, connectedUser, packet);
+            case REQ_CHANGE_USER_NAME:
+                reqHandler.onChangeUserName(session, connectedUser, packet);
                 break;
 
-            case TALK_CHAT_ROOM:
-                receiveHandler.onTalkChatRoom(type, session, connectedUser, packet);
+            case REQ_CREATE_CHAT_ROOM:
+                reqHandler.onCreateChatRoom(session, connectedUser, packet);
+                break;
+
+            case REQ_ENTER_CHAT_ROOM:
+                reqHandler.onEnterChatRoom(session, connectedUser, packet);
+                break;
+
+            case REQ_EXIT_CHAT_ROOM:
+                reqHandler.onExitChatRoom(session, connectedUser, packet);
+                break;
+
+            case REQ_TALK_CHAT_ROOM:
+                reqHandler.onTalkChatRoom(session, connectedUser, packet);
                 break;
 
             default:

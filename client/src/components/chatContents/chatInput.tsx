@@ -2,14 +2,14 @@ import {ChangeEvent, Dispatch, RefObject, SetStateAction, useCallback, useEffect
 import styles from "@/styles/chat.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import Image from "next/image";
-import Picture from "public/images/Picture_icon_BLACK.svg";
+import Picture from "../../../public/images/picture.svg";
 import {Helpers} from "@/helpers";
 import isEmpty from "lodash/isEmpty";
 import {sendMessageReq} from "@/stores/reducers/webSocket";
 import {v4 as uuid} from "uuid";
 import {Defines} from "@/defines";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import {setIsActiveChatImageInput} from "@/stores/reducers/dialog";
+import {setIsActiveChatImageInput} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 

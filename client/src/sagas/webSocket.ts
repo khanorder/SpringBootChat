@@ -11,7 +11,7 @@ import {
     enterChatRoomReq,
     exitChatRoomReq,
     sendMessageReq,
-    saveUserNameReq
+    saveUserNameReq, connectedUsersReq, followReq, unfollowReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -22,24 +22,25 @@ import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {
     addChatRoomRes,
-    checkAuthenticationRes,
+    checkAuthenticationRes, connectedUsersRes,
     createChatRoomRes,
     enterChatRoomRes,
-    exitChatRoomRes,
+    exitChatRoomRes, followerRes, followRes,
     historyChatRoomRes,
-    noticeChangeNameChatRoomRes,
+    noticeChangeNameChatRoomRes, noticeConnectedUserRes, noticeDisconnectedUserRes,
     noticeEnterChatRoomRes,
     noticeExitChatRoomRes, removeChatRoomRes,
-    talkChatRoomRes,
+    talkChatRoomRes, unfollowerRes, unfollowRes,
     updateChatRoomRes,
     updateChatRoomsRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
+    callConnectedUsersReq,
     callCreateChatRoomReq,
     callEnterChatRoomReq,
-    callExitChatRoomReq,
+    callExitChatRoomReq, callFollowReq,
     callSaveUserNameReq,
-    callSendMessageReq
+    callSendMessageReq, callUnfollowReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -124,7 +125,7 @@ export function* checkConnection (socket: WebSocket) {
                         yield setConnectionState(readyState);
 
                         try {
-                            const flag = new Uint8Array([Defines.PacketType.CHECK_CONNECTION]);
+                            const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_CONNECTION]);
                             const packet = new Uint8Array(flag.length);
                             packet.set(flag);
                             socket.send(packet);
@@ -166,7 +167,7 @@ function* onOpen (socket: WebSocket) {
                 try {
                     const event: Event = yield take(channel);
                     yield call(setConnectionState, WebSocket.OPEN);
-                    const flag = new Uint8Array([Defines.PacketType.CHECK_AUTHENTICATION]);
+                    const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
                     const userId = Helpers.getCookie("userId");
                     const bytesUserId = new Uint8Array(isEmpty(userId) || 36 !== userId.length ? 0 : 16);
                     if (!isEmpty(userId) && 36 === userId.length)
@@ -257,55 +258,83 @@ function* onMessage (socket: WebSocket) {
                     const packetData = Helpers.getDataBytes(event);
 
                     switch (packetFlag[0]) {
-                        case Defines.PacketType.CHECK_AUTHENTICATION:
+                        case Defines.ResType.RES_CHECK_AUTHENTICATION:
                             yield call(checkAuthenticationRes, packetData);
                             break;
 
-                        case Defines.PacketType.CREATE_CHAT_ROOM:
+                        case Defines.ResType.RES_CONNECTED_USERS:
+                            yield call(connectedUsersRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_CONNECTED_USER:
+                            yield call(noticeConnectedUserRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_DISCONNECTED_USER:
+                            yield call(noticeDisconnectedUserRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_FOLLOW:
+                            yield call(followRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_UNFOLLOW:
+                            yield call(unfollowRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_FOLLOWER:
+                            yield call(followerRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_UNFOLLOWER:
+                            yield call(unfollowerRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_CREATE_CHAT_ROOM:
                             yield call(createChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.ADD_CHAT_ROOM:
+                        case Defines.ResType.RES_ADD_CHAT_ROOM:
                             yield call(addChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.REMOTE_CHAT_ROOM:
+                        case Defines.ResType.RES_REMOTE_CHAT_ROOM:
                             yield call(removeChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.UPDATE_CHAT_ROOMS:
+                        case Defines.ResType.RES_UPDATE_CHAT_ROOMS:
                             yield call(updateChatRoomsRes, packetData);
                             break;
 
-                        case Defines.PacketType.UPDATE_CHAT_ROOM:
+                        case Defines.ResType.RES_UPDATE_CHAT_ROOM:
                             yield call(updateChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.ENTER_CHAT_ROOM:
+                        case Defines.ResType.RES_ENTER_CHAT_ROOM:
                             yield call(enterChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.EXIT_CHAT_ROOM:
+                        case Defines.ResType.RES_EXIT_CHAT_ROOM:
                             yield call(exitChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.NOTICE_ENTER_CHAT_ROOM:
+                        case Defines.ResType.RES_NOTICE_ENTER_CHAT_ROOM:
                             yield call(noticeEnterChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.NOTICE_EXIT_CHAT_ROOM:
+                        case Defines.ResType.RES_NOTICE_EXIT_CHAT_ROOM:
                             yield call(noticeExitChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.NOTICE_CHANGE_NAME_CHAT_ROOM:
+                        case Defines.ResType.RES_NOTICE_CHANGE_NAME_CHAT_ROOM:
                             yield call(noticeChangeNameChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.TALK_CHAT_ROOM:
+                        case Defines.ResType.RES_TALK_CHAT_ROOM:
                             yield call(talkChatRoomRes, packetData);
                             break;
 
-                        case Defines.PacketType.HISTORY_CHAT_ROOM:
+                        case Defines.ResType.RES_HISTORY_CHAT_ROOM:
                             yield call(historyChatRoomRes, packetData);
                             break;
                     }
@@ -374,6 +403,9 @@ function* callStartReconnecting() {
 export function* watchWebSocket() {
     yield takeLatest(initSocket, callInitSocket);
     yield takeLatest(startReconnecting, callStartReconnecting);
+    yield takeLatest(connectedUsersReq, callConnectedUsersReq);
+    yield takeLatest(followReq, callFollowReq);
+    yield takeLatest(unfollowReq, callUnfollowReq);
     yield takeLatest(createChatRoomReq, callCreateChatRoomReq);
     yield takeLatest(enterChatRoomReq, callEnterChatRoomReq);
     yield takeLatest(exitChatRoomReq, callExitChatRoomReq);

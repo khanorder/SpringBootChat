@@ -6,12 +6,12 @@ import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
 import Image from "next/image";
-import PlusIcon from "../../../public/images/plus-svgrepo-com.svg";
-import {toggleIsActiveCreateChatRoom} from "@/stores/reducers/dialog";
+import PlusIcon from "../../../public/images/plus.svg";
+import {toggleIsActiveCreateChatRoom} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 const CreateChatRoomDialog = dynamic(() => import("@/components/dialogs/createChatRoomDialog"), { ssr: false });
 
-export default function ChatRoomList() {
+export default function ChatRooms() {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
@@ -94,7 +94,7 @@ export default function ChatRoomList() {
     return (
         <>
             <CreateChatRoomDialog />
-            <div className={styles.chatRoomListWrapper}>
+            <div className={`${styles.chatRoomListWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
                 <ul className={styles.chatRoomList}>
                     {list()}
                 </ul>

@@ -8,12 +8,22 @@ import {
     setChatRoomUsers,
     addChatData,
     setChatDatas,
-    ChatState, exitChatRoom, enterChatRoom
+    exitChatRoom,
+    enterChatRoom,
+    ChatState
 } from '@/stores/reducers/chat';
 import {
+    addConnectedUser,
+    addFollow,
+    addFollower,
+    removeConnectedUser,
+    removeFollow, removeFollower,
     setAuthState,
+    setConnectedUsers,
+    setFollowers,
+    setFollows,
     setUserId,
-    setUserName, UserState
+    setUserName
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -37,6 +47,8 @@ export function* checkAuthenticationRes(data: Uint8Array) {
             yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
             yield put(setUserId(response.userId));
             yield put(setUserName(response.userName));
+            yield put(setFollows(response.follows));
+            yield put(setFollowers(response.followers));
             yield put(setChatRooms(response.chatRooms));
             Helpers.setCookie("userId", response.userId, 3650);
 
@@ -51,6 +63,168 @@ export function* checkAuthenticationRes(data: Uint8Array) {
             alert('유저 생성 실패.');
             break;
     }
+
+    return response;
+}
+
+export function* connectedUsersRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - connectedUsers`);
+
+    const response = Domains.ConnectedUsersRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    yield put(setConnectedUsers(response.users));
+    return response;
+}
+
+export function* noticeConnectedUserRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeConnectedUser`);
+
+    const response = Domains.NoticeConnectedUserRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    if (null == response.user) {
+        return null;
+    }
+
+    yield put(addConnectedUser(response.user));
+    return response;
+}
+
+export function* noticeDisconnectedUserRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeDisconnectedUser`);
+
+    const response = Domains.NoticeDisconnectedUserRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    if (isEmpty(response.userId)) {
+        return null;
+    }
+
+    yield put(removeConnectedUser(response.userId));
+    return response;
+}
+
+export function* followRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - followRes`);
+
+    const response = Domains.FollowRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+    
+    switch (response.result) {
+        case Errors.Follow.NONE:
+            if (null != response.user)
+                yield put(addFollow(response.user));
+            break;
+
+        case Errors.Follow.AUTH_REQUIRED:
+            alert('로그인 후 이용해 주세요.');
+            break;
+
+        case Errors.Follow.NOT_FOUND_USER:
+            alert('사용자를 찾을 수 없습니다.');
+            break;
+
+        case Errors.Follow.CAN_NOT_FOLLOW_SELF:
+            alert('자신은 팔로우 할 수 없습니다.');
+            break;
+
+        case Errors.Follow.ALREADY_FOLLOWED:
+            alert('팔로우 중인 사용자 입니다.');
+            break;
+
+        case Errors.Follow.FAILED_TO_FOLLOW:
+            alert('팔로우하지 못했습니다.');
+            break;
+    }
+
+    return response;
+}
+
+export function* unfollowRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - followRes`);
+
+    const response = Domains.UnfollowRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.Unfollow.NONE:
+            if (!isEmpty(response.userId))
+                yield put(removeFollow(response.userId));
+            break;
+
+        case Errors.Unfollow.AUTH_REQUIRED:
+            alert('로그인 후 이용해 주세요.');
+            break;
+
+        case Errors.Unfollow.NOT_FOUND_USER:
+            alert('사용자를 찾을 수 없습니다.');
+            break;
+
+        case Errors.Unfollow.CAN_NOT_UNFOLLOW_SELF:
+            alert('자신은 팔로우 할 수 없습니다.');
+            break;
+
+        case Errors.Unfollow.NOT_FOUND_FOLLOWED:
+            alert('팔로우 중인 사용자가 아닙니다.');
+            break;
+
+        case Errors.Unfollow.FAILED_TO_UNFOLLOW:
+            alert('언팔로우하지 못했습니다.');
+            break;
+    }
+
+    return response;
+}
+
+export function* followerRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - followerRes`);
+
+    const response = Domains.FollowerRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    if (null != response.user)
+        yield put(addFollower(response.user));
+
+    return response;
+}
+
+export function* unfollowerRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - unfollowerRes`);
+
+    const response = Domains.UnfollowerRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    if (!isEmpty(response.userId))
+        yield put(removeFollower(response.userId));
 
     return response;
 }
@@ -154,9 +328,9 @@ export function* updateChatRoomRes(data: Uint8Array) {
     const response = Domains.UpdateChatRoomUsersRes.decode(data);
     yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: []}));
     if (response && 0 < response.userIds.length) {
-        const list: Domains.ChatRoomUser[] = [];
+        const list: Domains.User[] = [];
         for (let i = 0; i < response.userIds.length; i++)
-            list.push(new Domains.ChatRoomUser(response.userIds[i], response.userNames[i]));
+            list.push(new Domains.User(response.userIds[i], response.userNames[i]));
 
         yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: list}));
     }

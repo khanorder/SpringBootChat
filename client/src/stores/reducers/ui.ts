@@ -2,31 +2,31 @@ import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 import isEmpty from "lodash/isEmpty";
 import {Defines} from "@/defines";
 
-interface DialogsState {
-    activeTab: Defines.ActiveTab;
-    isActiveGNB: boolean;
+interface UIState {
+    activeTab: Defines.TabType;
+    isActiveLNB: boolean;
     isActiveCreateChatRoom: boolean;
     isActiveChatImageInput: boolean;
     isActiveChatImageDetail: boolean;
 }
 
-const initialState: DialogsState = {
-    activeTab: Defines.ActiveTab.Friend,
-    isActiveGNB: false,
+const initialState: UIState = {
+    activeTab: Defines.TabType.FOLLOW,
+    isActiveLNB: false,
     isActiveCreateChatRoom: false,
     isActiveChatImageInput: false,
     isActiveChatImageDetail: false
 }
 
-const dialogsStateSlice = createSlice({
-    name: 'DialogsState',
+const uiStateSlice = createSlice({
+    name: 'UIState',
     initialState,
     reducers: {
-        setActiveTab: (state, action: PayloadAction<Defines.ActiveTab>) => {
+        setActiveTab: (state, action: PayloadAction<Defines.TabType>) => {
             state.activeTab = action.payload;
         },
-        setIsActiveGNB: (state, action: PayloadAction<boolean>) => {
-            state.isActiveGNB = action.payload;
+        setIsActiveLNB: (state, action: PayloadAction<boolean>) => {
+            state.isActiveLNB = action.payload;
         },
         setIsActiveCreateChatRoom: (state, action: PayloadAction<boolean>) => {
             state.isActiveCreateChatRoom = action.payload;
@@ -37,8 +37,8 @@ const dialogsStateSlice = createSlice({
         setIsActiveChatImageDetail: (state, action: PayloadAction<boolean>) => {
             state.isActiveChatImageDetail = action.payload;
         },
-        toggleIsActiveGNB: (state) => {
-            state.isActiveGNB = !state.isActiveGNB;
+        toggleIsActiveLNB: (state) => {
+            state.isActiveLNB = !state.isActiveLNB;
         },
         toggleIsActiveCreateChatRoom: (state) => {
             state.isActiveCreateChatRoom = !state.isActiveCreateChatRoom;
@@ -52,17 +52,17 @@ const dialogsStateSlice = createSlice({
     }
 });
 
-export type { DialogsState };
+export type { UIState };
 export const {
     setActiveTab,
-    setIsActiveGNB,
+    setIsActiveLNB,
     setIsActiveCreateChatRoom,
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
-    toggleIsActiveGNB,
+    toggleIsActiveLNB,
     toggleIsActiveCreateChatRoom,
     toggleIsActiveChatImageInput,
     toggleIsActiveChatImageDetail
-} = dialogsStateSlice.actions;
+} = uiStateSlice.actions;
 
-export default dialogsStateSlice.reducer;
+export default uiStateSlice.reducer;

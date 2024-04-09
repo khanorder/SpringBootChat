@@ -1,0 +1,60 @@
+.chatGNBWrapper
+    position: fixed
+    left: 0
+    border-right: 1px solid #d9d9d9
+    height: 100vh
+
+
+    .buttonWrapper
+        flex: 0 0 auto
+        margin: 0
+
+        .button
+            display: flex
+            flex-direction: column
+            align-items: center
+            border: 0
+            padding: 10px 20px 5px
+            width: 100%
+            background: none
+
+            &:hover
+                cursor: pointer
+
+            .buttonIcon
+                opacity: 0.3
+
+            .buttonLabel
+                opacity: 0.3
+                font-weight: 400
+
+        &.activeTab
+            .button
+                .buttonIcon
+                    opacity: 1
+
+                .buttonLabel
+                    opacity: 1
+                    font-weight: 700
+
+    .buttonWrapperEmpty
+        flex: 1 0 auto
+
+    &.dev
+        .buttonWrapper
+            .button
+                .buttonIcon
+                    opacity: 0
+
+                .buttonLabel
+                    opacity: 0.1
+
+@media (max-width: 700px)
+    .chatGNBWrapper
+        bottom: 0
+        display: flex
+        justify-content: center
+        border-top: 1px solid #d9d9d9
+        width: 100%
+        height: auto
+        max-height: 75px

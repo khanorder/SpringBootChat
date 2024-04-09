@@ -1,8 +1,8 @@
 package com.zangho.game.server.configuration;
 
 import com.zangho.game.server.service.*;
-import com.zangho.game.server.socketHandler.chat.ReceiveHandler;
-import com.zangho.game.server.socketHandler.chat.SendHandler;
+import com.zangho.game.server.socketHandler.chat.ReqHandler;
+import com.zangho.game.server.socketHandler.chat.ResHandler;
 import com.zangho.game.server.socketHandler.chat.SocketHandler;
 import com.zangho.game.server.socketHandler.chat.SessionHandler;
 import org.springframework.context.annotation.Bean;
@@ -34,13 +34,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     @Bean
-    public SendHandler sendHandler() {
-        return new SendHandler(sessionHandler(), userService);
+    public ResHandler sendHandler() {
+        return new ResHandler(sessionHandler(), userService);
     }
 
     @Bean
-    public ReceiveHandler receiveHandler() {
-        return new ReceiveHandler(sessionHandler(), sendHandler(), userService, chatRoomService, lineNotifyService, messageService);
+    public ReqHandler receiveHandler() {
+        return new ReqHandler(sessionHandler(), sendHandler(), userService, chatRoomService, lineNotifyService, messageService);
     }
 
     @Override

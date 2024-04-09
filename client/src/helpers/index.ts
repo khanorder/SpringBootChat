@@ -284,7 +284,7 @@ export namespace Helpers {
             case Defines.RoomOpenType.PUBLIC:
                 return "공개";
 
-            case Defines.RoomOpenType.FRIEND:
+            case Defines.RoomOpenType.FOLLOW:
                 return "친구 공개";
 
             default:

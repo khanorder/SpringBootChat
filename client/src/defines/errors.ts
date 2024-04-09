@@ -14,6 +14,24 @@ export namespace Errors {
         REQUIRED_ROOM_ID = 5,
     }
 
+    export enum Follow {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        NOT_FOUND_USER = 2,
+        CAN_NOT_FOLLOW_SELF = 3,
+        ALREADY_FOLLOWED = 4,
+        FAILED_TO_FOLLOW = 5,
+    }
+
+    export enum Unfollow {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        NOT_FOUND_USER = 2,
+        CAN_NOT_UNFOLLOW_SELF = 3,
+        NOT_FOUND_FOLLOWED = 4,
+        FAILED_TO_UNFOLLOW = 5,
+    }
+
     export enum ExitChatRoom {
         NONE = 0,
         NOT_FOUND_USER = 1,

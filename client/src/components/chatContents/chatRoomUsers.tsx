@@ -56,7 +56,7 @@ export default function ChatRoomUsers() {
         if (!chat || isEmpty(chat.currentChatRoomId))
             return <></>;
 
-        let chatRoomUsers: Domains.ChatRoomUser[] = [];
+        let chatRoomUsers: Domains.User[] = [];
         const chatRoom = chat.chatRooms.find(_ => _.roomId == chat.currentChatRoomId);
         if (chatRoom)
             chatRoomUsers = chatRoom.users;

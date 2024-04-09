@@ -117,17 +117,17 @@ const chatSlice = createSlice({
 
 export interface AddChatRoomUserProps {
     roomId: string;
-    chatRoomUser: Domains.ChatRoomUser;
+    chatRoomUser: Domains.User;
 }
 
 export interface RemoveChatRoomUserProps {
     roomId: string;
-    chatRoomUser: Domains.ChatRoomUser;
+    chatRoomUser: Domains.User;
 }
 
 export interface SetChatRoomUsersProps {
     roomId: string;
-    chatRoomUsers: Domains.ChatRoomUser[];
+    chatRoomUsers: Domains.User[];
 }
 
 export interface AddChatDataProps {

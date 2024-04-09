@@ -1,18 +1,18 @@
 import {ChangeEvent, useCallback, useEffect, useRef, useState} from "react";
-import styles from "@/styles/gnbDialog.module.sass";
+import styles from "@/styles/lnbDialog.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
 import {createChatRoomReq} from "@/stores/reducers/webSocket";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import {setIsActiveGNB} from "@/stores/reducers/dialog";
+import {setIsActiveLNB} from "@/stores/reducers/ui";
 import ChatRoomUsers from "@/components/chatContents/chatRoomUsers";
 
-export default function GNBDialog() {
+export default function LnbDialog() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
-    const dialogState = useAppSelector(state => state.dialog);
+    const ui = useAppSelector(state => state.ui);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
     const dispatch = useAppDispatch();
@@ -28,17 +28,17 @@ export default function GNBDialog() {
 
     useEffect(() => {
         if (!firstRender.current) {
-            if (dialogState.isActiveGNB) {
+            if (ui.isActiveLNB) {
                 setDialogWrapperClass(`${styles.dialogWrapper} ${styles.active}`);
             } else {
                 setDialogWrapperClass(`${styles.dialogWrapper}`);
             }
         }
 
-    }, [firstRender, dialogState, setDialogWrapperClass]);
+    }, [firstRender, ui, setDialogWrapperClass]);
 
     const hideDialog = useCallback(() => {
-        dispatch(setIsActiveGNB(false));
+        dispatch(setIsActiveLNB(false));
     }, [dispatch]);
 
     const dialog = useCallback(() => {

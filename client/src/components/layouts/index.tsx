@@ -4,8 +4,11 @@ import {useAppSelector} from "@/hooks";
 import style from "@/styles/layout.module.sass";
 import {Defines} from "@/defines";
 import dynamic from "next/dynamic";
-const GNBDialog = dynamic(() => import("@/components/dialogs/gnbDialog"), { ssr: false });
-const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), { ssr: false });
+import isEmpty from "lodash/isEmpty";
+
+const LNBDialog = dynamic(() => import("@/components/dialogs/lnbDialog"), {ssr: false});
+const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
+const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), {ssr: false});
 
 export const metadata: Metadata = {
     title: 'chat client',
@@ -14,6 +17,7 @@ export const metadata: Metadata = {
 
 export default function Layout({children}: { children: ReactNode }) {
     const firstRender = useRef(true);
+    const chat = useAppSelector(state => state.chat);
     const webSocket = useAppSelector(state => state.webSocket);
     const user = useAppSelector(state => state.user);
     const mainWrapper = createRef<HTMLDivElement>();
@@ -38,25 +42,41 @@ export default function Layout({children}: { children: ReactNode }) {
     }, [firstRender, handleResize]);
     //#endregion
 
-    if (Defines.AuthStateType.ALREADY_SIGN_IN == user.authState) {
-        return <></>;
-    }
+    const layout = useCallback(() => {
+        if (Defines.AuthStateType.ALREADY_SIGN_IN == user.authState) {
+            return <></>;
+        }
+
+        const gnb = isEmpty(chat.currentChatRoomId) ? <ChatGNB/> : <></>;
+        let contents = children;
+
+        if (!webSocket) {
+
+        } else {
+            switch (webSocket.connectionState) {
+                case WebSocket.CONNECTING:
+                    contents = (
+                        <div className={style.loaderWrapper}>
+                            <div className={style.loader}></div>
+                        </div>
+                    );
+                    break;
+            }
+        }
+
+        return (
+            <>
+                <LNBDialog/>
+                <ChatHeader/>
+                {contents}
+                {gnb}
+            </>
+        );
+    }, [children, webSocket, chat, user]);
 
     return (
-        webSocket
-            ?
-            <main className={WebSocket.OPEN === webSocket.connectionState ? style.main : style.loaderWrapper} ref={mainWrapper}>
-                <GNBDialog />
-                <ChatHeader />
-                {
-                    WebSocket.OPEN === webSocket.connectionState
-                        ?
-                        children
-                        :
-                        <div className={style.loader}></div>
-                }
-            </main>
-            :
-            <></>
-    )
+        <main className={style.main} ref={mainWrapper}>
+            {layout()}
+        </main>
+    );
 }

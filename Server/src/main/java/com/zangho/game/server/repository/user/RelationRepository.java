@@ -1,9 +1,10 @@
 package com.zangho.game.server.repository.user;
 
 import com.zangho.game.server.define.RelationState;
-import com.zangho.game.server.domain.user.FriendInterface;
-import com.zangho.game.server.domain.user.Invitation;
+import com.zangho.game.server.domain.user.RelatedUserInterface;
 import com.zangho.game.server.domain.user.Relation;
+import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.domain.user.UserInterface;
 import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,10 +21,21 @@ public interface RelationRepository extends JpaRepository<Relation, String> {
     <S extends Relation> List<S> findAll(Example<S> example);
 
     @Override
+    void delete(Relation entity);
+
+    @Override
+    boolean existsById(String s);
+
+    @Override
     Optional<Relation> findById(String id);
 
-    @Query(value = "SELECT b.id AS userId, b.name AS userName, a.relatedAt FROM relation AS a LEFT JOIN users AS b ON a.targetId = b.id WHERE a.userId = :userId AND a.relationState = :relationState", nativeQuery = true)
-    List<FriendInterface> findFriends(String userId, RelationState relationState);
+    Optional<Relation> findByUserIdAndTargetIdAndRelationState(String userId, String targetId, RelationState relationState);
+
+    @Query(value = "SELECT b.id AS id, b.name AS name FROM relations AS a LEFT JOIN users AS b ON a.targetId = b.id WHERE a.userId = :userId AND a.relationState = :relationState", nativeQuery = true)
+    List<UserInterface> findMineRelatedUsers(String userId, RelationState relationState);
+
+    @Query(value = "SELECT b.id AS id, b.name AS name FROM relations AS a LEFT JOIN users AS b ON a.userId = b.id WHERE a.targetId = :userId AND a.relationState = :relationState", nativeQuery = true)
+    List<UserInterface> findYourRelatedUsers(String userId, RelationState relationState);
 
     @Override
     long count();

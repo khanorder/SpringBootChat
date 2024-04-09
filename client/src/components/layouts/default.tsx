@@ -1,21 +1,25 @@
 import type {Metadata} from 'next'
 import {ReactNode} from "react";
 import Head from "next/head";
+import dynamic from "next/dynamic";
+import {useAppSelector} from "@/hooks";
+const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), { ssr: false });
 
 export const metadata: Metadata = {
     title: 'chat client',
     description: 'chat client',
 }
 
-export default function DefaultLayout({children}: { children: ReactNode }) {
-    const title: string = '채팅 샘플';
-    const subject: string = '채팅 샘플';
-    const description: string = '웹소켓 구현, 채팅 샘플';
-    const keyword: string = '채팅 샘플, 웹소캣, 채팅방';
-    const author: string = '배장호';
-    const copyright: string = '배장호';
-    const url: string = 'chat.baejangho.com';
-    const ogImage: string = '/images/logo-m3_gmbaejangho.gif';
+export default function MainLayout({children}: { children: ReactNode }) {
+    const appConfigs = useAppSelector(state => state.appConfigs);
+    const title: string = appConfigs.name;
+    const subject: string = appConfigs.name;
+    const description: string = appConfigs.description;
+    const keyword: string = appConfigs.keyword;
+    const author: string = appConfigs.author;
+    const copyright: string = appConfigs.copyright;
+    const url: string = appConfigs.url;
+    const ogImage: string = appConfigs.ogImage;
 
     return (
         <>
@@ -42,6 +46,7 @@ export default function DefaultLayout({children}: { children: ReactNode }) {
                 <meta name="twitter:image" content={ogImage}/>
             </Head>
             {children}
+            <ChatGNB />
         </>
     )
 }

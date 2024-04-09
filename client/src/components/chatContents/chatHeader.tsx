@@ -6,14 +6,14 @@ import styles from "@/styles/chatHeader.module.sass";
 import Image from "next/image";
 import ArrowLeftIcon from "public/images/arrow-left.svg";
 import {CommonAPI} from "@/apis/commonAPI";
-import {toggleIsActiveGNB} from "@/stores/reducers/dialog";
+import {toggleIsActiveLNB} from "@/stores/reducers/ui";
 import {Defines} from "@/defines";
 
 export default function ChatHeader() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
-    const dialog = useAppSelector(state => state.dialog);
+    const ui = useAppSelector(state => state.ui);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
     const dispatch = useAppDispatch();
@@ -60,27 +60,34 @@ export default function ChatHeader() {
     }, [chat, user]);
 
     const title = useCallback(() => {
-        let title = !appConfigs.isProd ? appConfigs.name : "";
+        let title = appConfigs.isProd ? appConfigs.name : "";
         if (chat && !isEmpty(chat.currentChatRoomId)) {
             const chatRoom = chat.chatRooms.find(_ => _.roomId == chat.currentChatRoomId);
             if (chatRoom)
                 title = chatRoom.roomName;
         } else {
-            switch (dialog.activeTab) {
-                case Defines.ActiveTab.Friend:
+            switch (ui.activeTab) {
+                case Defines.TabType.FOLLOW:
                     title = "친구";
                     break;
 
-                case Defines.ActiveTab.Chat:
+                case Defines.TabType.CHAT:
                     title = "채팅";
+                    break;
+
+                case Defines.TabType.SEARCH:
+                    title = "검색";
                     break;
             }
         }
 
+        if (!appConfigs.isProd)
+            title = "테스트";
+
         return (
             <span className={styles.chatTitle}>{title}</span>
         );
-    }, [appConfigs, chat, dialog]);
+    }, [appConfigs, chat, ui]);
 
     const leftButtons = useCallback(() => {
         if (!chat || isEmpty(chat.currentChatRoomId))
@@ -93,32 +100,32 @@ export default function ChatHeader() {
         );
     }, [chat, exitChatRoom]);
 
-    const toggleGNB = useCallback(() => {
-        dispatch(toggleIsActiveGNB());
+    const toggleLNB = useCallback(() => {
+        dispatch(toggleIsActiveLNB());
     }, [dispatch]);
 
-    const gnb = useCallback(() => {
-        let gnbButtonWrapperClass = styles.chatHeaderGNBButtonWrapper;
-        if (dialog.isActiveGNB)
-            gnbButtonWrapperClass += ' ' + styles.active;
+    const lnb = useCallback(() => {
+        let lnbButtonWrapperClass = styles.chatHeaderLNBButtonWrapper;
+        if (ui.isActiveLNB)
+            lnbButtonWrapperClass += ' ' + styles.active;
 
         return (
-            <div className={gnbButtonWrapperClass}>
-                <button className={styles.chatHeaderGNBButton} onClick={toggleGNB}>
-                    <div className={`${styles.gnbLine} ${styles.gnbLine01}`}></div>
-                    <div className={`${styles.gnbLine} ${styles.gnbLine02}`}></div>
-                    <div className={`${styles.gnbLine} ${styles.gnbLine03}`}></div>
+            <div className={lnbButtonWrapperClass}>
+                <button className={styles.chatHeaderLNBButton} onClick={toggleLNB}>
+                    <div className={`${styles.lnbLine} ${styles.lnbLine01}`}></div>
+                    <div className={`${styles.lnbLine} ${styles.lnbLine02}`}></div>
+                    <div className={`${styles.lnbLine} ${styles.lnbLine03}`}></div>
                 </button>
             </div>
         );
-    }, [dialog, toggleGNB]);
+    }, [ui, toggleLNB]);
 
     return (
         <div className={styles.chatHeaderWrapper}>
             <div className={styles.chatTitleWrapper}>
                 {leftButtons()}
                 {title()}
-                {gnb()}
+                { isEmpty(chat.currentChatRoomId) ? <></> : lnb()}
             </div>
         </div>
     );

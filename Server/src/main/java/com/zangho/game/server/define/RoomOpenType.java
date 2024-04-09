@@ -9,7 +9,7 @@ import java.util.Optional;
 public enum RoomOpenType implements Types {
     PRIVATE(0),
     PUBLIC(1),
-    FRIEND(2);
+    FOLLOW(2);
 
     private final int number;
 

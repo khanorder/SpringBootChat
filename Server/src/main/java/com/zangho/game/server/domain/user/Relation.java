@@ -18,7 +18,6 @@ import java.util.Date;
 public class Relation {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Nonnull
     @Column(length = 36, nullable = false)
     private String id;
 
@@ -34,7 +33,6 @@ public class Relation {
     @Column(nullable = false)
     private RelationState relationState;
 
-    @Nonnull
     @CreationTimestamp
     @Column(length = 6, nullable = false)
     Date relatedAt;

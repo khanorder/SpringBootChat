@@ -13,8 +13,7 @@ import Head from "next/head";
 import dynamic from "next/dynamic";
 import {setIsProd} from "@/stores/reducers/appConfigs";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
-const ChatRoomLayout = dynamic(() => import("@/components/layouts/chatRoom"), { ssr: false });
-const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), { ssr: false });
+const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
 const ChatInput = dynamic(() => import("@/components/chatContents/chatInput"), { ssr: false });
 const ChatImageInputDialog = dynamic(() => import("@/components/dialogs/chatImageInputDialog"), { ssr: false });
 const NotFoundChatRoom = dynamic(() => import("@/components/chatContents/notFoundChatRoom"), { ssr: false });
@@ -142,7 +141,7 @@ function ChatRoom({isProd, roomId, roomIdBase62, roomName, roomOpenType, serverH
 ChatRoom.getLayout = function getLayout(page: ReactElement) {
     return (
         <Layout>
-            <ChatRoomLayout>{page}</ChatRoomLayout>
+            <DefaultLayout>{page}</DefaultLayout>
         </Layout>
     );
 }

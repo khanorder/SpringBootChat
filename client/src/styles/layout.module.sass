@@ -1,25 +1,3 @@
-.loaderWrapper
-    position: absolute
-    display: flex
-    overflow: hidden
-    justify-content: center
-    margin-left: auto
-    width: 100%
-    top: calc(50% - 25px)
-
-    .loader
-        width: 50px
-        padding: 8px
-        aspect-ratio: 1
-        border-radius: 50%
-        background: #000000
-        --_m: conic-gradient(#0000 10%, #000000), linear-gradient(#000000, #000000) content-box
-        -webkit-mask: var(--_m)
-        mask: var(--_m)
-        -webkit-mask-composite: source-out
-        mask-composite: subtract
-        animation: l3 1s infinite linear
-
 .main
     display: flex
     flex-direction: column
@@ -29,6 +7,28 @@
     height: 100vh
     width: 100%
     overflow: hidden
+
+    .loaderWrapper
+        position: absolute
+        display: flex
+        overflow: hidden
+        justify-content: center
+        margin-left: auto
+        width: 100%
+        top: calc(50% - 25px)
+
+        .loader
+            width: 50px
+            padding: 8px
+            aspect-ratio: 1
+            border-radius: 50%
+            background: #000000
+            --_m: conic-gradient(#0000 10%, #000000), linear-gradient(#000000, #000000) content-box
+            -webkit-mask: var(--_m)
+            mask: var(--_m)
+            -webkit-mask-composite: source-out
+            mask-composite: subtract
+            animation: l3 1s infinite linear
 
 @media (min-width: 640px)
     .main

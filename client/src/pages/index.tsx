@@ -10,11 +10,10 @@ import {setIsProd} from "@/stores/reducers/appConfigs";
 import dynamic from "next/dynamic";
 import {Defines} from "@/defines";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
-const MainLayout = dynamic(() => import("@/components/layouts/main"), { ssr: false });
-const ChatRoomList = dynamic(() => import("@/components/chatContents/chatRoomList"), { ssr: false });
-const ChatFriends = dynamic(() => import("@/components/chatContents/chatFriends"), { ssr: false });
-
-
+const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
+const ChatFollows = dynamic(() => import("@/components/chatContents/chatFollows"), { ssr: false });
+const ChatRooms = dynamic(() => import("@/components/chatContents/chatRooms"), { ssr: false });
+const ChatSearch = dynamic(() => import("@/components/chatContents/chatSearch"), { ssr: false });
 
 interface MainProps {
     isProd: boolean;
@@ -22,7 +21,7 @@ interface MainProps {
 
 function Main({isProd}: MainProps) {
     const firstRender = useRef(true);
-    const dialog = useAppSelector(state => state.dialog);
+    const ui = useAppSelector(state => state.ui);
     const dispatch = useAppDispatch();
 
     //#region OnRender
@@ -37,17 +36,20 @@ function Main({isProd}: MainProps) {
 
     const contents = useCallback(() => {
 
-        switch (dialog.activeTab) {
-            case Defines.ActiveTab.Friend:
-                return <ChatFriends />;
+        switch (ui.activeTab) {
+            case Defines.TabType.FOLLOW:
+                return <ChatFollows />;
 
-            case Defines.ActiveTab.Chat:
-                return <ChatRoomList />;
+            case Defines.TabType.CHAT:
+                return <ChatRooms />;
+
+            case Defines.TabType.SEARCH:
+                return <ChatSearch />;
 
             default:
                 return <></>;
         }
-    }, [dialog]);
+    }, [ui]);
 
     return contents();
 }
@@ -55,7 +57,7 @@ function Main({isProd}: MainProps) {
 Main.getLayout = function getLayout(page: ReactElement) {
     return (
         <Layout>
-            <MainLayout>{page}</MainLayout>
+            <DefaultLayout>{page}</DefaultLayout>
         </Layout>
     );
 }

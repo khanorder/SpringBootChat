@@ -83,6 +83,21 @@ public class SessionHandler {
         });
     }
 
+    public void sendOthers(WebSocketSession mineSession, byte[] packet) throws Exception {
+        consoleLogPackets(packet, "sendToOthers");
+
+        connectedSessions.values().forEach(session -> {
+            try {
+                if (session.getId().equals(mineSession.getId()))
+                    return;
+
+                session.sendMessage(new BinaryMessage(packet));
+            } catch (Exception ex) {
+                logger.error(ex.getMessage(), ex);
+            }
+        });
+    }
+
     public void consoleLogPackets(byte[] packet, String name) throws Exception {
         if (!isDevelopment)
             return;
@@ -105,8 +120,6 @@ public class SessionHandler {
         try {
             var logPosition = (position.isEmpty() ? "" : position + " - ");
             logger.info(logPosition + "sessionCount: " + connectedSessions.size());
-//            logger.info(logPosition + "Public RoomCount: " + chatRoomService.findAllPublicChatRooms().size());
-//            logger.info(logPosition + "Private RoomCount: " + chatRoomService.findAllPrivateChatRooms().size());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
