@@ -40,22 +40,25 @@ export default function ChatGNB() {
     const gnbTabButton = useCallback((tab: Defines.TabType) => {
         let tabName: string = " ";
         let tabIcon: string = PersonIcon;
-        let wrapperClass: string = styles.buttonWrapper + (tab == ui.activeTab ? ` ${styles.activeTab}` : "");
+        let wrapperClass: string = styles.buttonWrapper;
 
         switch (tab) {
             case Defines.TabType.FOLLOW:
                 tabName = "친구";
                 tabIcon = PersonIcon;
+                wrapperClass += "/" == router.pathname ? ` ${styles.activeTab}` : '';
                 break;
 
             case Defines.TabType.CHAT:
                 tabName = "채팅";
                 tabIcon = ChatIcon;
+                wrapperClass += "/rooms" == router.pathname ? ` ${styles.activeTab}` : '';
                 break;
 
             case Defines.TabType.SEARCH:
                 tabName = "검색";
                 tabIcon = SearchIcon;
+                wrapperClass += "/search" == router.pathname ? ` ${styles.activeTab}` : '';
                 break;
         }
         return (
@@ -66,7 +69,7 @@ export default function ChatGNB() {
                 </button>
             </div>
         );
-    }, [ui, onChangeTab]);
+    }, [ui, onChangeTab, router]);
 
     return (
         <div className={`${styles.chatGNBWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>

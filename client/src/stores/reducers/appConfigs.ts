@@ -21,7 +21,7 @@ const initialState: AppConfigsState = {
     isProd: false,
     clientVersionMain: 0,
     clientVersionUpdate: 1,
-    clientVersionMaintenance: 1,
+    clientVersionMaintenance: 3,
     serverVersionMain: 0,
     serverVersionUpdate: 0,
     serverVersionMaintenance: 0,
