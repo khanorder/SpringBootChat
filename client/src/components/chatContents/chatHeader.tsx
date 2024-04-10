@@ -8,6 +8,7 @@ import ArrowLeftIcon from "public/images/arrow-left.svg";
 import {CommonAPI} from "@/apis/commonAPI";
 import {toggleIsActiveLNB} from "@/stores/reducers/ui";
 import {Defines} from "@/defines";
+import {useRouter} from "next/router";
 
 export default function ChatHeader() {
     const firstRender = useRef(true);
@@ -16,6 +17,7 @@ export default function ChatHeader() {
     const ui = useAppSelector(state => state.ui);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
+    const router = useRouter();
     const dispatch = useAppDispatch();
 
     //#region OnRender
@@ -66,18 +68,10 @@ export default function ChatHeader() {
             if (chatRoom)
                 title = chatRoom.roomName;
         } else {
-            switch (ui.activeTab) {
-                case Defines.TabType.FOLLOW:
+            if ("/" == router.pathname) {
                     title = "친구";
-                    break;
-
-                case Defines.TabType.CHAT:
-                    title = "채팅";
-                    break;
-
-                case Defines.TabType.SEARCH:
-                    title = "검색";
-                    break;
+            } else if ("/rooms" == router.pathname) {
+                title = "채팅";
             }
         }
 
@@ -87,7 +81,7 @@ export default function ChatHeader() {
         return (
             <span className={styles.chatTitle}>{title}</span>
         );
-    }, [appConfigs, chat, ui]);
+    }, [appConfigs, chat, router]);
 
     const leftButtons = useCallback(() => {
         if (!chat || isEmpty(chat.currentChatRoomId))

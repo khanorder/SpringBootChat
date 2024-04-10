@@ -475,7 +475,7 @@ export function* exitChatRoomRes(data: Uint8Array) {
     }
 
     yield put(exitChatRoom());
-    yield put(push('/'));
+    yield put(push('/rooms'));
 
     return response;
 }

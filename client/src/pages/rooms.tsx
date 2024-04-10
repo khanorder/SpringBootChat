@@ -14,15 +14,13 @@ import isEmpty from "lodash/isEmpty";
 import {exitChatRoomReq} from "@/stores/reducers/webSocket";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
-const ChatFollows = dynamic(() => import("@/components/chatContents/chatFollows"), { ssr: false });
 const ChatRooms = dynamic(() => import("@/components/chatContents/chatRooms"), { ssr: false });
-const ChatSearch = dynamic(() => import("@/components/chatContents/chatSearch"), { ssr: false });
 
 interface MainProps {
     isProd: boolean;
 }
 
-function Main({isProd}: MainProps) {
+function Rooms({isProd}: MainProps) {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const dispatch = useAppDispatch();
@@ -43,10 +41,10 @@ function Main({isProd}: MainProps) {
     }, [firstRender, dispatch, isProd]);
     //#endregion
 
-    return <ChatFollows />;
+    return <ChatRooms />;
 }
 
-Main.getLayout = function getLayout(page: ReactElement) {
+Rooms.getLayout = function getLayout(page: ReactElement) {
     return (
         <Layout>
             <DefaultLayout>{page}</DefaultLayout>
@@ -54,8 +52,8 @@ Main.getLayout = function getLayout(page: ReactElement) {
     );
 }
 
-Main.getInitialProps = ({res, err}: NextPageContext) => {
+Rooms.getInitialProps = ({res, err}: NextPageContext) => {
     return {isProd: ("production" === process.env.NODE_ENV)};
 }
 
-export default Main;
+export default Rooms;

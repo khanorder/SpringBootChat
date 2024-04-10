@@ -2,7 +2,7 @@ import {ChangeEvent, Dispatch, RefObject, SetStateAction, useCallback, useEffect
 import styles from "@/styles/chat.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import Image from "next/image";
-import Picture from "../../../public/images/picture.svg";
+import Picture from "public/images/picture.svg";
 import {Helpers} from "@/helpers";
 import isEmpty from "lodash/isEmpty";
 import {sendMessageReq} from "@/stores/reducers/webSocket";

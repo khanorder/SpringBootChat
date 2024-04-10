@@ -8,11 +8,13 @@ import ChatIcon from "public/images/chat.svg";
 import SearchIcon from "public/images/search.svg";
 import {setActiveTab} from "@/stores/reducers/ui";
 import {Defines} from "@/defines";
+import {useRouter} from "next/router";
 
 export default function ChatGNB() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const ui = useAppSelector(state => state.ui);
+    const router = useRouter();
     const dispatch = useAppDispatch();
 
     //#region OnRender
@@ -25,12 +27,15 @@ export default function ChatGNB() {
 
     const onChangeTab = useCallback((tab: Defines.TabType) => {
         switch (tab) {
-            case Defines.TabType.SEARCH:
-                dispatch(connectedUsersReq());
+            case Defines.TabType.FOLLOW:
+                router.push("/");
+                break;
+
+            case Defines.TabType.CHAT:
+                router.push("/rooms")
                 break;
         }
-        dispatch(setActiveTab(tab));
-    }, [dispatch]);
+    }, [router]);
 
     const gnbTabButton = useCallback((tab: Defines.TabType) => {
         let tabName: string = " ";
