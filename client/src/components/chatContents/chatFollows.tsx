@@ -2,7 +2,7 @@ import {Fragment, ReactElement, useCallback, useEffect, useRef} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {Item, ItemParams, Menu, useContextMenu} from "react-contexify";
 import {Domains} from "@/domains";
-import {followReq, unfollowReq} from "@/stores/reducers/webSocket";
+import {followReq, startChatReq, unfollowReq} from "@/stores/reducers/webSocket";
 import styles from "@/styles/chatFollows.module.sass";
 import Image from "next/image";
 import UserIcon from "public/images/user-circle.svg";
@@ -79,7 +79,8 @@ export default function ChatFollows() {
                 dispatch(unfollowReq(props.target))
                 break;
 
-            case "chat":
+            case "startChat":
+                dispatch(startChatReq(props.target))
                 break;
         }
     }, [dispatch]);
@@ -176,12 +177,12 @@ export default function ChatFollows() {
                         <div className={styles.userMenuName}>언팔로우</div>
                     </div>
                 </Item>
-                <Item className={styles.userMenuItem} id="chat" onClick={handleItemClick}>
+                <Item className={styles.userMenuItem} id="startChat" onClick={handleItemClick}>
                     <div className={styles.userMenuItemContent}>
                         <div className={styles.userMenuItemIconWrapper}>
-                            <Image className={styles.userMenuItemIcon} src={ChatIcon} alt='대화하기' width={15} height={15} />
+                            <Image className={styles.userMenuItemIcon} src={ChatIcon} alt='채팅하기' width={15} height={15} />
                         </div>
-                        <div className={styles.userMenuName}>대화하기</div>
+                        <div className={styles.userMenuName}>채팅하기</div>
                     </div>
                 </Item>
             </Menu>
@@ -199,7 +200,7 @@ export default function ChatFollows() {
                         <div className={styles.userMenuName}>팔로우</div>
                     </div>
                 </Item>
-                <Item className={styles.userMenuItem} id="chat" onClick={handleItemClick}>
+                <Item className={styles.userMenuItem} id="startChat" onClick={handleItemClick}>
                     <div className={styles.userMenuItemContent}>
                         <div className={styles.userMenuItemIconWrapper}>
                             <Image className={styles.userMenuItemIcon} src={ChatIcon} alt='채팅하기' width={15} height={15} />

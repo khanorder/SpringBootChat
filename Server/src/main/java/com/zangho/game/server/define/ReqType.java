@@ -13,11 +13,12 @@ public enum ReqType implements Types {
     REQ_CONNECTED_USERS(3),
     REQ_FOLLOW(4),
     REQ_UNFOLLOW(5),
-    REQ_CHANGE_USER_NAME(6),
-    REQ_CREATE_CHAT_ROOM(7),
-    REQ_ENTER_CHAT_ROOM(8),
-    REQ_EXIT_CHAT_ROOM(9),
-    REQ_TALK_CHAT_ROOM(10),
+    REQ_START_CHAT(6),
+    REQ_CHANGE_USER_NAME(7),
+    REQ_CREATE_CHAT_ROOM(8),
+    REQ_ENTER_CHAT_ROOM(9),
+    REQ_EXIT_CHAT_ROOM(10),
+    REQ_TALK_CHAT_ROOM(11),
     REQ_TEST(255);
 
     private final int number;

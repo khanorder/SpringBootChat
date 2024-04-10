@@ -56,17 +56,18 @@ public class UserService {
         return connectedUsers.values().stream().anyMatch(user -> user.getId().equals(userId));
     }
 
-    public void addUserChatRoomInfo(String userId, ChatRoom chatRoom) {
-        if (userId.isEmpty())
+    public void addUserChatRoomInfo(User user, ChatRoom chatRoom) {
+        if (user.getId().isEmpty())
             return;
 
-        var currentUser = connectedUsers.get(userId);
+        var currentUser = connectedUsers.get(user.getId());
         if (null == currentUser)
             return;
 
         if (currentUser.getChatRoomList().stream().anyMatch(chatRoomInfo -> chatRoomInfo.getRoomId().equals(chatRoom.getRoomId())))
             return;
 
+        currentUser.setCurrentChatRoom(Optional.of(chatRoom.getInfo()));
         currentUser.getChatRoomList().add(chatRoom.getInfo());
         userRoomRepository.save(new UserRoom(currentUser.getId(), chatRoom.getRoomId()));
     }

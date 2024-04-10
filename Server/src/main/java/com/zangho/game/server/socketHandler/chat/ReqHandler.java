@@ -14,6 +14,7 @@ import com.zangho.game.server.service.UserService;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -29,6 +30,13 @@ public class ReqHandler {
     private final ChatRoomService chatRoomService;
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
+
+    @Value("${client.version.main}")
+    private int clientVersionMain;
+    @Value("${client.version.update}")
+    private int clientVersionUpdate;
+    @Value("${client.version.maintenance}")
+    private int clientVersionMaintenance;
 
     public ReqHandler(SessionHandler sessionHandler, ResHandler resHandler, UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService) {
         var config = System.getProperty("Config");
@@ -89,9 +97,40 @@ public class ReqHandler {
     }
 
     public void onCheckConnection(ReqType reqType, WebSocketSession session, byte[] packet) {
-        if (isDevelopment)
-            logger.info(reqType.name() + ": " + Helpers.getSessionIP(session));
+        try {
+            if (isDevelopment)
+                logger.info(reqType.name() + ": " + Helpers.getSessionIP(session));
 
+            if (4 > packet.length) {
+                resHandler.resCheckConnection(session, ErrorCheckConnection.UPDATE_REQUIRED);
+                return;
+            }
+
+            var sessionClientVersionMain = packet[1];
+
+            if (clientVersionMain > sessionClientVersionMain) {
+                resHandler.resCheckConnection(session, ErrorCheckConnection.UPDATE_REQUIRED);
+                return;
+            }
+
+            var sessionClientVersionUpdate = packet[2];
+
+            if (clientVersionUpdate > sessionClientVersionUpdate) {
+                resHandler.resCheckConnection(session, ErrorCheckConnection.UPDATE_REQUIRED);
+                return;
+            }
+
+            var sessionClientVersionMaintenance = packet[3];
+
+            if (clientVersionMaintenance > sessionClientVersionMaintenance) {
+                resHandler.resCheckConnection(session, ErrorCheckConnection.UPDATE_REQUIRED);
+                return;
+            }
+
+            resHandler.resCheckConnection(session, ErrorCheckConnection.NONE);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
     }
 
     public void onCheckAuthentication(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
@@ -125,8 +164,11 @@ public class ReqHandler {
             }
 
             // 팔로우, 팔로워, 사용 가능한 채팅방 정보 전달
-            resHandler.resCheckAuthentication(session, optUser.get(), chatRooms);
+            resHandler.resCheckAuthentication(session, optUser.get());
             resHandler.resConnectedUsers(session);
+            resHandler.resFollows(session, optUser.get().getFollowList());
+            resHandler.resFollowers(session, optUser.get().getFollowerList());
+            resHandler.resChatRooms(session, chatRooms);
 
             // 접속 전체알림
             resHandler.noticeConnectedUser(session, optUser.get());
@@ -223,6 +265,37 @@ public class ReqHandler {
         }
     }
 
+    public void onStartChat(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        try {
+            if (connectedUser.isEmpty()) {
+                resHandler.resStartChat(session, ErrorStartChat.AUTH_REQUIRED);
+                return;
+            }
+
+            var bytesTargetUserId = Arrays.copyOfRange(packet, 1, 17);
+            var targetUserId = Helpers.getUUIDFromByteArray(bytesTargetUserId);
+            var targetUser = userService.findOnlyUser(targetUserId);
+            if (targetUser.isEmpty()) {
+                resHandler.resStartChat(session, ErrorStartChat.NOT_FOUND_TARGET_USER);
+                return;
+            }
+
+            var oneToOneChatRoom = chatRoomService.startOneToOneChat(connectedUser.get(), targetUser.get());
+
+            if (oneToOneChatRoom.isEmpty()) {
+                resHandler.resStartChat(session, ErrorStartChat.FAILED_TO_START_CHAT);
+                return;
+            }
+
+            resHandler.resStartChat(session, oneToOneChatRoom.get(), targetUser.get());
+            resHandler.noticeEnterChatRoom(oneToOneChatRoom.get(), connectedUser.get());
+            resHandler.noticeRoomUsersChanged(oneToOneChatRoom.get());
+            resHandler.resHistoryChatRoom(session, oneToOneChatRoom.get());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
     public void onChangeUserName(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
@@ -285,18 +358,23 @@ public class ReqHandler {
             }
 
             var chatRoom = chatRoomService.createRoom(roomName, connectedUser.get(), roomOpenType.get());
-            if (isDevelopment)
-                logger.info(chatRoom.getOpenType().getNumber() + ", " + chatRoom.getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName());
+            if (chatRoom.isEmpty()) {
+                resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.FAILED_TO_CREATE_CHAT_ROOM);
+                return;
+            }
 
-            var bytesRoomId = Helpers.getByteArrayFromUUID(chatRoom.getRoomId());
+            var bytesRoomId = Helpers.getByteArrayFromUUID(chatRoom.get().getRoomId());
             if (0 == bytesRoomId.length) {
                 resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.REQUIRED_ROOM_ID);
                 return;
             }
 
-            resHandler.sendAddChatRoom(session, chatRoom);
+            if (isDevelopment)
+                logger.info(chatRoom.get().getOpenType().getNumber() + ", " + chatRoom.get().getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName());
+
+            resHandler.sendAddChatRoom(session, chatRoom.get());
             resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.NONE);
-            resHandler.noticeRoomUsersChanged(chatRoom);
+            resHandler.noticeRoomUsersChanged(chatRoom.get());
             lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -306,45 +384,20 @@ public class ReqHandler {
     public void onEnterChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
-                resHandler.resEnterChatRoom(session, ErrorEnterChatRoom.NOT_FOUND_USER);
+                resHandler.resEnterChatRoom(session, ErrorEnterChatRoom.AUTH_REQUIRED);
                 return;
             }
 
             var bytesRoomId = Arrays.copyOfRange(packet, 1, 17);
             var roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-            var existsRoom = chatRoomService.findPrivateRoomById(roomId);
 
-            if (existsRoom.isEmpty())
-                existsRoom = chatRoomService.findPublicRoomById(roomId);
-
-            if (existsRoom.isEmpty()) {
-                resHandler.resEnterChatRoom(session, ErrorEnterChatRoom.NO_EXISTS_ROOM);
+            var result = chatRoomService.enterRoom(roomId, connectedUser.get());
+            if (!result.getLeft().equals(ErrorEnterChatRoom.NONE) || result.getRight().isEmpty()) {
+                resHandler.resEnterChatRoom(session, result.getLeft());
                 return;
             }
 
-            if (existsRoom.get().getUsers().containsKey(connectedUser.get().getId())) {
-                resHandler.resEnterChatRoom(session, ErrorEnterChatRoom.ALREADY_IN_ROOM);
-                return;
-            }
-
-            var bytesUserId = Arrays.copyOfRange(packet, 17, packet.length);
-            var userId = Helpers.getUUIDFromByteArray(bytesUserId);
-
-            if (!connectedUser.get().getId().equals(userId)) {
-                resHandler.resEnterChatRoom(session, ErrorEnterChatRoom.ALREADY_IN_ROOM);
-                return;
-            }
-
-            if (existsRoom.get().checkUserInRoom(userId)) {
-                resHandler.resEnterChatRoom(session, ErrorEnterChatRoom.ALREADY_IN_ROOM);
-                return;
-            }
-
-            // 채팅방 메모리에 유저 정보 추가
-            existsRoom.get().addUserToRoom(connectedUser.get());
-            // 유저 메모리에 채팅방 정보 추가
-            connectedUser.get().setCurrentChatRoom(Optional.of(existsRoom.get().getInfo()));
-            userService.addUserChatRoomInfo(connectedUser.get().getId(), existsRoom.get());
+            var existsRoom = result.getRight();
 
             resHandler.sendAddChatRoom(existsRoom.get());
             resHandler.resEnterChatRoom(session, existsRoom.get());

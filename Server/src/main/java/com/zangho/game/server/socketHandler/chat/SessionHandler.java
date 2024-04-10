@@ -4,6 +4,7 @@ import com.zangho.game.server.domain.chat.ChatRoom;
 import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -38,6 +39,16 @@ public class SessionHandler {
 
     public void sendOneSession(WebSocketSession session, byte[] packet) throws Exception {
         try {
+            if (null == session) {
+                logger.info("session is null.");
+                return;
+            }
+
+            if (!session.isOpen()) {
+                logger.info("closed session: " + session.getId());
+                return;
+            }
+
             consoleLogPackets(packet, "sendToOne");
 
             session.sendMessage(new BinaryMessage(packet));
@@ -51,6 +62,16 @@ public class SessionHandler {
             return;
 
         connectedSessions.values().forEach(session -> {
+            if (null == session) {
+                logger.info("session is null.");
+                return;
+            }
+
+            if (!session.isOpen()) {
+                logger.info("closed session: " + session.getId());
+                return;
+            }
+
             if (!sessionIds.contains(session.getId()))
                 return;
 
@@ -76,6 +97,16 @@ public class SessionHandler {
 
         connectedSessions.values().forEach(session -> {
             try {
+                if (null == session) {
+                    logger.info("session is null.");
+                    return;
+                }
+
+                if (!session.isOpen()) {
+                    logger.info("closed session: " + session.getId());
+                    return;
+                }
+
                 session.sendMessage(new BinaryMessage(packet));
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
@@ -88,6 +119,16 @@ public class SessionHandler {
 
         connectedSessions.values().forEach(session -> {
             try {
+                if (null == session) {
+                    logger.info("session is null.");
+                    return;
+                }
+
+                if (!session.isOpen()) {
+                    logger.info("closed session: " + session.getId());
+                    return;
+                }
+
                 if (session.getId().equals(mineSession.getId()))
                     return;
 

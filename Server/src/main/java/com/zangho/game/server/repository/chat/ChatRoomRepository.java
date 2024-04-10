@@ -19,10 +19,33 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
 
     Optional<ChatRoom> findByRoomIdAndOpenType(String roomId, RoomOpenType openType);
 
-    @Query(value = "SELECT a.roomId AS roomId, a.roomName AS roomName, a.openType AS openType, (SELECT COUNT(c.roomId) FROM user_rooms AS c WHERE c.roomId = a.roomId) AS userCount FROM chat_rooms AS a LEFT JOIN user_rooms AS b ON a.roomId = b.roomId WHERE b.userId = :userId", nativeQuery = true)
+    @Query(
+        value = "SELECT a.roomId AS roomId, a.roomName AS roomName, a.openType AS openType, (SELECT COUNT(d.roomId) FROM user_rooms AS d WHERE d.roomId = a.roomId) AS userCount " +
+                "FROM chat_rooms AS a " +
+                "RIGHT JOIN (SELECT * FROM user_rooms WHERE userId = :userId) AS b ON a.roomId = b.roomId " +
+                "RIGHT JOIN (SELECT * FROM user_rooms WHERE userId = :targetUserId) AS c ON a.roomId = c.roomId " +
+                "WHERE b.userId = :userId AND (SELECT COUNT(e.roomId) FROM user_rooms AS e WHERE e.roomId = a.roomId) = 2",
+        nativeQuery = true
+    )
+    Optional<ChatRoomInfoInterface> findOneToOneChatRoomInfo(@Param("userId") String userId, @Param("targetUserId") String targetUserId);
+
+    @Query(
+            value = "SELECT a.roomId AS roomId, a.roomName AS roomName, a.openType AS openType, (SELECT COUNT(c.roomId) FROM user_rooms AS c WHERE c.roomId = a.roomId) AS userCount " +
+                    "FROM chat_rooms AS a " +
+                    "LEFT JOIN user_rooms AS b ON a.roomId = b.roomId " +
+                    "WHERE b.userId = :userId",
+            nativeQuery = true
+    )
     List<ChatRoomInfoInterface> findInUserChatRoomInfos(@Param("userId") String userId);
 
-    @Query(value = "SELECT a.roomId AS roomId, a.roomName AS roomName, a.openType AS openType, (SELECT COUNT(c.roomId) FROM user_rooms AS c WHERE c.roomId = a.roomId) AS userCount FROM chat_rooms AS a LEFT JOIN user_rooms AS b ON a.roomId = b.roomId WHERE b.userId = :userId OR a.openType = 1 GROUP BY a.roomId", nativeQuery = true)
+    @Query(
+            value = "SELECT a.roomId AS roomId, a.roomName AS roomName, a.openType AS openType, (SELECT COUNT(c.roomId) FROM user_rooms AS c WHERE c.roomId = a.roomId) AS userCount " +
+                    "FROM chat_rooms AS a " +
+                    "LEFT JOIN user_rooms AS b ON a.roomId = b.roomId " +
+                    "WHERE b.userId = :userId OR a.openType = 1 " +
+                    "GROUP BY a.roomId",
+            nativeQuery = true
+    )
     List<ChatRoomInfoInterface> findAvailableChatRoomInfos(@Param("userId") String userId);
 
     @Override

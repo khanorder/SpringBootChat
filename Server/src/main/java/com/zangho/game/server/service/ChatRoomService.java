@@ -1,20 +1,17 @@
 package com.zangho.game.server.service;
 
 import com.zangho.game.server.define.RoomOpenType;
-import com.zangho.game.server.domain.chat.Chat;
-import com.zangho.game.server.domain.chat.ChatRoom;
-import com.zangho.game.server.domain.chat.UserRoom;
-import com.zangho.game.server.domain.chat.UserRoomId;
+import com.zangho.game.server.domain.chat.*;
 import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.error.ErrorEnterChatRoom;
 import com.zangho.game.server.error.ErrorExitChatRoom;
 import com.zangho.game.server.repository.chat.ChatRepository;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
-import com.zangho.game.server.repository.user.UserRepository;
 import nl.martijndwars.webpush.Subscription;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -124,24 +121,79 @@ public class ChatRoomService {
         return Optional.ofNullable(chatRoom.get());
     }
 
-    public ChatRoom createRoom(String name, User user, RoomOpenType roomOpenType) throws Exception {
-        var roomId = UUID.randomUUID().toString();
-        var chatRoom = new ChatRoom(roomId, name, roomOpenType);
+    public Optional<ChatRoom> startOneToOneChat(User user, User targetUser) throws Exception {
+        var chatRoomInfo = chatRoomRepository.findOneToOneChatRoomInfo(user.getId(), targetUser.getId());
+        if (chatRoomInfo.isEmpty())
+            return createOneToOneChatRoom(user, targetUser);
 
-        chatRoom.getUsers().put(user.getId(), user.getUserRoom(roomId));
-        switch (roomOpenType) {
-            case PRIVATE:
-                privateChatRooms.put(roomId, chatRoom);
-                break;
+        var result = enterRoom(chatRoomInfo.get().getRoomId(), user);
+        if (result.getLeft().equals(ErrorEnterChatRoom.NONE) && result.getRight().isPresent())
+            return result.getRight();
 
-            case PUBLIC:
-                publicChatRooms.put(roomId, chatRoom);
-                break;
+        return Optional.empty();
+    }
+
+    public Optional<ChatRoom> createRoom(String name, User user, RoomOpenType roomOpenType) {
+        try {
+            var roomId = UUID.randomUUID().toString();
+            var chatRoom = new ChatRoom(roomId, name, roomOpenType);
+
+            chatRoom.addUserToRoom(user);
+            switch (roomOpenType) {
+                case PRIVATE:
+                    privateChatRooms.put(roomId, chatRoom);
+                    break;
+
+                case PUBLIC:
+                    publicChatRooms.put(roomId, chatRoom);
+                    break;
+            }
+            chatRoomRepository.save(chatRoom);
+            userService.addUserChatRoomInfo(user, chatRoom);
+            user.setCurrentChatRoom(Optional.of(chatRoom.getInfo()));
+            return Optional.of(chatRoom);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Optional.empty();
         }
-        chatRoomRepository.save(chatRoom);
-        userService.addUserChatRoomInfo(user.getId(), chatRoom);
-        user.setCurrentChatRoom(Optional.of(chatRoom.getInfo()));
-        return chatRoom;
+    }
+
+    public Optional<ChatRoom> createOneToOneChatRoom(User user, User targetUser) {
+        try {
+            var chatRoom = createRoom(targetUser.getName(), user, RoomOpenType.PRIVATE);
+            if (chatRoom.isEmpty())
+                return Optional.empty();
+
+            // 1:1 대화상대의 정보를 채팅방 사용자 정보에 추가
+            userRoomRepository.save(new UserRoom(targetUser.getId(), chatRoom.get().getRoomId()));
+            return chatRoom;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Optional.empty();
+        }
+    }
+
+    public Pair<ErrorEnterChatRoom, Optional<ChatRoom>> enterRoom(String roomId, User user) throws Exception {
+        var existsRoom = findPrivateRoomById(roomId);
+
+        if (existsRoom.isEmpty())
+            existsRoom = findPublicRoomById(roomId);
+
+        if (existsRoom.isEmpty())
+            return Pair.of(ErrorEnterChatRoom.NO_EXISTS_ROOM, Optional.empty());
+
+        if (!isAvailablePrivateRoom(existsRoom.get(), user))
+            return Pair.of(ErrorEnterChatRoom.NOT_AVAILABLE_ROOM, Optional.empty());
+
+        if (existsRoom.get().checkUserInRoom(user.getId()))
+            return Pair.of(ErrorEnterChatRoom.ALREADY_IN_ROOM, Optional.empty());
+
+        // 채팅방 메모리에 유저 정보 추가
+        existsRoom.get().addUserToRoom(user);
+        // 유저 메모리에 채팅방 정보 추가
+        userService.addUserChatRoomInfo(user, existsRoom.get());
+
+        return Pair.of(ErrorEnterChatRoom.NONE, existsRoom);
     }
 
     public ErrorExitChatRoom exitRoom(ChatRoom chatRoom, User user) throws Exception {
@@ -198,6 +250,14 @@ public class ChatRoomService {
 
         optChatRoom.get().getChats().add(chat);
         chatRepository.save(chat);
+    }
+
+    public boolean isAvailablePrivateRoom(ChatRoom room, User user) {
+        if (room.getOpenType().equals(RoomOpenType.PUBLIC)) {
+            return true;
+        } else {
+            return userRoomRepository.existsByRoomIdAndUserId(room.getRoomId(), user.getId());
+        }
     }
 
     public void subscribeUserRoom(Subscription subscription, String userId, String roomId) {

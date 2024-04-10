@@ -2,6 +2,7 @@ package com.zangho.game.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.TimeZone;
@@ -10,10 +11,12 @@ import java.util.TimeZone;
 @SpringBootApplication
 public class ServerApplication {
 
+	private static ApplicationContext applicationContext;
+
 	public static void main(String[] args)
 	{
 		TimeZone.setDefault( TimeZone.getTimeZone("UTC"));
-		SpringApplication.run(ServerApplication.class, args);
+		applicationContext = SpringApplication.run(ServerApplication.class, args);
 	}
 
 }

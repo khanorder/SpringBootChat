@@ -20,6 +20,8 @@ public interface UserRoomRepository extends JpaRepository<UserRoom, UserRoomId> 
     @Override
     Optional<UserRoom> findById(UserRoomId userRoomId);
 
+    boolean existsByRoomIdAndUserId(String roomId, String userId);
+
     List<UserRoom> findUserRoomsByUserId(String userId);
 
     @Override

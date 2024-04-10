@@ -112,153 +112,46 @@ export namespace Domains {
         }
     }
 
-    export class TalkChatRoomRes {
-        result: Errors.TalkChatRoom;
-        type: Defines.ChatType;
-        roomId: string;
-        userId: string;
-        id: string;
-        time: number;
-        userName: string;
-        message: string;
-
-        constructor(result: Errors.TalkChatRoom, type: Defines.ChatType, roomId: string, userId: string, id: string, time: number, userName: string, message: string) {
-            this.result = result;
-            this.type = type;
-            this.roomId = roomId;
-            this.userId = userId;
-            this.id = id;
-            this.time = time;
-            this.userName = userName;
-            this.message = message;
-        }
-
-        static decode(bytes: Uint8Array) {
-            try {
-                const result = bytes[0];
-                if (1 == bytes.length)
-                    return new TalkChatRoomRes(result, Defines.ChatType.TALK, '', '', '', (new Date()).getTime(), '', '');
-
-                const type = bytes[1];
-                const bytesRoomId= bytes.slice(2, 18);
-                const roomId= Helpers.getUUIDFromByteArray(bytesRoomId);
-                const bytesUserId = bytes.slice(18, 34);
-                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                const bytesId = bytes.slice(34, 50);
-                const id = Helpers.getUUIDFromByteArray(bytesId);
-                const bytesTime = bytes.slice(50, 58);
-                const time = Helpers.getLongFromByteArray(bytesTime);
-                const userNameByteLength = bytes[58];
-                const bytesMessageByteLength = bytes.slice(59, 63);
-                const messageByteLength = Helpers.getIntFromByteArray(bytesMessageByteLength);
-                const bytesUserName = bytes.slice(63, 63 + userNameByteLength);
-                const userName = new TextDecoder().decode(bytesUserName);
-                const bytesMessage = bytes.slice(63 + userNameByteLength, 63 + userNameByteLength + messageByteLength);
-                const message = new TextDecoder().decode(bytesMessage);
-
-                return new TalkChatRoomRes(result, type, roomId, userId, id, time, userName, message);
-            } catch (error) {
-                console.error(error);
-                return null;
-            }
-        }
-
-        getChatData() {
-            return new Chat(this.type, this.roomId, this.userId, this.id, this.time, this.userName, this.message);
-        }
+    export class Visit {
+        session: string = '';
+        fp: number = 0;
+        deviceType: string = '';
+        deviceVendor: string = '';
+        deviceModel: string = '';
+        agent: string = '';
+        browser: string = '';
+        browserVersion: string = '';
+        engine: string = '';
+        engineVersion: string = '';
+        os: string = '';
+        osVersion: string = '';
+        host: string = '';
+        parameter: string = '';
+        path: string = '';
+        title: string = '';
+        localTime: Date = new Date();
     }
 
-    export class HistoryChatRoomRes {
-        roomId: string;
-        chatIds: string[];
-        userIds: string[];
-        types: Defines.ChatType[];
-        sendAts: number[];
-        userNames: string[];
-        messages: string[];
+    export class CheckConnectionRes {
+        result: Errors.CheckConnection;
+        serverVersionMain: number;
+        serverVersionUpdate: number;
+        serverVersionMaintenance: number;
 
-        constructor(roomId: string, chatIds: string[], userIds: string[], types: Defines.ChatType[], sendAts: number[], userNames: string[], messages: string[]) {
-            this.roomId = roomId;
-            this.chatIds = chatIds;
-            this.userIds = userIds;
-            this.types = types;
-            this.sendAts = sendAts;
-            this.userNames = userNames;
-            this.messages = messages;
+        constructor(result: Errors.CheckConnection, serverVersionMain: number, serverVersionUpdate: number, serverVersionMaintenance: number) {
+            this.result = result;
+            this.serverVersionMain = serverVersionMain;
+            this.serverVersionUpdate = serverVersionUpdate;
+            this.serverVersionMaintenance = serverVersionMaintenance;
         }
 
         static decode(bytes: Uint8Array) {
             try {
-                const count = Helpers.getIntFromByteArray(bytes.slice(0, 4));
-                const roomId: string = Helpers.getUUIDFromByteArray(bytes.slice(4, 20));
-                const chatIds: string[] = [];
-                const userIds: string[] = [];
-                const types: Defines.ChatType[] = [];
-                const sendAts: number[] = [];
-                const userNameLengths: number[] = [];
-                const messageLengths: number[] = [];
-                const userNames: string[] = [];
-                const messages: string[] = [];
-
-                const offsetBytesRoomId = 20;
-                const offsetBytesChatIds = offsetBytesRoomId + (16 * count);
-                const offsetBytesUserIds = offsetBytesChatIds + (16 * count);
-                const offsetBytesTypes = offsetBytesUserIds + (count);
-                const offsetBytesSendAts = offsetBytesTypes + (count * 8);
-                const offsetBytesUserNameLength = offsetBytesSendAts + (count);
-                const offsetBytesMessageLength = offsetBytesUserNameLength + (4 * count);
-
-                for (let i = 0; i < count; i++) {
-                    let bytesChatId = bytes.slice(offsetBytesRoomId + (i * 16), offsetBytesRoomId + ((i + 1) * 16));
-                    chatIds.push(Helpers.getUUIDFromByteArray(bytesChatId));
-
-                    let bytesUserId = bytes.slice(offsetBytesChatIds + (i * 16), offsetBytesChatIds + ((i + 1) * 16));
-                    userIds.push(Helpers.getUUIDFromByteArray(bytesUserId));
-
-                    let type = bytes[offsetBytesUserIds + i];
-                    types.push(type as Defines.ChatType);
-
-                    let bytesSendAt = bytes.slice(offsetBytesTypes + (i * 8), offsetBytesTypes + ((i + 1) * 8));
-                    sendAts.push(Helpers.getLongFromByteArray(bytesSendAt));
-
-                    let userNameLength = bytes[offsetBytesSendAts + i];
-                    userNameLengths.push(userNameLength);
-
-                    let bytesMessage = bytes.slice(offsetBytesUserNameLength + (i * 4), offsetBytesUserNameLength + ((i + 1) * 4));
-                    messageLengths.push(Helpers.getIntFromByteArray(bytesMessage));
-                }
-
-                let offsetBytesUserNames = offsetBytesMessageLength;
-                for (let i = 0; i < userNameLengths.length; i++) {
-                    let bytesUserName = bytes.slice(offsetBytesUserNames, offsetBytesUserNames + userNameLengths[i]);
-                    userNames.push(new TextDecoder().decode(bytesUserName));
-                    offsetBytesUserNames += userNameLengths[i];
-                }
-
-                let offsetBytesMessages = offsetBytesUserNames;
-                for (let i = 0; i < messageLengths.length; i++) {
-                    let bytesMessage = bytes.slice(offsetBytesMessages, offsetBytesMessages + messageLengths[i]);
-                    messages.push(new TextDecoder().decode(bytesMessage));
-                    offsetBytesMessages += messageLengths[i];
-                }
-
-                return new Domains.HistoryChatRoomRes(roomId, chatIds, userIds, types, sendAts, userNames, messages);
+                return new CheckConnectionRes(bytes[0], bytes[1] ?? 0, bytes[2] ?? 0, bytes[3] ?? 0);
             } catch (error) {
                 console.error(error);
                 return null;
             }
-        }
-
-        getChatHistories(): Domains.Chat[] {
-            const histories: Domains.Chat[] = [];
-            try {
-                for (let i = 0; i < this.chatIds.length; i++) {
-                    histories.push(new Chat(this.types[i], this.roomId, this.userIds[i], this.chatIds[i], this.sendAts[i], this.userNames[i], this.messages[i]));
-                }
-            } catch (error) {
-                console.error(error);
-            }
-            return histories;
         }
     }
 
@@ -266,17 +159,11 @@ export namespace Domains {
         result: Errors.CheckAuthentication;
         userId: string;
         userName: string;
-        follows: Domains.User[];
-        followers: Domains.User[];
-        chatRooms: Domains.ChatRoom[];
 
-        constructor(result: Errors.CheckAuthentication, userId: string, userName: string, follows: Domains.User[], followers: Domains.User[], chatRooms?: Domains.ChatRoom[]) {
+        constructor(result: Errors.CheckAuthentication, userId: string, userName: string) {
             this.result = result;
             this.userId = userId;
             this.userName = userName;
-            this.follows = follows;
-            this.followers = followers;
-            this.chatRooms = 'undefined' != typeof chatRooms && null != chatRooms ? chatRooms : [];
         }
 
         static decode(bytes: Uint8Array) {
@@ -286,63 +173,7 @@ export namespace Domains {
                 const userNameLength = bytes[17];
                 const bytesUserName = bytes.slice(18, 18 + userNameLength);
                 const userName = new TextDecoder().decode(bytesUserName);
-                const offsetUserInfo = 18 + userNameLength;
-                const offsetFollowCount = offsetUserInfo + 4;
-                const bytesFollowCount = bytes.slice(offsetUserInfo, offsetFollowCount);
-                const followCount = Helpers.getIntFromByteArray(bytesFollowCount);
-                const offsetFollowerCount = offsetFollowCount + 4;
-                const bytesFollowerCount = bytes.slice(offsetFollowCount, offsetFollowerCount);
-                const followerCount = Helpers.getIntFromByteArray(bytesFollowerCount);
-                const offsetChatRoomCount = offsetFollowerCount + 4;
-                const bytesChatRoomCount = bytes.slice(offsetFollowerCount, offsetChatRoomCount);
-                const chatRoomCount = Helpers.getIntFromByteArray(bytesChatRoomCount);
-                const offsetFollowId = offsetChatRoomCount + (followCount * 16);
-                const offsetFollowNameLength = offsetFollowId + followCount;
-                let offsetFollowName = offsetFollowNameLength;
-                const follows: Domains.User[] = [];
-                for (let i = 0; i < followCount; i++) {
-                    let bytesFollowUserId = bytes.slice(offsetChatRoomCount + (i * 16), offsetChatRoomCount + ((i + 1) * 16));
-                    let followId = Helpers.getUUIDFromByteArray(bytesFollowUserId);
-                    let followNameLength = bytes[offsetFollowId + i];
-                    let bytesFollowName = bytes.slice(offsetFollowName, offsetFollowName + followNameLength);
-                    let followName = new TextDecoder().decode(bytesFollowName);
-                    offsetFollowName += followNameLength;
-                    follows.push(new Domains.User(followId, followName));
-                }
-
-                const offsetFollowerId = offsetFollowName + (followerCount * 16);
-                const offsetFollowerNameLength = offsetFollowerId + followerCount;
-                let offsetFollowerName = offsetFollowerNameLength;
-                const followers: Domains.User[] = [];
-                for (let i = 0; i < followerCount; i++) {
-                    let bytesFollowerUserId = bytes.slice(offsetFollowName + (i * 16), offsetFollowName + ((i + 1) * 16));
-                    let followerId = Helpers.getUUIDFromByteArray(bytesFollowerUserId);
-                    let followerNameLength = bytes[offsetFollowerId + i];
-                    let bytesFollowerName = bytes.slice(offsetFollowerName, offsetFollowerName + followerNameLength);
-                    let followerName = new TextDecoder().decode(bytesFollowerName);
-                    offsetFollowerName += followerNameLength;
-                    followers.push(new Domains.User(followerId, followerName));
-                }
-
-                const offsetChatRoomId = offsetFollowerName + (chatRoomCount * 16);
-                const offsetChatRoomOpenType = offsetChatRoomId + chatRoomCount;
-                const offsetChatRoomUserCount = offsetChatRoomOpenType + (chatRoomCount * 4);
-                const offsetChatRoomNameLength = offsetChatRoomUserCount + chatRoomCount;
-                let offsetChatRoomName = offsetChatRoomNameLength;
-                const chatRooms: Domains.ChatRoom[] = [];
-                for (let i = 0; i < chatRoomCount; i++) {
-                    let bytesChatRoomId = bytes.slice(offsetFollowerName + (i * 16), offsetFollowerName + ((i + 1) * 16));
-                    let chatRoomId = Helpers.getUUIDFromByteArray(bytesChatRoomId);
-                    let chatRoomOpenType = bytes[offsetChatRoomId + i];
-                    let bytesChatRoomUserCount = bytes.slice(offsetChatRoomOpenType + (i * 4), offsetChatRoomOpenType + ((i + 1) * 4));
-                    let chatRoomUserCount = Helpers.getIntFromByteArray(bytesChatRoomUserCount);
-                    let chatRoomNameLength = bytes[offsetChatRoomUserCount + i];
-                    let bytesChatRoomName = bytes.slice(offsetChatRoomName, offsetChatRoomName + chatRoomNameLength);
-                    let chatRoomName = new TextDecoder().decode(bytesChatRoomName);
-                    offsetChatRoomName += chatRoomNameLength;
-                    chatRooms.push(new Domains.ChatRoom(chatRoomId, chatRoomName, chatRoomOpenType, [], []));
-                }
-                return new CheckAuthenticationRes(bytes[0], userId, userName, follows, followers, chatRooms);
+                return new CheckAuthenticationRes(bytes[0], userId, userName);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -359,17 +190,18 @@ export namespace Domains {
 
         static decode(bytes: Uint8Array) {
             try {
-                const bytesUserCount = bytes.slice(0, 4);
+                const offsetUserCount = 4;
+                const bytesUserCount = bytes.slice(0, offsetUserCount);
                 const userCount = Helpers.getIntFromByteArray(bytesUserCount);
                 if (1 > userCount)
                     return null;
 
-                const offsetUserId = 4 + (userCount * 16);
+                const offsetUserId = offsetUserCount + (userCount * 16);
                 const offsetUserNameLength = offsetUserId + userCount;
                 let offsetUserName = offsetUserNameLength;
                 const users: Domains.User[] = [];
                 for (let i = 0; i < userCount; i++) {
-                    let bytesUserId = bytes.slice(4 + (i * 16), 4 + ((i + 1) * 16));
+                    let bytesUserId = bytes.slice(offsetUserCount + (i * 16), offsetUserCount + ((i + 1) * 16));
                     let userId = Helpers.getUUIDFromByteArray(bytesUserId);
                     let userNameLength = bytes[offsetUserId + i];
                     let bytesUserName = bytes.slice(offsetUserName, offsetUserName + userNameLength);
@@ -378,6 +210,121 @@ export namespace Domains {
                     users.push(new Domains.User(userId, userName));
                 }
                 return new ConnectedUsersRes(users);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class FollowsRes {
+        users: Domains.User[];
+
+        constructor(users?: Domains.User[]) {
+            this.users = 'undefined' != typeof users && null != users ? users : [];
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetUserCount = 4;
+                const bytesUserCount = bytes.slice(0, offsetUserCount);
+                const userCount = Helpers.getIntFromByteArray(bytesUserCount);
+                const offsetUserIds = offsetUserCount  + (userCount * 16);
+                let offsetUserNames = offsetUserIds + userCount;
+                const users: Domains.User[] = [];
+                for (let i = 0; i < userCount; i++) {
+                    let bytesUserId = bytes.slice(offsetUserCount + (i * 16), offsetUserCount + ((i + 1) * 16));
+                    let userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    let userNameLength = bytes[offsetUserIds + i];
+                    let bytesUserName = bytes.slice(offsetUserNames, offsetUserNames + userNameLength);
+                    let userName = new TextDecoder().decode(bytesUserName);
+                    offsetUserNames += userNameLength;
+                    users.push(new Domains.User(userId, userName));
+                }
+                return new FollowsRes(users);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class FollowersRes {
+        users: Domains.User[];
+
+        constructor(users?: Domains.User[]) {
+            this.users = 'undefined' != typeof users && null != users ? users : [];
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetUserCount = 4;
+                const bytesUserCount = bytes.slice(0, offsetUserCount);
+                const userCount = Helpers.getIntFromByteArray(bytesUserCount);
+                const offsetUserIds = offsetUserCount  + (userCount * 16);
+                let offsetUserNames = offsetUserIds + userCount;
+                const users: Domains.User[] = [];
+                for (let i = 0; i < userCount; i++) {
+                    let bytesUserId = bytes.slice(offsetUserCount + (i * 16), offsetUserCount + ((i + 1) * 16));
+                    let userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                    let userNameLength = bytes[offsetUserIds + i];
+                    let bytesUserName = bytes.slice(offsetUserNames, offsetUserNames + userNameLength);
+                    let userName = new TextDecoder().decode(bytesUserName);
+                    offsetUserNames += userNameLength;
+                    users.push(new Domains.User(userId, userName));
+                }
+                return new FollowersRes(users);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class ChatRoomsRes {
+        roomIds: string[];
+        roomOpenTypes: Defines.RoomOpenType[];
+        userCounts: number[];
+        roomNames: string[];
+
+        constructor(roomIds: string[], roomOpenTypes: Defines.RoomOpenType[], userCounts: number[], roomNames: string[]) {
+            this.roomIds = roomIds;
+            this.roomOpenTypes = roomOpenTypes;
+            this.userCounts = userCounts;
+            this.roomNames = roomNames;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const bytesRoomCount= bytes.slice(0, 4);
+                const offsetRoomCount = 4;
+                const roomCount= Helpers.getIntFromByteArray(bytesRoomCount);
+                const offsetRoomIds = 4 + (roomCount * 16);
+                const offsetRoomOpenTypes = offsetRoomIds + roomCount;
+                const offsetUserCount = offsetRoomOpenTypes + (4 * roomCount);
+                let offsetUserName = offsetUserCount + roomCount;
+                const roomIds: string[] = [];
+                const roomOpenTypes: Defines.RoomOpenType[] = [];
+                const userCounts: number[] = [];
+                const roomNames: string[] = [];
+
+                for (let i = 0; i < roomCount; i++) {
+                    const bytesRoomId= bytes.slice(offsetRoomCount + (i * 16), offsetRoomCount + ((i + 1) * 16));
+                    const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
+                    const roomOpenType: Defines.RoomOpenType = bytes[offsetRoomIds + i];
+                    let bytesUserCount= bytes.slice(offsetRoomOpenTypes + (i * 4), offsetRoomOpenTypes + ((i + 1) * 4));
+                    let userCount = Helpers.getIntFromByteArray(bytesUserCount);
+                    let bytesRoomNameLength= bytes[offsetUserCount + i];
+                    let bytesRoomName = bytes.slice(offsetUserName, offsetUserName + bytesRoomNameLength);
+                    let roomName =  new TextDecoder().decode(bytesRoomName);
+                    roomIds.push(roomId);
+                    roomOpenTypes.push(roomOpenType);
+                    userCounts.push(userCount);
+                    roomNames.push(roomName);
+                    offsetUserName += bytesRoomNameLength;
+                }
+
+                return new ChatRoomsRes(roomIds, roomOpenTypes, userCounts, roomNames);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -526,6 +473,43 @@ export namespace Domains {
         }
     }
 
+    export class StartChatRes {
+        result: Errors.StartChat;
+        roomId: string;
+        roomOpenType: Defines.RoomOpenType;
+        userCount: number;
+        roomName: string;
+
+        constructor(result: Errors.StartChat, roomId: string, roomOpenType: Defines.RoomOpenType, userCount: number, roomName: string) {
+            this.result = result;
+            this.roomId = roomId;
+            this.roomOpenType = roomOpenType;
+            this.userCount = userCount;
+            this.roomName = roomName;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetRoomId = 17;
+                const offsetRoomOpenType = offsetRoomId + 1;
+                const offsetUserCount = offsetRoomOpenType + 4
+                const offsetRoomNameLength = offsetUserCount + 1;
+                const bytesRoomId = bytes.slice(1, offsetRoomId);
+                const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
+                const roomOpenType = bytes[offsetRoomId];
+                const bytesUserCount = bytes.slice(offsetRoomOpenType, offsetUserCount);
+                const userCount = Helpers.getIntFromByteArray(bytesUserCount);
+                const roomNameLength = bytes[offsetUserCount];
+                const bytesRoomName = bytes.slice(offsetRoomNameLength, offsetRoomNameLength + roomNameLength);
+                const roomName = new TextDecoder().decode(bytesRoomName);
+                return new StartChatRes(bytes[0], roomId, roomOpenType, userCount, roomName);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
     export class CreateChatRoomReq {
         openType: Defines.RoomOpenType;
         roomName: string;
@@ -640,59 +624,6 @@ export namespace Domains {
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
 
                 return new EnterChatRoomRes(bytes[0], roomId);
-            } catch (error) {
-                console.error(error);
-                return null;
-            }
-        }
-    }
-
-    export class UpdateChatRoomsRes {
-        roomIds: string[];
-        roomNames: string[];
-        roomUserCounts: number[];
-
-        constructor(roomIds: string[], roomNames: string[], roomuserCounts: number[]) {
-            this.roomIds = roomIds;
-            this.roomNames = roomNames;
-            this.roomUserCounts = roomuserCounts;
-        }
-
-        static decode(bytes: Uint8Array) {
-            try {
-                const bytesRoomCount= bytes.slice(0, 4);
-                const roomCount= Helpers.getIntFromByteArray(bytesRoomCount);
-                const roomIds: string[] = [];
-                const roomNames: string[] = [];
-                const roomNameLengths: number[] = [];
-                const roomUserCounts: number[] = [];
-
-                for (let i = 0; i < roomCount; i++) {
-                    let roomIdOffset= 4 + (i * 16);
-                    let bytesRoomId= bytes.slice(roomIdOffset, roomIdOffset + 16);
-                    let roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-                    roomIds.push(roomId);
-                    let roomUserCountOffset= (4 + (roomCount * 16)) + (i * 4);
-                    let bytesRoomUserCount= bytes.slice(roomUserCountOffset, roomUserCountOffset + 4);
-                    let roomUserCount = Helpers.getIntFromByteArray(bytesRoomUserCount);
-                    roomUserCounts.push(roomUserCount);
-
-                    let roomNameLengthOffset= (4 + (roomCount * 16) + (roomCount * 4)) + i;
-                    let bytesRoomNameLength= bytes.slice(roomNameLengthOffset, roomNameLengthOffset + 1);
-                    roomNameLengths.push(bytesRoomNameLength[0]);
-                    let roomNameBytesOffset= 0;
-                    if (0 < roomNameLengths.length && 0 < i) {
-                        let prevRoomNameLengths = roomNameLengths.slice(0, i);
-                        if (0 < prevRoomNameLengths.length)
-                            roomNameBytesOffset = prevRoomNameLengths.reduce((p, c) => p + c);
-                    }
-                    let roomNameOffset = 4 + (roomCount * 16) + (roomCount * 4) + roomCount + roomNameBytesOffset;
-                    let bytesRoomName = bytes.slice(roomNameOffset, roomNameOffset + roomNameLengths[i]);
-                    let roomName =  new TextDecoder().decode(bytesRoomName);
-                    roomNames.push(roomName);
-                }
-
-                return new UpdateChatRoomsRes(roomIds, roomNames, roomUserCounts);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -822,24 +753,154 @@ export namespace Domains {
         }
     }
 
-    export class Visit {
-        session: string = '';
-        fp: number = 0;
-        deviceType: string = '';
-        deviceVendor: string = '';
-        deviceModel: string = '';
-        agent: string = '';
-        browser: string = '';
-        browserVersion: string = '';
-        engine: string = '';
-        engineVersion: string = '';
-        os: string = '';
-        osVersion: string = '';
-        host: string = '';
-        parameter: string = '';
-        path: string = '';
-        title: string = '';
-        localTime: Date = new Date();
+    export class HistoryChatRoomRes {
+        roomId: string;
+        chatIds: string[];
+        userIds: string[];
+        types: Defines.ChatType[];
+        sendAts: number[];
+        userNames: string[];
+        messages: string[];
+
+        constructor(roomId: string, chatIds: string[], userIds: string[], types: Defines.ChatType[], sendAts: number[], userNames: string[], messages: string[]) {
+            this.roomId = roomId;
+            this.chatIds = chatIds;
+            this.userIds = userIds;
+            this.types = types;
+            this.sendAts = sendAts;
+            this.userNames = userNames;
+            this.messages = messages;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const count = Helpers.getIntFromByteArray(bytes.slice(0, 4));
+                const roomId: string = Helpers.getUUIDFromByteArray(bytes.slice(4, 20));
+                const chatIds: string[] = [];
+                const userIds: string[] = [];
+                const types: Defines.ChatType[] = [];
+                const sendAts: number[] = [];
+                const userNameLengths: number[] = [];
+                const messageLengths: number[] = [];
+                const userNames: string[] = [];
+                const messages: string[] = [];
+
+                const offsetBytesRoomId = 20;
+                const offsetBytesChatIds = offsetBytesRoomId + (16 * count);
+                const offsetBytesUserIds = offsetBytesChatIds + (16 * count);
+                const offsetBytesTypes = offsetBytesUserIds + (count);
+                const offsetBytesSendAts = offsetBytesTypes + (count * 8);
+                const offsetBytesUserNameLength = offsetBytesSendAts + (count);
+                const offsetBytesMessageLength = offsetBytesUserNameLength + (4 * count);
+
+                for (let i = 0; i < count; i++) {
+                    let bytesChatId = bytes.slice(offsetBytesRoomId + (i * 16), offsetBytesRoomId + ((i + 1) * 16));
+                    chatIds.push(Helpers.getUUIDFromByteArray(bytesChatId));
+
+                    let bytesUserId = bytes.slice(offsetBytesChatIds + (i * 16), offsetBytesChatIds + ((i + 1) * 16));
+                    userIds.push(Helpers.getUUIDFromByteArray(bytesUserId));
+
+                    let type = bytes[offsetBytesUserIds + i];
+                    types.push(type as Defines.ChatType);
+
+                    let bytesSendAt = bytes.slice(offsetBytesTypes + (i * 8), offsetBytesTypes + ((i + 1) * 8));
+                    sendAts.push(Helpers.getLongFromByteArray(bytesSendAt));
+
+                    let userNameLength = bytes[offsetBytesSendAts + i];
+                    userNameLengths.push(userNameLength);
+
+                    let bytesMessage = bytes.slice(offsetBytesUserNameLength + (i * 4), offsetBytesUserNameLength + ((i + 1) * 4));
+                    messageLengths.push(Helpers.getIntFromByteArray(bytesMessage));
+                }
+
+                let offsetBytesUserNames = offsetBytesMessageLength;
+                for (let i = 0; i < userNameLengths.length; i++) {
+                    let bytesUserName = bytes.slice(offsetBytesUserNames, offsetBytesUserNames + userNameLengths[i]);
+                    userNames.push(new TextDecoder().decode(bytesUserName));
+                    offsetBytesUserNames += userNameLengths[i];
+                }
+
+                let offsetBytesMessages = offsetBytesUserNames;
+                for (let i = 0; i < messageLengths.length; i++) {
+                    let bytesMessage = bytes.slice(offsetBytesMessages, offsetBytesMessages + messageLengths[i]);
+                    messages.push(new TextDecoder().decode(bytesMessage));
+                    offsetBytesMessages += messageLengths[i];
+                }
+
+                return new Domains.HistoryChatRoomRes(roomId, chatIds, userIds, types, sendAts, userNames, messages);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+
+        getChatHistories(): Domains.Chat[] {
+            const histories: Domains.Chat[] = [];
+            try {
+                for (let i = 0; i < this.chatIds.length; i++) {
+                    histories.push(new Chat(this.types[i], this.roomId, this.userIds[i], this.chatIds[i], this.sendAts[i], this.userNames[i], this.messages[i]));
+                }
+            } catch (error) {
+                console.error(error);
+            }
+            return histories;
+        }
+    }
+
+    export class TalkChatRoomRes {
+        result: Errors.TalkChatRoom;
+        type: Defines.ChatType;
+        roomId: string;
+        userId: string;
+        id: string;
+        time: number;
+        userName: string;
+        message: string;
+
+        constructor(result: Errors.TalkChatRoom, type: Defines.ChatType, roomId: string, userId: string, id: string, time: number, userName: string, message: string) {
+            this.result = result;
+            this.type = type;
+            this.roomId = roomId;
+            this.userId = userId;
+            this.id = id;
+            this.time = time;
+            this.userName = userName;
+            this.message = message;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const result = bytes[0];
+                if (1 == bytes.length)
+                    return new TalkChatRoomRes(result, Defines.ChatType.TALK, '', '', '', (new Date()).getTime(), '', '');
+
+                const type = bytes[1];
+                const bytesRoomId= bytes.slice(2, 18);
+                const roomId= Helpers.getUUIDFromByteArray(bytesRoomId);
+                const bytesUserId = bytes.slice(18, 34);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                const bytesId = bytes.slice(34, 50);
+                const id = Helpers.getUUIDFromByteArray(bytesId);
+                const bytesTime = bytes.slice(50, 58);
+                const time = Helpers.getLongFromByteArray(bytesTime);
+                const userNameByteLength = bytes[58];
+                const bytesMessageByteLength = bytes.slice(59, 63);
+                const messageByteLength = Helpers.getIntFromByteArray(bytesMessageByteLength);
+                const bytesUserName = bytes.slice(63, 63 + userNameByteLength);
+                const userName = new TextDecoder().decode(bytesUserName);
+                const bytesMessage = bytes.slice(63 + userNameByteLength, 63 + userNameByteLength + messageByteLength);
+                const message = new TextDecoder().decode(bytesMessage);
+
+                return new TalkChatRoomRes(result, type, roomId, userId, id, time, userName, message);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+
+        getChatData() {
+            return new Chat(this.type, this.roomId, this.userId, this.id, this.time, this.userName, this.message);
+        }
     }
 
     export class SubscriptionRequest {

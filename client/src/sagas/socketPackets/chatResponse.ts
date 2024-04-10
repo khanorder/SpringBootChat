@@ -31,6 +31,30 @@ import {v4 as uuid} from "uuid";
 import {push} from "connected-next-router";
 import isEmpty from "lodash/isEmpty";
 import {RootState} from "@/stores/reducers";
+import {setServerVersion} from "@/stores/reducers/appConfigs";
+
+export function* checkConnectionRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - checkAuthentication`);
+
+    const response = Domains.CheckConnectionRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    yield put(setServerVersion([response.serverVersionMain, response.serverVersionUpdate, response.serverVersionMaintenance]));
+
+    switch (response.result) {
+        case Errors.CheckConnection.NONE:
+            break;
+
+        case Errors.CheckConnection.UPDATE_REQUIRED:
+            break;
+    }
+
+    return response;
+}
 
 export function* checkAuthenticationRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -47,9 +71,6 @@ export function* checkAuthenticationRes(data: Uint8Array) {
             yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
             yield put(setUserId(response.userId));
             yield put(setUserName(response.userName));
-            yield put(setFollows(response.follows));
-            yield put(setFollowers(response.followers));
-            yield put(setChatRooms(response.chatRooms));
             Helpers.setCookie("userId", response.userId, 3650);
 
             break;
@@ -114,6 +135,46 @@ export function* noticeDisconnectedUserRes(data: Uint8Array) {
     }
 
     yield put(removeConnectedUser(response.userId));
+    return response;
+}
+
+export function* followsRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - followsRes`);
+
+    const response = Domains.FollowsRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    yield put(setFollows(response.users));
+    return response;
+}
+
+export function* followersRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - followersRes`);
+
+    const response = Domains.FollowersRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    yield put(setFollowers(response.users));
+    return response;
+}
+
+export function* chatRoomsRes(data: Uint8Array) {
+    const response = Domains.ChatRoomsRes.decode(data);
+    if (response && 0 < response.roomIds.length) {
+        const list: Domains.ChatRoom[] = [];
+        for (let i = 0; i < response.roomIds.length; i++)
+            list.push(new Domains.ChatRoom(response.roomIds[i], response.roomNames[i], response.roomOpenTypes[i], [], []));
+
+        yield put(setChatRooms(list));
+    }
     return response;
 }
 
@@ -229,6 +290,36 @@ export function* unfollowerRes(data: Uint8Array) {
     return response;
 }
 
+export function* startChatRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - startChatRes`);
+
+    const response = Domains.StartChatRes.decode(data);
+    if (null == response) {
+        alert('데이터 형식 오류.');
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.StartChat.NONE:
+            yield put(addChatRooms([new Domains.ChatRoom(response.roomId, response.roomName, response.roomOpenType, [], [])]));
+            yield put(enterChatRoom(response.roomId));
+            yield put(push(`/chat/${Helpers.getBase62FromUUID(response.roomId)}`));
+
+            break;
+
+        case Errors.StartChat.AUTH_REQUIRED:
+            alert('로그인 후 이용해 주세요.');
+            break;
+
+        case Errors.StartChat.NOT_FOUND_TARGET_USER:
+            alert('없는 사용자 입니다.');
+            break;
+    }
+
+    return response;
+}
+
 export function* createChatRoomRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`packet - createChatRoom`);
@@ -247,7 +338,7 @@ export function* createChatRoomRes(data: Uint8Array) {
             break;
 
         case Errors.CreateChatRoom.NOT_ALLOWED_OPEN_TYPE:
-            alert('채팅방 공개 범위가 잘못 설되었습니다.');
+            alert('채팅방 공개 범위가 잘못 설정되었습니다.');
             break;
 
         case Errors.CreateChatRoom.EXISTS_ROOM:
@@ -311,19 +402,6 @@ export function* removeChatRoomRes(data: Uint8Array) {
     return response;
 }
 
-export function* updateChatRoomsRes(data: Uint8Array) {
-    const response = Domains.UpdateChatRoomsRes.decode(data);
-    if (response && 0 < response.roomIds.length) {
-        const list: Domains.ChatRoom[] = [];
-        for (let i = 0; i < response.roomIds.length; i++) {
-            list.push(new Domains.ChatRoom(response.roomIds[i], response.roomNames[i], Defines.RoomOpenType.PRIVATE, [], []));
-
-        }
-        yield put(setChatRooms(list));
-    }
-    return response;
-}
-
 export function* updateChatRoomRes(data: Uint8Array) {
     const response = Domains.UpdateChatRoomUsersRes.decode(data);
     yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: []}));
@@ -351,12 +429,12 @@ export function* enterChatRoomRes(data: Uint8Array) {
             yield put(push(`/chat/${Helpers.getBase62FromUUID(response.roomId)}`));
             break;
 
-        case Errors.EnterChatRoom.NO_EXISTS_ROOM:
-            alert('그런 채팅방은 없습니다.');
+        case Errors.EnterChatRoom.AUTH_REQUIRED:
+            alert('로그인 후 이용해 주세요.');
             break;
 
-        case Errors.EnterChatRoom.NOT_FOUND_USER:
-            alert('유저 정보를 찾을 수 없습니다.');
+        case Errors.EnterChatRoom.NO_EXISTS_ROOM:
+            alert('채팅방이 없습니다.');
             break;
 
         case Errors.EnterChatRoom.ALREADY_IN_ROOM:

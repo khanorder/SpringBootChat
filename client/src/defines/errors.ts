@@ -5,13 +5,26 @@ export namespace Errors {
         FAILED_TO_CREATE_USER = 2,
     }
 
+    export enum CheckConnection {
+        NONE = 0,
+        UPDATE_REQUIRED = 1,
+    }
+
+    export enum StartChat {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        NOT_FOUND_TARGET_USER = 2,
+        FAILED_TO_START_CHAT = 3,
+    }
+
     export enum CreateChatRoom {
         NONE = 0,
         NOT_ALLOWED_OPEN_TYPE = 1,
         NOT_FOUND_USER = 2,
         NOT_MATCHED_USER = 3,
         EXISTS_ROOM = 4,
-        REQUIRED_ROOM_ID = 5,
+        FAILED_TO_CREATE_CHAT_ROOM = 5,
+        REQUIRED_ROOM_ID = 6,
     }
 
     export enum Follow {
@@ -43,11 +56,13 @@ export namespace Errors {
 
     export enum EnterChatRoom {
         NONE = 0,
-        ROOM_REMOVED = 1,
-        NO_EXISTS_ROOM = 2,
-        NOT_FOUND_USER = 3,
-        ALREADY_IN_ROOM = 4,
-        FAILED_TO_ENTER = 5,
+        AUTH_REQUIRED = 1,
+        ROOM_REMOVED = 2,
+        NO_EXISTS_ROOM = 3,
+        NOT_MATCHED_USER = 4,
+        ALREADY_IN_ROOM = 5,
+        NOT_AVAILABLE_ROOM = 6,
+        FAILED_TO_ENTER = 7,
     }
 
     export enum TalkChatRoom {

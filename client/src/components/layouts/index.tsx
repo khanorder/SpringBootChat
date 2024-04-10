@@ -5,6 +5,7 @@ import style from "@/styles/layout.module.sass";
 import {Defines} from "@/defines";
 import dynamic from "next/dynamic";
 import isEmpty from "lodash/isEmpty";
+import ChatDisconnected from "@/components/chatContents/chatDisconnected";
 
 const LNBDialog = dynamic(() => import("@/components/dialogs/lnbDialog"), {ssr: false});
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
@@ -60,6 +61,10 @@ export default function Layout({children}: { children: ReactNode }) {
                             <div className={style.loader}></div>
                         </div>
                     );
+                    break;
+
+                case WebSocket.CLOSED:
+                    contents = <ChatDisconnected />;
                     break;
             }
         }

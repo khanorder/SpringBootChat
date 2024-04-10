@@ -1,9 +1,7 @@
 import type {Metadata} from 'next'
 import {ReactNode} from "react";
 import Head from "next/head";
-import dynamic from "next/dynamic";
 import {useAppSelector} from "@/hooks";
-const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), { ssr: false });
 
 export const metadata: Metadata = {
     title: 'chat client',
@@ -46,7 +44,6 @@ export default function MainLayout({children}: { children: ReactNode }) {
                 <meta name="twitter:image" content={ogImage}/>
             </Head>
             {children}
-            <ChatGNB />
         </>
     )
 }

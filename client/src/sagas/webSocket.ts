@@ -11,7 +11,7 @@ import {
     enterChatRoomReq,
     exitChatRoomReq,
     sendMessageReq,
-    saveUserNameReq, connectedUsersReq, followReq, unfollowReq
+    saveUserNameReq, connectedUsersReq, followReq, unfollowReq, startChatReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -22,7 +22,7 @@ import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {
     addChatRoomRes,
-    checkAuthenticationRes, connectedUsersRes,
+    checkAuthenticationRes, checkConnectionRes, connectedUsersRes,
     createChatRoomRes,
     enterChatRoomRes,
     exitChatRoomRes, followerRes, followRes,
@@ -32,7 +32,7 @@ import {
     noticeExitChatRoomRes, removeChatRoomRes,
     talkChatRoomRes, unfollowerRes, unfollowRes,
     updateChatRoomRes,
-    updateChatRoomsRes
+    chatRoomsRes, followsRes, followersRes, startChatRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -40,7 +40,7 @@ import {
     callEnterChatRoomReq,
     callExitChatRoomReq, callFollowReq,
     callSaveUserNameReq,
-    callSendMessageReq, callUnfollowReq
+    callSendMessageReq, callUnfollowReq, callCheckConnectionReq, callCheckAuthenticationReq, callStartChatReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -122,21 +122,15 @@ export function* checkConnection (socket: WebSocket) {
                     case WebSocket.OPEN:
                         if ('production' !== process.env.NODE_ENV)
                             console.log(`saga - checkConnection: websocket connection checked.(${dayjs().format("YYYY-MM-DD HH:mm:ss")})`);
-                        yield setConnectionState(readyState);
 
-                        try {
-                            const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_CONNECTION]);
-                            const packet = new Uint8Array(flag.length);
-                            packet.set(flag);
-                            socket.send(packet);
-                        } catch (sendPacketError) {
-                            console.error(sendPacketError);
-                        }
+                        yield setConnectionState(readyState);
+                        yield call(callCheckConnectionReq, socket);
                         break;
 
                     default:
                         if ('production' !== process.env.NODE_ENV)
                             console.log(`saga - checkConnection: stop check connection.(${dayjs().format("YYYY-MM-DD HH:mm:ss")})`);
+
                         channel.close();
                         break;
                 }
@@ -167,18 +161,7 @@ function* onOpen (socket: WebSocket) {
                 try {
                     const event: Event = yield take(channel);
                     yield call(setConnectionState, WebSocket.OPEN);
-                    const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
-                    const userId = Helpers.getCookie("userId");
-                    const bytesUserId = new Uint8Array(isEmpty(userId) || 36 !== userId.length ? 0 : 16);
-                    if (!isEmpty(userId) && 36 === userId.length)
-                        bytesUserId.set(Helpers.getByteArrayFromUUID(userId));
-
-                    const packet = new Uint8Array(flag.byteLength + bytesUserId.byteLength);
-                    packet.set(flag);
-                    if (0 < bytesUserId.byteLength)
-                        packet.set(bytesUserId, flag.byteLength);
-
-                    socket.send(packet);
+                    yield call(callCheckAuthenticationReq, socket);
 
                     if ('production' !== process.env.NODE_ENV)
                         console.log("connection opened.");
@@ -216,6 +199,8 @@ function* onClose (socket: WebSocket) {
                     if (maxReTryCount < webSocketState.countTryConnect) {
                         if ('production' !== process.env.NODE_ENV)
                             console.log(`saga - reconnect: stop reconnect.`);
+
+                        yield put(setConnectionState(WebSocket.CLOSED));
                     } else {
                         yield call(setSocketInfo, socket.url);
                     }
@@ -262,6 +247,10 @@ function* onMessage (socket: WebSocket) {
                             yield call(checkAuthenticationRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_CHECK_CONNECTION:
+                            yield call(checkConnectionRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_CONNECTED_USERS:
                             yield call(connectedUsersRes, packetData);
                             break;
@@ -272,6 +261,18 @@ function* onMessage (socket: WebSocket) {
 
                         case Defines.ResType.RES_NOTICE_DISCONNECTED_USER:
                             yield call(noticeDisconnectedUserRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_FOLLOWS:
+                            yield call(followsRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_FOLLOWERS:
+                            yield call(followersRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_CHAT_ROOMS:
+                            yield call(chatRoomsRes, packetData);
                             break;
 
                         case Defines.ResType.RES_FOLLOW:
@@ -290,6 +291,10 @@ function* onMessage (socket: WebSocket) {
                             yield call(unfollowerRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_START_CHAT:
+                            yield call(startChatRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_CREATE_CHAT_ROOM:
                             yield call(createChatRoomRes, packetData);
                             break;
@@ -302,20 +307,16 @@ function* onMessage (socket: WebSocket) {
                             yield call(removeChatRoomRes, packetData);
                             break;
 
-                        case Defines.ResType.RES_UPDATE_CHAT_ROOMS:
-                            yield call(updateChatRoomsRes, packetData);
-                            break;
-
-                        case Defines.ResType.RES_UPDATE_CHAT_ROOM:
-                            yield call(updateChatRoomRes, packetData);
-                            break;
-
                         case Defines.ResType.RES_ENTER_CHAT_ROOM:
                             yield call(enterChatRoomRes, packetData);
                             break;
 
                         case Defines.ResType.RES_EXIT_CHAT_ROOM:
                             yield call(exitChatRoomRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_UPDATE_CHAT_ROOM:
+                            yield call(updateChatRoomRes, packetData);
                             break;
 
                         case Defines.ResType.RES_NOTICE_ENTER_CHAT_ROOM:
@@ -392,7 +393,8 @@ function* callStartReconnecting() {
 
             default:
                 try {
-                    yield call(reconnect, webSocketState.socket);
+                    //yield put(setConnectionState(WebSocket.CONNECTING));
+                    yield call(setSocketInfo, webSocketState.socket.url);
                 } catch (error) {
                     console.error(error);
                 }
@@ -406,6 +408,7 @@ export function* watchWebSocket() {
     yield takeLatest(connectedUsersReq, callConnectedUsersReq);
     yield takeLatest(followReq, callFollowReq);
     yield takeLatest(unfollowReq, callUnfollowReq);
+    yield takeLatest(startChatReq, callStartChatReq);
     yield takeLatest(createChatRoomReq, callCreateChatRoomReq);
     yield takeLatest(enterChatRoomReq, callEnterChatRoomReq);
     yield takeLatest(exitChatRoomReq, callExitChatRoomReq);

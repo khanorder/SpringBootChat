@@ -92,6 +92,10 @@ public class SocketHandler extends TextWebSocketHandler {
                 reqHandler.onUnfollow(session, connectedUser, packet);
                 break;
 
+            case REQ_START_CHAT:
+                reqHandler.onStartChat(session, connectedUser, packet);
+                break;
+
             case REQ_CHANGE_USER_NAME:
                 reqHandler.onChangeUserName(session, connectedUser, packet);
                 break;
