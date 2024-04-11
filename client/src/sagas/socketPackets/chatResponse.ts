@@ -22,8 +22,9 @@ import {
     setConnectedUsers,
     setFollowers,
     setFollows,
+    setUserMessage,
     setUserId,
-    setUserName
+    setUserName, setHaveProfile, setLatestActive
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -35,7 +36,7 @@ import {setServerVersion} from "@/stores/reducers/appConfigs";
 
 export function* checkConnectionRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - checkAuthentication`);
+        console.log(`packet - checkConnectionRes`);
 
     const response = Domains.CheckConnectionRes.decode(data);
     if (null == response) {
@@ -58,11 +59,12 @@ export function* checkConnectionRes(data: Uint8Array) {
 
 export function* checkAuthenticationRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - checkAuthentication`);
+        console.log(`packet - checkAuthenticationRes`);
 
     const response = Domains.CheckAuthenticationRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - checkAuthenticationRes: response is null.`);
         return null;
     }
 
@@ -71,6 +73,9 @@ export function* checkAuthenticationRes(data: Uint8Array) {
             yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
             yield put(setUserId(response.userId));
             yield put(setUserName(response.userName));
+            yield put(setUserMessage(response.userMessage));
+            yield put(setHaveProfile(response.haveProfile));
+            yield put(setLatestActive(response.latestActive));
             Helpers.setCookie("userId", response.userId, 3650);
 
             break;
@@ -90,11 +95,12 @@ export function* checkAuthenticationRes(data: Uint8Array) {
 
 export function* connectedUsersRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - connectedUsers`);
+        console.log(`packet - connectedUsersRes`);
 
     const response = Domains.ConnectedUsersRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - connectedUsersRes: response is null.`);
         return null;
     }
 
@@ -104,11 +110,12 @@ export function* connectedUsersRes(data: Uint8Array) {
 
 export function* noticeConnectedUserRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - noticeConnectedUser`);
+        console.log(`packet - noticeConnectedUserRes`);
 
     const response = Domains.NoticeConnectedUserRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeConnectedUserRes: response is null.`);
         return null;
     }
 
@@ -122,11 +129,12 @@ export function* noticeConnectedUserRes(data: Uint8Array) {
 
 export function* noticeDisconnectedUserRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - noticeDisconnectedUser`);
+        console.log(`packet - noticeDisconnectedUserRes`);
 
     const response = Domains.NoticeDisconnectedUserRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeDisconnectedUserRes: response is null.`);
         return null;
     }
 
@@ -144,7 +152,8 @@ export function* followsRes(data: Uint8Array) {
 
     const response = Domains.FollowsRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - followsRes: response is null.`);
         return null;
     }
 
@@ -158,7 +167,8 @@ export function* followersRes(data: Uint8Array) {
 
     const response = Domains.FollowersRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - followersRes: response is null.`);
         return null;
     }
 
@@ -184,7 +194,8 @@ export function* followRes(data: Uint8Array) {
 
     const response = Domains.FollowRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - followRes: response is null.`);
         return null;
     }
     
@@ -220,11 +231,12 @@ export function* followRes(data: Uint8Array) {
 
 export function* unfollowRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - followRes`);
+        console.log(`packet - unfollowRes`);
 
     const response = Domains.UnfollowRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - unfollowRes: response is null.`);
         return null;
     }
 
@@ -264,7 +276,8 @@ export function* followerRes(data: Uint8Array) {
 
     const response = Domains.FollowerRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - followerRes: response is null.`);
         return null;
     }
 
@@ -280,7 +293,8 @@ export function* unfollowerRes(data: Uint8Array) {
 
     const response = Domains.UnfollowerRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - unfollowerRes: response is null.`);
         return null;
     }
 
@@ -296,7 +310,8 @@ export function* startChatRes(data: Uint8Array) {
 
     const response = Domains.StartChatRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - startChatRes: response is null.`);
         return null;
     }
 
@@ -326,7 +341,8 @@ export function* createChatRoomRes(data: Uint8Array) {
 
     const response = Domains.CreateChatRoomRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - createChatRoom: response is null.`);
         return null;
     }
 
@@ -351,11 +367,12 @@ export function* createChatRoomRes(data: Uint8Array) {
 
 export function* addChatRoomRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - createChatRoom`);
+        console.log(`packet - addChatRoomRes`);
 
     const response = Domains.AddChatRoomRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - addChatRoomRes: response is null.`);
         return null;
     }
 
@@ -384,7 +401,8 @@ export function* removeChatRoomRes(data: Uint8Array) {
 
     const response = Domains.RemoveChatRoomRes.decode(data);
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - removeChatRoomRes: response is null.`);
         return null;
     }
 
@@ -403,12 +421,22 @@ export function* removeChatRoomRes(data: Uint8Array) {
 }
 
 export function* updateChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - updateChatRoomRes`);
+
     const response = Domains.UpdateChatRoomUsersRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - updateChatRoomRes: response is null.`);
+        return null;
+    }
+
     yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: []}));
     if (response && 0 < response.userIds.length) {
         const list: Domains.User[] = [];
         for (let i = 0; i < response.userIds.length; i++)
-            list.push(new Domains.User(response.userIds[i], response.userNames[i]));
+            list.push(new Domains.User(response.userIds[i], response.userNames[i], '', false, 0));
 
         yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: list}));
     }
@@ -416,10 +444,14 @@ export function* updateChatRoomRes(data: Uint8Array) {
 }
 
 export function* enterChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - enterChatRoomRes`);
+
     const response = Domains.EnterChatRoomRes.decode(data);
 
-    if (!response) {
-        alert('데이터 형식 오류.');
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - enterChatRoomRes: response is null.`);
         return null;
     }
 
@@ -446,10 +478,14 @@ export function* enterChatRoomRes(data: Uint8Array) {
 }
 
 export function* exitChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - exitChatRoomRes`);
+
     const response = Domains.ExitChatRoomRes.decode(data);
 
     if (null == response) {
-        alert('데이터 형식 오류.');
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - exitChatRoomRes: response is null.`);
         return null;
     }
 
@@ -481,7 +517,16 @@ export function* exitChatRoomRes(data: Uint8Array) {
 }
 
 export function* noticeEnterChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeEnterChatRoomRes`);
+
     const response = Domains.NoticeEnterChatRoomRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeEnterChatRoomRes: response is null.`);
+        return null;
+    }
 
     const enterNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.userName}'님이 입장했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: enterNotice}));
@@ -489,7 +534,16 @@ export function* noticeEnterChatRoomRes(data: Uint8Array) {
 }
 
 export function* noticeExitChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeExitChatRoomRes`);
+
     const response = Domains.NoticeExitChatRoomRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeExitChatRoomRes: response is null.`);
+        return null;
+    }
 
     const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.userName}'님이 퇴장했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: exitNotice}));
@@ -497,7 +551,16 @@ export function* noticeExitChatRoomRes(data: Uint8Array) {
 }
 
 export function* noticeChangeNameChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeChangeNameChatRoomRes`);
+
     const response = Domains.NoticeChangeNameChatRoomRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeChangeNameChatRoomRes: response is null.`);
+        return null;
+    }
 
     const changeNameNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.oldUserName}'님이 '${response?.newUserName}'으로 대화명을 변경했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: changeNameNotice}));
@@ -505,18 +568,32 @@ export function* noticeChangeNameChatRoomRes(data: Uint8Array) {
 }
 
 export function* talkChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - talkChatRoomRes`);
+
     const response = Domains.TalkChatRoomRes.decode(data);
-    if (!response)
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - talkChatRoomRes: response is null.`);
         return null;
+    }
 
     yield put(addChatData({roomId: response.roomId ?? '', chatData: response.getChatData()}));
     return response;
 }
 
 export function* historyChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - historyChatRoomRes`);
+
     const response = Domains.HistoryChatRoomRes.decode(data);
-    if (!response)
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - historyChatRoomRes: response is null.`);
         return null;
+    }
 
     yield put(setChatDatas({ roomId: response.roomId ?? '', chatDatas: response.getChatHistories()}));
     return response;

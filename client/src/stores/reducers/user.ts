@@ -8,6 +8,9 @@ import AuthStateType = Defines.AuthStateType;
 interface UserState {
     id: string;
     name: string;
+    message: string;
+    haveProfile: boolean;
+    latestActive: number;
     authState: Defines.AuthStateType;
     connectedUsers: Domains.User[];
     follows: Domains.User[];
@@ -17,6 +20,9 @@ interface UserState {
 const initialState: UserState = {
     id: '',
     name: '',
+    message: '',
+    haveProfile: false,
+    latestActive: 0,
     authState: AuthStateType.NONE,
     connectedUsers: [],
     follows: [],
@@ -29,13 +35,13 @@ const userSlice = createSlice({
     reducers: {
         setUserId: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setUserId: ${JSON.stringify(action.payload)}`);
+                console.log(`reducer - setUserId: ${action.payload}`);
 
             state.id = isEmpty(action.payload) ? '' : action.payload;
         },
         setUserName: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setUserName: ${JSON.stringify(action.payload)}`);
+                console.log(`reducer - setUserName: ${action.payload}`);
 
             if (action.payload && 10 < action.payload.trim().length) {
                 alert(`대화명은 10글자 이내로 입력해주세요.`);
@@ -44,6 +50,30 @@ const userSlice = createSlice({
             }
 
             state.name = isEmpty(action.payload) ? '' : action.payload;
+        },
+        setUserMessage: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setUserMessage: ${action.payload}`);
+
+            if (action.payload && 128 < action.payload.trim().length) {
+                alert(`상태 메시지는 128글자 이내로 입력해주세요.`);
+                state.message = state.message.trim();
+                return;
+            }
+
+            state.message = isEmpty(action.payload) ? '' : action.payload;
+        },
+        setHaveProfile: (state, action: PayloadAction<boolean>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setHaveProfile: ${action.payload}`);
+
+            state.haveProfile = action.payload ?? false;
+        },
+        setLatestActive: (state, action: PayloadAction<number>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setLatestActive: ${action.payload}`);
+
+            state.latestActive = 0 > action.payload ? 0 : action.payload;
         },
         setAuthState: (state, action: PayloadAction<Defines.AuthStateType>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -163,6 +193,9 @@ export type { UserState };
 export const {
     setUserId,
     setUserName,
+    setUserMessage,
+    setHaveProfile,
+    setLatestActive,
     setAuthState,
     setConnectedUsers,
     addConnectedUser,

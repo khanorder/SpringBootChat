@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.util.Date;
 
@@ -28,6 +29,7 @@ public class ChatRead {
     String userId;
 
     @Nonnull
+    @ColumnDefault(value = "current_timestamp(6)")
     @Column(length = 6, nullable = false)
     Date readAt;
 }

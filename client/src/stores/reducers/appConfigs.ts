@@ -2,6 +2,8 @@ import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 
 interface AppConfigsState {
     isProd: boolean;
+    serverHost: string;
+    serverProtocol: string;
     clientVersionMain: number;
     clientVersionUpdate: number;
     clientVersionMaintenance: number;
@@ -19,6 +21,8 @@ interface AppConfigsState {
 
 const initialState: AppConfigsState = {
     isProd: false,
+    serverHost: "",
+    serverProtocol: "https",
     clientVersionMain: 0,
     clientVersionUpdate: 1,
     clientVersionMaintenance: 3,
@@ -41,6 +45,12 @@ const appConfigsSlice = createSlice({
         setIsProd: (state, action: PayloadAction<boolean>) => {
             state.isProd = action.payload;
         },
+        setServerHost: (state, action: PayloadAction<string>) => {
+            state.serverHost = action.payload;
+        },
+        setServerProtocol: (state, action: PayloadAction<string>) => {
+            state.serverProtocol = action.payload;
+        },
         setServerVersion: (state, action: PayloadAction<[number, number, number]>) => {
             state.serverVersionMain = action.payload[0];
             state.serverVersionUpdate = action.payload[1];
@@ -58,6 +68,8 @@ const appConfigsSlice = createSlice({
 export type { AppConfigsState };
 export const {
     setIsProd,
+    setServerHost,
+    setServerProtocol,
     setServerVersion,
     setAppName
 } = appConfigsSlice.actions;

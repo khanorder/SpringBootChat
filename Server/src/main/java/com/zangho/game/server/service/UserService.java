@@ -80,7 +80,7 @@ public class UserService {
         return Optional.ofNullable(result);
     }
 
-    public Optional<User> findUser(String userId) throws Exception {
+    public Optional<User> findUserWithChatRooms(String userId) throws Exception {
         var user = userRepository.findById(userId);
         if (user.isPresent()) {
             var chatRooms = chatRoomRepository.findInUserChatRoomInfos(userId);
@@ -89,7 +89,7 @@ public class UserService {
         return user;
     }
 
-    public Optional<User> findOnlyUser(String userId) throws Exception {
+    public Optional<User> findUser(String userId) {
         return userRepository.findById(userId);
     }
 
@@ -141,7 +141,13 @@ public class UserService {
         return result;
     }
 
-    public boolean updateUser(User user) throws Exception {
+    public boolean updateUser(User user) {
+        var existsUser = userRepository.save(user);
+        return null != existsUser;
+    }
+
+    public boolean updateActiveUser(User user) {
+        user.setLatestActiveAt(new Date());
         var existsUser = userRepository.save(user);
         return null != existsUser;
     }

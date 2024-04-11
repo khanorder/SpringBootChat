@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
@@ -34,6 +35,7 @@ public class Relation {
     private RelationState relationState;
 
     @CreationTimestamp
+    @ColumnDefault(value = "current_timestamp(6)")
     @Column(length = 6, nullable = false)
     Date relatedAt;
 }

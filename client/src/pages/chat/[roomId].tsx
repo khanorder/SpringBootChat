@@ -5,9 +5,7 @@ import stylesCommon from "@/styles/common.module.sass";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
-import * as chatActions from "@/stores/reducers/chat";
 import {enterChatRoomReq} from "@/stores/reducers/webSocket";
-import {Domains} from "@/domains";
 import {Helpers} from "@/helpers";
 import Head from "next/head";
 import dynamic from "next/dynamic";
@@ -24,12 +22,12 @@ interface ChatRoomProps {
     isProd: boolean;
     roomId: string;
     roomIdBase62: string;
-    roomName: string;
-    roomOpenType: Defines.RoomOpenType;
+    // roomName: string;
+    // roomOpenType: Defines.RoomOpenType;
     serverHost: string;
 }
 
-function ChatRoom({isProd, roomId, roomIdBase62, roomName, roomOpenType, serverHost}: ChatRoomProps) {
+function ChatRoom({isProd, roomId, roomIdBase62, serverHost}: ChatRoomProps) {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
@@ -67,17 +65,22 @@ function ChatRoom({isProd, roomId, roomIdBase62, roomName, roomOpenType, serverH
     }, [webSocket, user, dispatch, roomId]);
 
     const enterUser = useCallback(() => {
+        const currentChatRoom = chat.chatRooms.find(_ => _.roomId == roomId);
+
+        if (!currentChatRoom)
+            return <NotFoundChatRoom />;
+
         return (
             <div className={styles.chatRoomEnterWrapper}>
                 <div className={styles.chatRoomInputNotice}>
-                    {isProd ? `'${roomName}' 대화방에 입장하시겠습니까?` : ''}
+                    {isProd ? `'${currentChatRoom.roomName}' 채팅방에 입장하시겠습니까?` : ''}
                 </div>
                 <div className={styles.enterChatRoomButtonWrapper}>
                     <button className={`${styles.enterChatRoomButton} ${stylesCommon.button}`} onClick={enterChatRoom}>입장</button>
                 </div>
             </div>
         );
-    }, [isProd, roomName, enterChatRoom]);
+    }, [isProd, chat, enterChatRoom]);
 
     const contents = useCallback(() => {
         if (isEmpty(roomId))
@@ -108,21 +111,6 @@ function ChatRoom({isProd, roomId, roomIdBase62, roomName, roomOpenType, serverH
 
     return (
         <>
-            <Head>
-                <title>{'채팅방 - ' + roomName}</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-                <meta name="title" content={'채팅방 - ' + roomName}/>
-                <meta name="subject" content={'채팅방 - ' + roomName}/>
-                <meta name="description" content={'채팅방 - ' + roomName}/>
-                <meta name="keyword" content={'채팅방 - ' + roomName}/>
-                <meta property="og:title" content={'채팅방 - ' + roomName}/>
-                <meta property="og:site_name" content={'채팅방 - ' + roomName}/>
-                <meta property="og:type" content={'채팅방 - ' + roomName}/>
-                <meta property="og:description" content={'채팅방 - ' + roomName}/>
-                <meta property="og:image:alt" content={'채팅방 - ' + roomName}/>
-                <meta name="twitter:title" content={'채팅방 - ' + roomName}/>
-                <meta name="twitter:description" content={'채팅방 - ' + roomName}/>
-            </Head>
             <ChatImageDetailDialog
                 chatDetailImageId={chatDetailImageId}
                 setChatDetailImageId={setChatDetailImageId}
@@ -166,39 +154,37 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         if (!isProd)
             console.error(error);
     }
-    let roomNameProp: string = '';
-    let roomOpenTypeProp: Defines.RoomOpenType = Defines.RoomOpenType.PRIVATE;
     const serverHost = process.env.SERVER_HOST ?? 'localhost:8080';
     const serverHostProp = ('production' === process.env.NODE_ENV ? 'https://' : 'http://') + serverHost;
-
-
-
-    const url = serverHostProp + "/api/room/" + roomUUID;
-    try {
-        const response = await fetch(`${url}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (200 == response.status) {
-            const json = await response.json();
-            if (json.roomId && json.roomName) {
-                roomNameProp = json.roomName;
-                roomOpenTypeProp = json.roomOpenType;
-            }
-        }
-    } catch (error) {
-        console.error(error);
-    }
+    // let roomNameProp: string = '';
+    // let roomOpenTypeProp: Defines.RoomOpenType = Defines.RoomOpenType.PRIVATE;
+    //
+    // const url = serverHostProp + "/api/room/" + roomUUID;
+    // try {
+    //     const response = await fetch(`${url}`, {
+    //         method: 'POST',
+    //         headers: { 'Content-Type': 'application/json' }
+    //     });
+    //
+    //     if (200 == response.status) {
+    //         const json = await response.json();
+    //         if (json.roomId && json.roomName) {
+    //             roomNameProp = json.roomName;
+    //             roomOpenTypeProp = json.roomOpenType;
+    //         }
+    //     }
+    // } catch (error) {
+    //     console.error(error);
+    // }
 
     return {
         props: {
             isProd: ("production" === process.env.NODE_ENV),
             roomId: roomUUID,
             roomIdBase62: roomId,
-            roomName: roomNameProp,
-            roomOpenType: roomOpenTypeProp,
             serverHost: serverHostProp
+            // roomName: roomNameProp,
+            // roomOpenType: roomOpenTypeProp,
         }
     };
 }

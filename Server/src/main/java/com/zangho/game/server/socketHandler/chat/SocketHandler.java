@@ -48,76 +48,85 @@ public class SocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
-        sessionHandler.consoleLogState("message");
-        var payload = message.getPayload();
-        if (!payload.hasArray())
-            return;
+        try {
 
-        var packet = payload.array();
+            sessionHandler.consoleLogState("message");
+            var payload = message.getPayload();
+            if (!payload.hasArray())
+                return;
 
-        if (1 > packet.length)
-            return;
+            var packet = payload.array();
 
-        var optType = ReqType.getType(packet[0]);
-        if (optType.isEmpty())
-            return;
+            if (1 > packet.length)
+                return;
 
-        var type = optType.get();
-        Optional<User> connectedUser = switch (type) {
-            case REQ_CHECK_CONNECTION -> Optional.empty();
-            default -> userService.getConnectedUser(session);
-        };
+            var optType = ReqType.getType(packet[0]);
+            if (optType.isEmpty())
+                return;
 
-        if (isDevelopment)
-            logger.info(type.name() + ": " + Helpers.getSessionIP(session));
+            var type = optType.get();
+            Optional<User> connectedUser = switch (type) {
+                case REQ_CHECK_CONNECTION -> Optional.empty();
+                default -> userService.getConnectedUser(session);
+            };
 
-        switch (type) {
-            case REQ_CHECK_CONNECTION:
-                reqHandler.onCheckConnection(type, session, packet);
-                break;
+            if (isDevelopment)
+                logger.info(type.name() + ": " + Helpers.getSessionIP(session));
 
-            case REQ_CHECK_AUTHENTICATION:
-                reqHandler.onCheckAuthentication(session, connectedUser, packet);
-                break;
+            switch (type) {
+                case REQ_CHECK_CONNECTION:
+                    reqHandler.onCheckConnection(type, session, packet);
+                    break;
 
-            case REQ_CONNECTED_USERS:
-                reqHandler.onConnectedUsers(session);
-                break;
+                case REQ_CHECK_AUTHENTICATION:
+                    reqHandler.onCheckAuthentication(session, connectedUser, packet);
+                    break;
 
-            case REQ_FOLLOW:
-                reqHandler.onFollow(session, connectedUser, packet);
-                break;
+                case REQ_CONNECTED_USERS:
+                    reqHandler.onConnectedUsers(session);
+                    break;
 
-            case REQ_UNFOLLOW:
-                reqHandler.onUnfollow(session, connectedUser, packet);
-                break;
+                case REQ_FOLLOW:
+                    reqHandler.onFollow(session, connectedUser, packet);
+                    break;
 
-            case REQ_START_CHAT:
-                reqHandler.onStartChat(session, connectedUser, packet);
-                break;
+                case REQ_UNFOLLOW:
+                    reqHandler.onUnfollow(session, connectedUser, packet);
+                    break;
 
-            case REQ_CHANGE_USER_NAME:
-                reqHandler.onChangeUserName(session, connectedUser, packet);
-                break;
+                case REQ_START_CHAT:
+                    reqHandler.onStartChat(session, connectedUser, packet);
+                    break;
 
-            case REQ_CREATE_CHAT_ROOM:
-                reqHandler.onCreateChatRoom(session, connectedUser, packet);
-                break;
+                case REQ_CHANGE_USER_NAME:
+                    reqHandler.onChangeUserName(session, connectedUser, packet);
+                    break;
 
-            case REQ_ENTER_CHAT_ROOM:
-                reqHandler.onEnterChatRoom(session, connectedUser, packet);
-                break;
+                case REQ_CREATE_CHAT_ROOM:
+                    reqHandler.onCreateChatRoom(session, connectedUser, packet);
+                    break;
 
-            case REQ_EXIT_CHAT_ROOM:
-                reqHandler.onExitChatRoom(session, connectedUser, packet);
-                break;
+                case REQ_ENTER_CHAT_ROOM:
+                    reqHandler.onEnterChatRoom(session, connectedUser, packet);
+                    break;
 
-            case REQ_TALK_CHAT_ROOM:
-                reqHandler.onTalkChatRoom(session, connectedUser, packet);
-                break;
+                case REQ_EXIT_CHAT_ROOM:
+                    reqHandler.onExitChatRoom(session, connectedUser, packet);
+                    break;
 
-            default:
-                break;
+                case REQ_TALK_CHAT_ROOM:
+                    reqHandler.onTalkChatRoom(session, connectedUser, packet);
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (ReqType.REQ_CHECK_CONNECTION != type)
+                connectedUser.ifPresent(userService::updateActiveUser);
+
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
         }
     }
 

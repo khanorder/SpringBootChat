@@ -22,6 +22,7 @@ export function* callCheckAuthenticationReq(socket: WebSocket) {
     try {
         const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
         const userId = Helpers.getCookie("userId");
+        console.log(`saga - callCheckAuthenticationReq: ${userId}`);
         const bytesUserId = new Uint8Array(isEmpty(userId) || 36 !== userId.length ? 0 : 16);
         if (!isEmpty(userId) && 36 === userId.length)
             bytesUserId.set(Helpers.getByteArrayFromUUID(userId));

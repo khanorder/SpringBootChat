@@ -1,0 +1,54 @@
+.userProfileWrapper
+    display: flex
+    width: 100%
+
+    .userThumb
+        flex: 0 0 auto
+        position: relative
+        overflow: hidden
+        display: flex
+        justify-content: center
+        align-items: center
+        margin-left: 10px
+        border-radius: 10px
+        width: 40px
+        height: 40px
+        background: #dfdfdf
+
+        .userThumbIcon
+            padding: 5px
+            width: 30px
+            height: 30px
+
+        .userThumbImage
+            max-width: 40px
+            max-height: 40px
+
+    .userInfo
+        flex: 1 0 auto
+        width: calc(100% - 100px)
+        padding-left: 10px
+
+        .userName
+            width: 100%
+            font-size: 1em
+
+        .userMessage
+            width: 100%
+            overflow: hidden
+            white-space: nowrap
+            text-overflow: ellipsis
+            font-size: 0.8em
+            color: #797979
+
+    .online
+        flex: 0 0 auto
+        width: 40px
+        height: 40px
+
+    &:hover
+        background: #f5f5f5
+        cursor: pointer
+
+    &:first-child
+        border-top: 0

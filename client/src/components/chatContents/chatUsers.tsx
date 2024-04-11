@@ -1,15 +1,20 @@
-import {Fragment, ReactElement, useCallback, useEffect, useRef} from "react";
+import {ReactElement, useCallback, useEffect, useRef} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {Item, ItemParams, Menu, useContextMenu} from "react-contexify";
 import {Domains} from "@/domains";
 import {followReq, startChatReq, unfollowReq} from "@/stores/reducers/webSocket";
-import styles from "@/styles/chatFollows.module.sass";
+import styles from "@/styles/chatUsers.module.sass";
+import stylesMyProfile from "@/styles/chatMyProfile.module.sass";
 import Image from "next/image";
-import UserIcon from "public/images/user-circle.svg";
 import AddUserIcon from "public/images/add-user.svg";
 import ChatIcon from "public/images/chat.svg";
 import CloseIcon from "public/images/close.svg";
 import 'react-contexify/ReactContexify.css';
+import dynamic from "next/dynamic";
+import {Defines} from "@/defines";
+import UserIcon from "../../../public/images/user-circle.svg";
+import ChatMyProfile from "@/components/chatContents/chatMyProfile";
+const ChatUserProfile = dynamic(() => import("@/components/chatContents/chatUserProfile"), { ssr: false });
 
 enum UserListType {
     CONNECTED = 0,
@@ -17,7 +22,7 @@ enum UserListType {
     FOLLOWER = 2
 }
 
-export default function ChatFollows() {
+export default function ChatUsers() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
@@ -35,8 +40,8 @@ export default function ChatFollows() {
     const FOLLOW_MENU_ID = 'followMenu';
     const NORMAL_MENU_ID = 'normalMenu';
 
-    const followContextMenu = useContextMenu({ id: FOLLOW_MENU_ID });
-    const normalContextMenu = useContextMenu({ id: NORMAL_MENU_ID });
+    const followContextMenu = useContextMenu({id: FOLLOW_MENU_ID});
+    const normalContextMenu = useContextMenu({id: NORMAL_MENU_ID});
 
     const handleContextMenu = useCallback((event: any, state: UserListType, user: Domains.User) => {
         switch (state) {
@@ -97,19 +102,40 @@ export default function ChatFollows() {
                 <li key={i} className={styles.user}
                     onClick={(e) => { handleContextMenu(e, state, userData) }}
                     onContextMenu={(e) => { handleContextMenu(e, state, userData) }}>
-                    <div className={styles.userThumb}>
-                        <Image className={styles.userThumbIcon} src={UserIcon} alt='사용자 프로필' fill={true} priority={true} />
-                    </div>
-                    <div className={styles.userInfo}>
-                        <div className={styles.userName}>{userData.userName}</div>
-                        <div className={styles.userMessage}>★</div>
-                    </div>
+                    <ChatUserProfile userData={userData} />
                 </li>
             );
         }
 
         return list;
     }, [handleContextMenu, user]);
+
+    const userGroupName = useCallback((state: UserListType) => {
+        switch (state) {
+            case UserListType.CONNECTED:
+                return "접속중";
+
+            case UserListType.FOLLOW:
+                return "팔로우";
+
+            case UserListType.FOLLOWER:
+                return "팔로워";
+        }
+    }, []);
+
+    const userListGroup = useCallback((state: UserListType, userDatas: Domains.User[]) => {
+        const list: ReactElement[] = userList(state, userDatas);
+
+        return (
+            <div key={UserListType[state]} className={styles.sectionWrapper}>
+                <div className={styles.sectionName}>{userGroupName(state)}</div>
+                <ul className={styles.userList}>
+                    {list}
+                </ul>
+            </div>
+        );
+
+    }, [userList, userGroupName]);
 
     const users = useCallback(() => {
         let userLists: ReactElement[] = [];
@@ -123,48 +149,18 @@ export default function ChatFollows() {
                 </div>
             );
         } else {
-            if (0 < user.follows.length) {
-                const list: ReactElement[] = userList(UserListType.FOLLOW, user.follows);
+            if (0 < user.follows.length)
+                userLists.push(userListGroup(UserListType.FOLLOW, user.follows));
 
-                userLists.push(
-                    <div key={'follows'} className={styles.sectionWrapper}>
-                        <div className={styles.sectionName}>팔로우</div>
-                        <ul className={styles.userList}>
-                            {list}
-                        </ul>
-                    </div>
-                )
-            }
+            if (0 < user.followers.length)
+                userLists.push(userListGroup(UserListType.FOLLOWER, user.followers));
 
-            if (0 < user.followers.length) {
-                const list: ReactElement[] = userList(UserListType.FOLLOWER, user.followers);
-
-                userLists.push(
-                    <div key={'followers'} className={styles.sectionWrapper}>
-                        <div className={styles.sectionName}>팔로워</div>
-                        <ul className={styles.userList}>
-                            {list}
-                        </ul>
-                    </div>
-                )
-            }
-
-            if (0 < user.connectedUsers.length) {
-                const list: ReactElement[] = userList(UserListType.CONNECTED, user.connectedUsers);
-
-                userLists.push(
-                    <div key={'connected'} className={styles.sectionWrapper}>
-                        <div className={styles.sectionName}>접속중</div>
-                        <ul className={styles.userList}>
-                            {list}
-                        </ul>
-                    </div>
-                )
-            }
+            if (0 < user.connectedUsers.length)
+                userLists.push(userListGroup(UserListType.CONNECTED, user.connectedUsers));
         }
 
         return userLists;
-    }, [user, userList]);
+    }, [user, userListGroup]);
 
     const followMenu = useCallback(() => {
         return (
@@ -213,7 +209,8 @@ export default function ChatFollows() {
     }, [handleItemClick]);
 
     return (
-        <div className={`${styles.followWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={`${styles.usersWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+            <ChatMyProfile />
             {users()}
             {followMenu()}
             {followerMenu()}

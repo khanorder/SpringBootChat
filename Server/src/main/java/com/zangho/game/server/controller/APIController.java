@@ -39,31 +39,6 @@ public class APIController {
         this.messageService = messageService;
     }
 
-    @PostMapping(value = "/api/room/{id}")
-    @ResponseBody
-    public String room(@PathVariable("id") String id) throws Exception {
-        if (id.isEmpty())
-            return "{}";
-
-        try {
-            var chatRoom = chatRoomService.findPrivateRoomById(id);
-            if (chatRoom.isEmpty())
-                chatRoom = chatRoomService.findPublicRoomById(id);
-
-            if (chatRoom.isEmpty())
-                return "{}";
-
-            var result = new HashMap<String, Object>();
-            result.put("roomId", chatRoom.get().getRoomId());
-            result.put("roomName", chatRoom.get().getRoomName());
-            result.put("roomOpenType", chatRoom.get().getOpenType());
-            return (new ObjectMapper()).writeValueAsString(result);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-        }
-        return "{}";
-    }
-
     @PostMapping(value = "/api/visit")
     @ResponseBody
     public String visit(@RequestBody Visit visit, HttpServletRequest request) throws Exception {
@@ -149,7 +124,7 @@ public class APIController {
         if (chatImage.getData().isEmpty())
             return new byte[0];
 
-        var base64Image = chatImage.getData().replaceAll("^data:[^,]+", "").replace(",", "");
+        var base64Image = chatImage.getData().replaceAll("^data:[^,]+,", "");
 
         try {
             return Base64.getDecoder().decode(base64Image);
@@ -174,7 +149,57 @@ public class APIController {
         if (chatImage.getSmallData().isEmpty())
             return new byte[0];
 
-        var base64Image = chatImage.getSmallData().replaceAll("^data:[^,]+", "").replace(",", "");
+        var base64Image = chatImage.getSmallData().replaceAll("^data:[^,]+,", "");
+
+        try {
+            return Base64.getDecoder().decode(base64Image);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return new byte[0];
+        }
+    }
+
+    @GetMapping(value = "/api/profileImage/{id}", produces = "image/*")
+    @ResponseBody
+    public byte[] profileImage(@PathVariable String id) throws Exception {
+        if (id.isEmpty())
+            return new byte[0];
+
+        var optUser = userService.findUser(id);
+        if (optUser.isEmpty())
+            return new byte[0];
+
+        var user = optUser.get();
+
+        if (user.getProfileImage().isEmpty())
+            return new byte[0];
+
+        var base64Image = user.getProfileImage();
+
+        try {
+            return Base64.getDecoder().decode(base64Image);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return new byte[0];
+        }
+    }
+
+    @GetMapping(value = "/api/profileThumb/{id}", produces = "image/*")
+    @ResponseBody
+    public byte[] profileThumbImage(@PathVariable String id) throws Exception {
+        if (id.isEmpty())
+            return new byte[0];
+
+        var optUser = userService.findUser(id);
+        if (optUser.isEmpty())
+            return new byte[0];
+
+        var user = optUser.get();
+
+        if (user.getProfileThumb().isEmpty())
+            return new byte[0];
+
+        var base64Image = user.getProfileThumb();
 
         try {
             return Base64.getDecoder().decode(base64Image);

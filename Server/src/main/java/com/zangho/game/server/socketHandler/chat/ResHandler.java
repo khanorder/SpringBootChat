@@ -63,10 +63,14 @@ public class ResHandler {
     public void resCheckAuthentication(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_AUTHENTICATION, ErrorCheckAuth.NONE);
+            var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
             var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
+            var bytesUserLatestActive = Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime());
             var bytesUserNameLength = new byte[] {(byte)user.getName().getBytes().length};
+            var bytesMessageLength = new byte[] {(byte)user.getMessage().getBytes().length};
             var bytesUserName = user.getName().getBytes();
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId, bytesUserNameLength, bytesUserName);
+            var bytesMessage = user.getMessage().getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesUserId, bytesUserLatestActive, bytesUserNameLength, bytesMessageLength, bytesUserName, bytesMessage);
             sessionHandler.sendOneSession(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -96,18 +100,26 @@ public class ResHandler {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CONNECTED_USERS);
             var bytesUserCount = Helpers.getByteArrayFromInt(userService.getConnectedUsers().size());
-            var bytesUserIds = new byte[0];
-            var bytesUserNameLengths = new byte[0];
-            var bytesUserNames = new byte[0];
+            var bytesHaveProfiles = new byte[0];
+            var bytesIds = new byte[0];
+            var bytesLatestActives = new byte[0];
+            var bytesNameLengths = new byte[0];
+            var bytesMessageLengths = new byte[0];
+            var bytesNames = new byte[0];
+            var bytesMessages = new byte[0];
             if (!userService.getConnectedUsers().isEmpty()) {
                 for (User user : userService.getConnectedUsers()) {
-                    bytesUserIds = Helpers.mergeBytePacket(bytesUserIds, Helpers.getByteArrayFromUUID(user.getId()));
-                    bytesUserNameLengths = Helpers.mergeBytePacket(bytesUserNameLengths, new byte[]{(byte)user.getName().getBytes().length});
-                    bytesUserNames = Helpers.mergeBytePacket(bytesUserNames, user.getName().getBytes());
+                    bytesHaveProfiles = Helpers.mergeBytePacket(bytesHaveProfiles, new byte[] {(byte)user.getHaveProfile()});
+                    bytesIds = Helpers.mergeBytePacket(bytesIds, Helpers.getByteArrayFromUUID(user.getId()));
+                    bytesLatestActives = Helpers.mergeBytePacket(bytesLatestActives, Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime()));
+                    bytesNameLengths = Helpers.mergeBytePacket(bytesNameLengths, new byte[]{(byte)user.getName().getBytes().length});
+                    bytesMessageLengths = Helpers.mergeBytePacket(bytesMessageLengths, new byte[]{(byte)user.getMessage().getBytes().length});
+                    bytesNames = Helpers.mergeBytePacket(bytesNames, user.getName().getBytes());
+                    bytesMessages = Helpers.mergeBytePacket(bytesMessages, user.getMessage().getBytes());
                 }
             }
 
-            resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserCount, bytesUserIds, bytesUserNameLengths, bytesUserNames);
+            resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserCount, bytesHaveProfiles, bytesIds, bytesLatestActives, bytesNameLengths, bytesMessageLengths, bytesNames, bytesMessages);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -117,19 +129,27 @@ public class ResHandler {
     public void resFollows(WebSocketSession session, ConcurrentLinkedQueue<UserInterface> follows) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOWS);
-            var bytesFollowCount = Helpers.getByteArrayFromInt(follows.size());
-            var bytesFollowIds = new byte[0];
-            var bytesFollowNameLengths = new byte[0];
-            var bytesFollowNames = new byte[0];
+            var bytesUserCount = Helpers.getByteArrayFromInt(follows.size());
+            var bytesHaveProfiles = new byte[0];
+            var bytesIds = new byte[0];
+            var bytesLatestActives = new byte[0];
+            var bytesNameLengths = new byte[0];
+            var bytesMessageLengths = new byte[0];
+            var bytesNames = new byte[0];
+            var bytesMessages = new byte[0];
             if (!follows.isEmpty()) {
-                for (var follow : follows) {
-                    bytesFollowIds = Helpers.mergeBytePacket(bytesFollowIds, Helpers.getByteArrayFromUUID(follow.getId()));
-                    bytesFollowNameLengths = Helpers.mergeBytePacket(bytesFollowNameLengths, new byte[]{(byte)follow.getName().getBytes().length});
-                    bytesFollowNames = Helpers.mergeBytePacket(bytesFollowNames, follow.getName().getBytes());
+                for (var user : follows) {
+                    bytesHaveProfiles = Helpers.mergeBytePacket(bytesHaveProfiles, new byte[] {(byte)user.getHaveProfile()});
+                    bytesIds = Helpers.mergeBytePacket(bytesIds, Helpers.getByteArrayFromUUID(user.getId()));
+                    bytesLatestActives = Helpers.mergeBytePacket(bytesLatestActives, Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime()));
+                    bytesNameLengths = Helpers.mergeBytePacket(bytesNameLengths, new byte[]{(byte)user.getName().getBytes().length});
+                    bytesMessageLengths = Helpers.mergeBytePacket(bytesMessageLengths, new byte[]{(byte)user.getMessage().getBytes().length});
+                    bytesNames = Helpers.mergeBytePacket(bytesNames, user.getName().getBytes());
+                    bytesMessages = Helpers.mergeBytePacket(bytesMessages, user.getMessage().getBytes());
                 }
             }
 
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesFollowCount, bytesFollowIds, bytesFollowNameLengths, bytesFollowNames);
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserCount, bytesHaveProfiles, bytesIds, bytesLatestActives, bytesNameLengths, bytesMessageLengths, bytesNames, bytesMessages);
             sessionHandler.sendOneSession(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -139,19 +159,27 @@ public class ResHandler {
     public void resFollowers(WebSocketSession session, ConcurrentLinkedQueue<UserInterface> followers) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOWERS);
-            var bytesFollowerCount = Helpers.getByteArrayFromInt(followers.size());
-            var bytesFollowerIds = new byte[0];
-            var bytesFollowerNameLengths = new byte[0];
-            var bytesFollowerNames = new byte[0];
+            var bytesUserCount = Helpers.getByteArrayFromInt(followers.size());
+            var bytesHaveProfiles = new byte[0];
+            var bytesIds = new byte[0];
+            var bytesLatestActives = new byte[0];
+            var bytesNameLengths = new byte[0];
+            var bytesMessageLengths = new byte[0];
+            var bytesNames = new byte[0];
+            var bytesMessages = new byte[0];
             if (!followers.isEmpty()) {
-                for (var follower : followers) {
-                    bytesFollowerIds = Helpers.mergeBytePacket(bytesFollowerIds, Helpers.getByteArrayFromUUID(follower.getId()));
-                    bytesFollowerNameLengths = Helpers.mergeBytePacket(bytesFollowerNameLengths, new byte[]{(byte)follower.getName().getBytes().length});
-                    bytesFollowerNames = Helpers.mergeBytePacket(bytesFollowerNames, follower.getName().getBytes());
+                for (var user : followers) {
+                    bytesHaveProfiles = Helpers.mergeBytePacket(bytesHaveProfiles, new byte[] {(byte)user.getHaveProfile()});
+                    bytesIds = Helpers.mergeBytePacket(bytesIds, Helpers.getByteArrayFromUUID(user.getId()));
+                    bytesLatestActives = Helpers.mergeBytePacket(bytesLatestActives, Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime()));
+                    bytesNameLengths = Helpers.mergeBytePacket(bytesNameLengths, new byte[]{(byte)user.getName().getBytes().length});
+                    bytesMessageLengths = Helpers.mergeBytePacket(bytesMessageLengths, new byte[]{(byte)user.getMessage().getBytes().length});
+                    bytesNames = Helpers.mergeBytePacket(bytesNames, user.getName().getBytes());
+                    bytesMessages = Helpers.mergeBytePacket(bytesMessages, user.getMessage().getBytes());
                 }
             }
 
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesFollowerCount, bytesFollowerIds, bytesFollowerNameLengths, bytesFollowerNames);
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserCount, bytesHaveProfiles, bytesIds, bytesLatestActives, bytesNameLengths, bytesMessageLengths, bytesNames, bytesMessages);
             sessionHandler.sendOneSession(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -188,10 +216,14 @@ public class ResHandler {
     public void noticeConnectedUser(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_CONNECTED_USER);
-            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
-            var bytesUserNameLength = new byte[]{(byte)user.getName().getBytes().length};
-            var bytesUserName = user.getName().getBytes();
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId, bytesUserNameLength, bytesUserName);
+            var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
+            var bytesId = Helpers.getByteArrayFromUUID(user.getId());
+            var bytesLatestActive = Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime());
+            var bytesNameLength = new byte[]{(byte)user.getName().getBytes().length};
+            var bytesMessageLength = new byte[]{(byte)user.getMessage().getBytes().length};
+            var bytesName = user.getName().getBytes();
+            var bytesMessage = user.getMessage().getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesId, bytesLatestActive, bytesNameLength, bytesMessageLength, bytesName, bytesMessage);
             sessionHandler.sendOthers(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -222,10 +254,14 @@ public class ResHandler {
     public void resFollow(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOW, ErrorFollow.NONE);
-            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
-            var bytesUserNameLength = new byte[]{(byte)user.getName().getBytes().length};
-            var bytesUserName = user.getName().getBytes();
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId, bytesUserNameLength, bytesUserName);
+            var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
+            var bytesId = Helpers.getByteArrayFromUUID(user.getId());
+            var bytesLatestActive = Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime());
+            var bytesNameLength = new byte[]{(byte)user.getName().getBytes().length};
+            var bytesMessageLength = new byte[]{(byte)user.getMessage().getBytes().length};
+            var bytesName = user.getName().getBytes();
+            var bytesMessage = user.getMessage().getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesId, bytesLatestActive, bytesNameLength, bytesMessageLength, bytesName, bytesMessage);
             sessionHandler.sendOneSession(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -243,10 +279,14 @@ public class ResHandler {
                 return;
 
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOWER);
-            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
-            var bytesUserNameLength = new byte[]{(byte)user.getName().getBytes().length};
-            var bytesUserName = user.getName().getBytes();
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId, bytesUserNameLength, bytesUserName);
+            var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
+            var bytesId = Helpers.getByteArrayFromUUID(user.getId());
+            var bytesLatestActive = Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime());
+            var bytesNameLength = new byte[]{(byte)user.getName().getBytes().length};
+            var bytesMessageLength = new byte[]{(byte)user.getMessage().getBytes().length};
+            var bytesName = user.getName().getBytes();
+            var bytesMessage = user.getMessage().getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesId, bytesLatestActive, bytesNameLength, bytesMessageLength, bytesName, bytesMessage);
             sessionHandler.sendOneSession(optSession.get(), resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -347,6 +387,17 @@ public class ResHandler {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CREATE_CHAT_ROOM, error);
             sessionHandler.sendOneSession(session, packetFlag);
             sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resCreateChatRoom(WebSocketSession session, ChatRoom chatRoom) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_CREATE_CHAT_ROOM, ErrorCreateChatRoom.NONE);
+            var bytesRoomId = Helpers.getByteArrayFromUUID(chatRoom.getRoomId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesRoomId);
+            sessionHandler.sendOneSession(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

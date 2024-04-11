@@ -13,6 +13,7 @@ import {FingerPrint} from "@/helpers/fingerPrint";
 import isEmpty from "lodash/isEmpty";
 import { dayjs } from '@/helpers/localizedDayjs';
 import {CommonAPI} from "@/apis/commonAPI";
+import {setServerHost, setServerProtocol} from "@/stores/reducers/appConfigs";
 
 export type NextPageWithLayout = NextPage & {
     getLayout?: (page: ReactElement) => ReactNode
@@ -31,6 +32,8 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
     useEffect(() => {
         if (firstRender.current) {
             const serverHost = Helpers.getCookie("SERVER_HOST");
+            dispatch(setServerHost(serverHost));
+            dispatch(setServerProtocol('production' === process.env.NODE_ENV ? 'https' : "http"));
             const socketURL = ('production' === process.env.NODE_ENV ? 'wss://' : "ws://") + (serverHost ?? "localhost:8080");
 
             firstRender.current = false;
@@ -45,15 +48,15 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
             const cookies = document.cookie.split(';');
             const userCookie = cookies.find(cookie => cookie.trim().startsWith(`${sessionName}=`));
             let session = uuid();
-            if (userCookie) {
+            if (userCookie)
                 session = userCookie.trim().substring(sessionName.length + 1);
-            }
+
             Helpers.setCookie30Min(sessionName, session);
 
             const fp = fingerPrint.getFingerprint();
-            if (null == fp) {
+            if (null == fp)
                 return;
-            }
+
             const deviceType = fingerPrint.getDeviceType();
             const deviceVendor = fingerPrint.getDeviceVendor();
             const deviceModel = fingerPrint.getDeviceModel();

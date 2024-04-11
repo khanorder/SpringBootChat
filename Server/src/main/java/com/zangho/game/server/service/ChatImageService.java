@@ -44,8 +44,8 @@ public class ChatImageService {
             return Optional.empty();
 
         var mime = matcher.group();
-        var emptyChatImage = new ChatImage(chatId, roomId, userId, mime, largeData, smallData);
-        var result = chatImageRepostory.save(emptyChatImage);
+        var uploadedChatImage = new ChatImage(chatId, roomId, userId, mime, largeData.replaceAll("^(data:)[^,]+(base64,)", ""), smallData.replaceAll("^(data:)[^,]+(base64,)", ""));
+        var result = chatImageRepostory.save(uploadedChatImage);
         return Optional.ofNullable(result);
     }
 

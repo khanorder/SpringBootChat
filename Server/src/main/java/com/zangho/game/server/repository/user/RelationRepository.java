@@ -31,10 +31,22 @@ public interface RelationRepository extends JpaRepository<Relation, String> {
 
     Optional<Relation> findByUserIdAndTargetIdAndRelationState(String userId, String targetId, RelationState relationState);
 
-    @Query(value = "SELECT b.id AS id, b.name AS name FROM relations AS a LEFT JOIN users AS b ON a.targetId = b.id WHERE a.userId = :userId AND a.relationState = :relationState", nativeQuery = true)
+    @Query(
+            value = "SELECT b.id AS id, b.name AS name, b.message AS message, b.latestActiveAt AS latestActiveAt, ('' != TRIM(b.profileImage)) AS haveProfile " +
+                    "FROM relations AS a " +
+                    "LEFT JOIN users AS b ON a.targetId = b.id " +
+                    "WHERE a.userId = :userId AND a.relationState = :relationState",
+            nativeQuery = true
+    )
     List<UserInterface> findMineRelatedUsers(String userId, RelationState relationState);
 
-    @Query(value = "SELECT b.id AS id, b.name AS name FROM relations AS a LEFT JOIN users AS b ON a.userId = b.id WHERE a.targetId = :userId AND a.relationState = :relationState", nativeQuery = true)
+    @Query(
+            value = "SELECT b.id AS id, b.name AS name, b.message AS message, b.latestActiveAt AS latestActiveAt, ('' != TRIM(b.profileImage)) AS haveProfile " +
+                    "FROM relations AS a " +
+                    "LEFT JOIN users AS b ON a.userId = b.id " +
+                    "WHERE a.targetId = :userId AND a.relationState = :relationState",
+            nativeQuery = true
+    )
     List<UserInterface> findYourRelatedUsers(String userId, RelationState relationState);
 
     @Override

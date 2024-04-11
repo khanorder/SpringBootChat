@@ -45,6 +45,7 @@ public class Chat {
     String message;
 
     @Nonnull
+    @ColumnDefault(value = "current_timestamp(6)")
     @Column(length = 6, nullable = false)
     Date sendAt;
 }

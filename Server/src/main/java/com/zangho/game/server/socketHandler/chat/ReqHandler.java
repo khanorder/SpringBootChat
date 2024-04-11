@@ -172,6 +172,7 @@ public class ReqHandler {
 
             // 접속 전체알림
             resHandler.noticeConnectedUser(session, optUser.get());
+            userService.updateActiveUser(optUser.get());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -195,7 +196,7 @@ public class ReqHandler {
                 return;
             }
 
-            var targetUser = userService.findOnlyUser(userId);
+            var targetUser = userService.findUser(userId);
             if (targetUser.isEmpty()) {
                 resHandler.resFollow(session, ErrorFollow.NOT_FOUND_USER);
                 return;
@@ -235,7 +236,7 @@ public class ReqHandler {
                 return;
             }
 
-            var targetUser = userService.findOnlyUser(userId);
+            var targetUser = userService.findUser(userId);
             if (targetUser.isEmpty()) {
                 resHandler.resUnfollow(session, ErrorUnfollow.NOT_FOUND_USER);
                 return;
@@ -274,7 +275,7 @@ public class ReqHandler {
 
             var bytesTargetUserId = Arrays.copyOfRange(packet, 1, 17);
             var targetUserId = Helpers.getUUIDFromByteArray(bytesTargetUserId);
-            var targetUser = userService.findOnlyUser(targetUserId);
+            var targetUser = userService.findUser(targetUserId);
             if (targetUser.isEmpty()) {
                 resHandler.resStartChat(session, ErrorStartChat.NOT_FOUND_TARGET_USER);
                 return;
@@ -373,7 +374,7 @@ public class ReqHandler {
                 logger.info(chatRoom.get().getOpenType().getNumber() + ", " + chatRoom.get().getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName());
 
             resHandler.sendAddChatRoom(session, chatRoom.get());
-            resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.NONE);
+            resHandler.resCreateChatRoom(session,chatRoom.get());
             resHandler.noticeRoomUsersChanged(chatRoom.get());
             lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {

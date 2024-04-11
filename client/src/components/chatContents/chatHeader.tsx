@@ -75,11 +75,8 @@ export default function ChatHeader() {
             }
         }
 
-        if (!appConfigs.isProd)
-            title = "테스트";
-
         return (
-            <span className={styles.chatTitle}>{title}</span>
+            <span className={styles.chatTitle}>{appConfigs.isProd ? title : <>&nbsp;</>}</span>
         );
     }, [appConfigs, chat, router]);
 

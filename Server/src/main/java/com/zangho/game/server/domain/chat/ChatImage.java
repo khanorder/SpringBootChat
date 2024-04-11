@@ -3,6 +3,7 @@ package com.zangho.game.server.domain.chat;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
@@ -43,6 +44,7 @@ public class ChatImage {
     String smallData;
 
     @Nullable
+    @ColumnDefault(value = "current_timestamp(6)")
     @Column(nullable = false, length = 6)
     @CreationTimestamp
     Date createAt;

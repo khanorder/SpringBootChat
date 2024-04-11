@@ -5,10 +5,8 @@ import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
-import Image from "next/image";
-import PlusIcon from "../../../public/images/plus.svg";
-import {toggleIsActiveCreateChatRoom} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
+const ChatCreateRoomButton = dynamic(() => import("@/components/chatContents/chatCreateRoomButton"), { ssr: false });
 const CreateChatRoomDialog = dynamic(() => import("@/components/dialogs/createChatRoomDialog"), { ssr: false });
 
 export default function ChatRooms() {
@@ -87,10 +85,6 @@ export default function ChatRooms() {
         }
     }, [appConfigs, chat, enterChatRoom]);
 
-    const toggleCreateChatRoomDialog = useCallback(() => {
-        dispatch(toggleIsActiveCreateChatRoom());
-    }, [dispatch]);
-
     return (
         <>
             <CreateChatRoomDialog />
@@ -99,11 +93,7 @@ export default function ChatRooms() {
                     {list()}
                 </ul>
             </div>
-            <div className={styles.toggleCreateChatRoomDialogWrapper}>
-                <button className={styles.toggleCreateChatRoomDialogButton} onClick={toggleCreateChatRoomDialog}>
-                    <Image className={styles.toggleCreateChatRoomDialogIcon} src={PlusIcon} alt='채팅방 생성' width={30} height={30}/>
-                </button>
-            </div>
+            <ChatCreateRoomButton />
         </>
     );
 }

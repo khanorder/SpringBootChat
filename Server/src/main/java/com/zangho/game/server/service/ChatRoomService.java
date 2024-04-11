@@ -93,7 +93,7 @@ public class ChatRoomService {
         return Optional.ofNullable(chatRoom.get());
     }
 
-    public Optional<ChatRoom> findRoomById(String roomId) throws Exception {
+    public Optional<ChatRoom> findRoomById(String roomId) {
         AtomicReference<ChatRoom> chatRoom = new AtomicReference<>(privateChatRooms.get(roomId));
         if (null == chatRoom.get())
             chatRoom = new AtomicReference<>(publicChatRooms.get(roomId));
@@ -115,7 +115,6 @@ public class ChatRoomService {
                         publicChatRooms.put(chatRoom.get().getRoomId(), chatRoom.get());
                         break;
                 }
-
             }
         }
         return Optional.ofNullable(chatRoom.get());
