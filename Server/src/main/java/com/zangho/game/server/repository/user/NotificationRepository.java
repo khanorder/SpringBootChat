@@ -21,5 +21,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
     Optional<Notification> findById(@NonNull String id);
 
     @Override
+    void deleteById(String s);
+
+    @Override
+    boolean existsById(String s);
+
+    @Override
     long count();
 }

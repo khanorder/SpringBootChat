@@ -19,6 +19,10 @@ public class NotificationService {
         this.notificationRepository = notificationRepository;
     }
 
+    public Optional<Notification> findById(String id) {
+        return notificationRepository.findById(id);
+    }
+
     public Optional<Notification> createFollowNotification(User follower, User follow) {
         try {
             var notification = new Notification(NotificationType.FOLLOWER, follow.getId(), new Date());
@@ -28,6 +32,17 @@ public class NotificationService {
             logger.error(ex.getMessage(), ex);
             return Optional.empty();
         }
+    }
+
+    public Optional<Notification> check(Notification notification) {
+        notification.setCheck(true);
+        return Optional.ofNullable(notificationRepository.save(notification));
+    }
+
+    public boolean remove(Notification notification) {
+        notification.setCheck(true);
+        notificationRepository.deleteById(notification.getId());
+        return !notificationRepository.existsById(notification.getId());
     }
 
 }

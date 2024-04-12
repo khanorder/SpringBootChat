@@ -282,9 +282,9 @@ export function* callSaveUserNameReq() {
 
     if (2 > userState.name.length || 10 < userState.name.length) {
         if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserNameReq: not found user id.`);
+            console.log(`saga - callSaveUserNameReq: not suitable user name length.`);
 
-        alert('대화명은 2 글자 이상, 10 이하로 입력해주세요.');
+        alert('대화명은 2 글자 이상, 10글자 이하로 입력해주세요.');
         return;
     }
 
@@ -292,5 +292,93 @@ export function* callSaveUserNameReq() {
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserName]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callSaveUserMessageReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSaveUserMessageReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: not found user id.`);
+        return;
+    }
+
+    if (128 < userState.message.length) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: too long user message.`);
+
+        alert('상태 메세지는 128글자 이하로 입력해주세요.');
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_MESSAGE]);
+    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
+    const bytesUserMessage = new Uint8Array(Buffer.from(userState.message.trim(), 'utf8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserMessage]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callCheckNotificationReq(action: PayloadAction<Domains.Notification>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callCheckNotificationReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckNotificationReq: socket is not available.`);
+        return;
+    }
+
+    if (!action.payload || isEmpty(action.payload.id)) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckNotificationReq: not notification id.`);
+        return;
+    }
+
+    if (action.payload.isCheck) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckNotificationReq: already checked.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_NOTIFICATION]);
+    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesId]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callRemoveNotificationReq(action: PayloadAction<Domains.Notification>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callRemoveNotificationReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveNotificationReq: socket is not available.`);
+        return;
+    }
+
+    if (!action.payload || isEmpty(action.payload.id)) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveNotificationReq: not notification id.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_NOTIFICATION]);
+    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesId]);
     webSocketState.socket.send(packet);
 }

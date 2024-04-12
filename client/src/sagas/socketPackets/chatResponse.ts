@@ -24,7 +24,7 @@ import {
     setFollows,
     setUserMessage,
     setUserId,
-    setUserName, setHaveProfile, setLatestActive
+    setUserName, setHaveProfile, setLatestActive, updateUsersData
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -33,7 +33,7 @@ import {push} from "connected-next-router";
 import isEmpty from "lodash/isEmpty";
 import {RootState} from "@/stores/reducers";
 import {setServerVersion} from "@/stores/reducers/appConfigs";
-import {addNotification} from "@/stores/reducers/notification";
+import {addNotification, checkNotification, removeNotification} from "@/stores/reducers/notification";
 
 export function* checkConnectionRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -111,6 +111,58 @@ export function* notificationRes(data: Uint8Array) {
             break;
     }
 
+    return response;
+}
+
+export function* checkNotificationRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - checkNotificationRes`);
+
+    const response = Domains.CheckNotificationRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - checkNotificationRes: response is null.`);
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.CheckNotification.NONE:
+            yield put(checkNotification(response.id));
+            break;
+
+        default:
+            try {
+                console.log(Errors.CheckNotification[response.result]);
+            } catch (error) {
+                console.error(error);
+            }
+    }
+    return response;
+}
+
+export function* removeNotificationRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - removeNotificationRes`);
+
+    const response = Domains.RemoveNotificationRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - removeNotificationRes: response is null.`);
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.RemoveNotification.NONE:
+            yield put(removeNotification(response.id));
+            break;
+
+        default:
+            try {
+                console.log(Errors.RemoveNotification[response.result]);
+            } catch (error) {
+                console.error(error);
+            }
+    }
     return response;
 }
 
@@ -353,6 +405,36 @@ export function* startChatRes(data: Uint8Array) {
             break;
     }
 
+    return response;
+}
+
+export function* noticeUserNameChangedRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeUserNameChangedRes`);
+
+    const response = Domains.NoticeUserNameChangedRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeUserNameChangedRes: response is null.`);
+        return null;
+    }
+
+    yield put(updateUsersData({ dataType: "name", userId: response.userId, userData: response.userName }));
+    return response;
+}
+
+export function* noticeUserMessageChangedRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeUserMessageChangedRes`);
+
+    const response = Domains.NoticeUserMessageChangedRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeUserMessageChangedRes: response is null.`);
+        return null;
+    }
+
+    yield put(updateUsersData({ dataType: "message", userId: response.userId, userData: response.userMessage }));
     return response;
 }
 

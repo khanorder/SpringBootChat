@@ -1,0 +1,107 @@
+.editProfileWrapper
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-items: center
+    width: 100%
+    height: 100%
+
+    .userThumb
+        flex: 0 0 auto
+        position: relative
+        overflow: hidden
+        display: flex
+        justify-content: center
+        align-items: center
+        border-radius: 40px
+        width: 80px
+        height: 80px
+        background: #dfdfdf
+
+        .userThumbIcon
+            padding: 5px
+            width: 70px
+            height: 70px
+
+        .userThumbImage
+            max-width: 100px
+            max-height: 100px
+
+        &:hover
+            cursor: pointer
+
+    .userInfo
+        flex: 0 0 auto
+        width: 100%
+        display: flex
+        flex-direction: column
+        justify-content: center
+        align-items: center
+        margin-top: 25px
+
+        .userName
+            position: relative
+            width: 50%
+            height: 40px
+
+            .currentUserName
+                position: absolute
+                top: 0
+                left: 0
+                width: 100%
+                font-size: 1.5em
+                text-align: center
+
+            .userNameInput
+                position: absolute
+                top: 0
+                left: 0
+                width: 100%
+                font-size: 1.5em
+                line-height: 1.4em
+                text-align: center
+                border: 1px solid #ffffff00
+                opacity: 0
+
+                &:focus
+                    opacity: 1
+
+        .separator
+            border-top: 1px solid #d9d9d9
+            margin: 10px 0
+            width: 50px
+            height: 0
+
+        .userMessage
+            position: relative
+            width: 80%
+            height: 40px
+
+            .currentUserMessage
+                position: absolute
+                top: 0
+                left: 0
+                width: 100%
+                font-size: 0.8em
+                text-align: center
+                color: #797979
+                overflow: hidden
+                white-space: nowrap
+                text-overflow: ellipsis
+
+            .userMessageInput
+                position: absolute
+                top: 0
+                left: 0
+                width: 100%
+                font-size: 0.8em
+                line-height: 0.7em
+                text-align: center
+                border: 1px solid #ffffff00
+                opacity: 0
+
+                &:focus
+                    opacity: 1
+
+    &:first-child
+        border-top: 0

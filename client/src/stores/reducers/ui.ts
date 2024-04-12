@@ -4,6 +4,7 @@ import {Defines} from "@/defines";
 
 interface UIState {
     activeTab: Defines.TabType;
+    isActiveProfile: boolean;
     isActiveNotification: boolean;
     isActiveLNB: boolean;
     isActiveCreateChatRoom: boolean;
@@ -13,6 +14,7 @@ interface UIState {
 
 const initialState: UIState = {
     activeTab: Defines.TabType.FOLLOW,
+    isActiveProfile: false,
     isActiveNotification: false,
     isActiveLNB: false,
     isActiveCreateChatRoom: false,
@@ -27,11 +29,14 @@ const uiSlice = createSlice({
         setActiveTab: (state, action: PayloadAction<Defines.TabType>) => {
             state.activeTab = action.payload;
         },
-        setIsActiveLNB: (state, action: PayloadAction<boolean>) => {
-            state.isActiveLNB = action.payload;
+        setIsActiveProfile: (state, action: PayloadAction<boolean>) => {
+            state.isActiveProfile = action.payload;
         },
         setIsActiveNotification: (state, action: PayloadAction<boolean>) => {
             state.isActiveNotification = action.payload;
+        },
+        setIsActiveLNB: (state, action: PayloadAction<boolean>) => {
+            state.isActiveLNB = action.payload;
         },
         setIsActiveCreateChatRoom: (state, action: PayloadAction<boolean>) => {
             state.isActiveCreateChatRoom = action.payload;
@@ -41,6 +46,9 @@ const uiSlice = createSlice({
         },
         setIsActiveChatImageDetail: (state, action: PayloadAction<boolean>) => {
             state.isActiveChatImageDetail = action.payload;
+        },
+        toggleIsActiveProfile: (state) => {
+            state.isActiveProfile = !state.isActiveProfile;
         },
         toggleIsActiveNotification: (state) => {
             state.isActiveNotification = !state.isActiveNotification;
@@ -63,13 +71,15 @@ const uiSlice = createSlice({
 export type { UIState };
 export const {
     setActiveTab,
+    setIsActiveProfile,
     setIsActiveNotification,
     setIsActiveLNB,
     setIsActiveCreateChatRoom,
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
-    toggleIsActiveLNB,
     toggleIsActiveNotification,
+    toggleIsActiveProfile,
+    toggleIsActiveLNB,
     toggleIsActiveCreateChatRoom,
     toggleIsActiveChatImageInput,
     toggleIsActiveChatImageDetail

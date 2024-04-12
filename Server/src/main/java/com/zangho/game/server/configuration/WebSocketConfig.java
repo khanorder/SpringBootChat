@@ -42,7 +42,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public ReqHandler reqHandler() {
-        return new ReqHandler(sessionHandler(), resHandler(), userService, chatRoomService, lineNotifyService, messageService);
+        return new ReqHandler(sessionHandler(), resHandler(), userService, chatRoomService, lineNotifyService, messageService, notificationService);
     }
 
     @Override

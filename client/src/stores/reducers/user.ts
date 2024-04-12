@@ -210,8 +210,78 @@ const userSlice = createSlice({
             state.followers = state.followers.filter(_ => _.userId != action.payload);
             state.followers = deepmerge([], state.followers);
         },
+        updateUsersData: (state, action: PayloadAction<UpdateUsersDataProps>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - updateUsersData: ${action.payload}`);
+
+            if (!action || !action.payload) {
+                console.log(`reducer - updateUsersData: data is null.`);
+                return;
+            }
+
+            if ('name' != action.payload.dataType && 'message' != action.payload.dataType) {
+                console.log(`reducer - updateUsersData: not suitable dataType.`);
+                return;
+            }
+
+            if (isEmpty(action.payload.userId)) {
+                console.log(`reducer - updateUsersData: userId required.`);
+                return;
+            }
+
+            if ('name' == action.payload.dataType && isEmpty(action.payload.userData)) {
+                console.log(`reducer - updateUsersData: userName can not be empty.`);
+                return;
+            }
+
+            const connectedUser = state.connectedUsers.find(_ => _.userId == action.payload.userId);
+            const follow = state.follows.find(_ => _.userId == action.payload.userId);
+            const follower = state.followers.find(_ => _.userId == action.payload.userId);
+
+            switch (action.payload.dataType) {
+                case "name":
+                    if (null != connectedUser) {
+                        connectedUser.userName = action.payload.userData;
+                        state.connectedUsers = deepmerge([], state.connectedUsers);
+                    }
+
+                    if (null != follow) {
+                        follow.userName = action.payload.userData;
+                        state.follows = deepmerge([], state.follows);
+                    }
+
+                    if (null != follower) {
+                        follower.userName = action.payload.userData;
+                        state.followers = deepmerge([], state.followers);
+                    }
+                    break;
+
+                case "message":
+                    if (null != connectedUser) {
+                        connectedUser.message = action.payload.userData;
+                        state.connectedUsers = deepmerge([], state.connectedUsers);
+                    }
+
+                    if (null != follow) {
+                        follow.message = action.payload.userData;
+                        state.follows = deepmerge([], state.follows);
+                    }
+
+                    if (null != follower) {
+                        follower.message = action.payload.userData;
+                        state.followers = deepmerge([], state.followers);
+                    }
+                    break;
+            }
+        },
     }
 });
+
+export interface UpdateUsersDataProps {
+    dataType: 'name'|'message'
+    userId: string;
+    userData: string;
+}
 
 export type { UserState };
 export const {
@@ -229,7 +299,8 @@ export const {
     removeFollow,
     setFollowers,
     addFollower,
-    removeFollower
+    removeFollower,
+    updateUsersData
 } = userSlice.actions;
 
 export default userSlice.reducer;

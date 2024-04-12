@@ -5,17 +5,13 @@ import style from "@/styles/layout.module.sass";
 import {Defines} from "@/defines";
 import dynamic from "next/dynamic";
 import isEmpty from "lodash/isEmpty";
-import ChatDisconnected from "@/components/chatContents/chatDisconnected";
-import NotificationDialog from "@/components/dialogs/notificationDialog";
 
-const LNBDialog = dynamic(() => import("@/components/dialogs/lnbDialog"), {ssr: false});
+const ChatDisconnected = dynamic(() => import("@/components/chatContents/chatDisconnected"), {ssr: false});
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
+const ProfileDialog = dynamic(() => import("@/components/dialogs/profileDialog"), {ssr: false});
+const NotificationDialog = dynamic(() => import("@/components/dialogs/notificationDialog"), {ssr: false});
+const LNBDialog = dynamic(() => import("@/components/dialogs/lnbDialog"), {ssr: false});
 const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), {ssr: false});
-
-export const metadata: Metadata = {
-    title: 'chat client',
-    description: 'chat client',
-}
 
 export default function Layout({children}: { children: ReactNode }) {
     const firstRender = useRef(true);
@@ -72,6 +68,7 @@ export default function Layout({children}: { children: ReactNode }) {
 
         return (
             <>
+                <ProfileDialog/>
                 <NotificationDialog/>
                 <LNBDialog/>
                 <ChatHeader/>

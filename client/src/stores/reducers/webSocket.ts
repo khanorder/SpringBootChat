@@ -85,6 +85,22 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - saveUserNameReq`);
         },
+        saveUserMessageReq: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - saveUserMessageReq`);
+        },
+        saveUserProfileReq: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - saveUserProfileReq`);
+        },
+        checkNotificationReq: (state, action: PayloadAction<Domains.Notification>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - checkNotificationReq`);
+        },
+        removeNotificationReq: (state, action: PayloadAction<Domains.Notification>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - checkNotificationReq`);
+        },
     }
 });
 
@@ -104,7 +120,11 @@ export const {
     enterChatRoomReq,
     exitChatRoomReq,
     sendMessageReq,
-    saveUserNameReq
+    saveUserNameReq,
+    saveUserMessageReq,
+    saveUserProfileReq,
+    checkNotificationReq,
+    removeNotificationReq
 } = webSocketSlice.actions;
 
 export default webSocketSlice.reducer;

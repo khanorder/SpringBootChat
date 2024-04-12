@@ -5,6 +5,23 @@ export namespace Errors {
         FAILED_TO_CREATE_USER = 2,
     }
 
+    export enum CheckNotification {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        ID_REQUIRED = 2,
+        NOT_FOUND_NOTIFICATION = 3,
+        ALREADY_CHECKED = 4,
+        FAILED_TO_CHECK = 5,
+    }
+
+    export enum RemoveNotification {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        ID_REQUIRED = 2,
+        NOT_FOUND_NOTIFICATION = 3,
+        FAILED_TO_REMOVE = 4,
+    }
+
     export enum CheckConnection {
         NONE = 0,
         UPDATE_REQUIRED = 1,

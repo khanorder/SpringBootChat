@@ -56,7 +56,7 @@ export namespace Domains {
             this.message = message;
             this.haveProfile = haveProfile;
             this.latestActive = latestActive;
-            this.online = online ?? false;
+            this.online = online ? online : false;
         }
     }
 
@@ -297,6 +297,56 @@ export namespace Domains {
         }
     }
 
+    export class CheckNotificationRes {
+        result: Errors.CheckNotification;
+        id: string;
+
+        constructor(result: Errors.CheckNotification, id: string) {
+            this.result = result;
+            this.id = id;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const result = bytes[0];
+                let id = "";
+                if (Errors.CheckNotification.NONE == result) {
+                    const bytesId = bytes.slice(1, 17);
+                    id = Helpers.getUUIDFromByteArray(bytesId);
+                }
+                return new CheckNotificationRes(result, id);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class RemoveNotificationRes {
+        result: Errors.RemoveNotification;
+        id: string;
+
+        constructor(result: Errors.RemoveNotification, id: string) {
+            this.result = result;
+            this.id = id;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const result = bytes[0];
+                let id = "";
+                if (Errors.RemoveNotification.NONE == result) {
+                    const bytesId = bytes.slice(1, 17);
+                    id = Helpers.getUUIDFromByteArray(bytesId);
+                }
+                return new RemoveNotificationRes(result, id);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
     export class ConnectedUsersRes {
         users: Domains.User[];
 
@@ -417,7 +467,7 @@ export namespace Domains {
                 const offsetHaveProfile = offsetUserCount + userCount;
                 const offsetUserId = offsetHaveProfile + (userCount * 16);
                 const offsetLatestActive = offsetUserId + (userCount * 8);
-                const offsetOnline = offsetLatestActive + (userCount);
+                const offsetOnline = offsetLatestActive + userCount;
                 const offsetUserNameLength = offsetOnline + userCount;
                 let offsetUserNameAndMessage = offsetUserNameLength + userCount;
                 const users: Domains.User[] = [];
@@ -712,6 +762,54 @@ export namespace Domains {
                 const bytesRoomName = bytes.slice(offsetRoomNameLength, offsetRoomNameLength + roomNameLength);
                 const roomName = new TextDecoder().decode(bytesRoomName);
                 return new StartChatRes(bytes[0], roomId, roomOpenType, userCount, roomName);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NoticeUserNameChangedRes {
+        userId: string;
+        userName: string;
+
+        constructor(userId: string, userName: string) {
+            this.userId = userId;
+            this.userName = userName;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetUserId = 16;
+                const bytesUserId = bytes.slice(0, offsetUserId);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                const bytesUserName = bytes.slice(offsetUserId, bytes.byteLength);
+                const userName = new TextDecoder().decode(bytesUserName);
+                return new NoticeUserNameChangedRes(userId, userName);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NoticeUserMessageChangedRes {
+        userId: string;
+        userMessage: string;
+
+        constructor(userId: string, userName: string) {
+            this.userId = userId;
+            this.userMessage = userName;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetUserId = 16;
+                const bytesUserId = bytes.slice(0, offsetUserId);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                const bytesUserMessage = bytes.slice(offsetUserId, bytes.byteLength);
+                const userMessage = new TextDecoder().decode(bytesUserMessage);
+                return new NoticeUserMessageChangedRes(userId, userMessage);
             } catch (error) {
                 console.error(error);
                 return null;

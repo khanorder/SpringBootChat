@@ -7,10 +7,7 @@ import com.zangho.game.server.domain.chat.ChatRoomInfoInterface;
 import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.error.*;
 import com.zangho.game.server.helper.Helpers;
-import com.zangho.game.server.service.ChatRoomService;
-import com.zangho.game.server.service.LineNotifyService;
-import com.zangho.game.server.service.MessageService;
-import com.zangho.game.server.service.UserService;
+import com.zangho.game.server.service.*;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +27,7 @@ public class ReqHandler {
     private final ChatRoomService chatRoomService;
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
+    private final NotificationService notificationService;
 
     @Value("${client.version.main}")
     private int clientVersionMain;
@@ -38,7 +36,7 @@ public class ReqHandler {
     @Value("${client.version.maintenance}")
     private int clientVersionMaintenance;
 
-    public ReqHandler(SessionHandler sessionHandler, ResHandler resHandler, UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService) {
+    public ReqHandler(SessionHandler sessionHandler, ResHandler resHandler, UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService) {
         var config = System.getProperty("Config");
         isDevelopment = null == config || !config.equals("production");
         this.sessionHandler = sessionHandler;
@@ -47,6 +45,7 @@ public class ReqHandler {
         this.chatRoomService = chatRoomService;
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
+        this.notificationService = notificationService;
     }
 
     public void onAfterConnectionEstablished(@NonNull WebSocketSession session) {
@@ -176,6 +175,71 @@ public class ReqHandler {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
+    }
+
+    public void onCheckNotification(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        if (connectedUser.isEmpty()) {
+            resHandler.resCheckNotification(session, ErrorCheckNotification.AUTH_REQUIRED);
+            return;
+        }
+
+        var bytesId = Arrays.copyOfRange(packet, 1, 17);
+        var id = Helpers.getUUIDFromByteArray(bytesId);
+
+        if (id.isEmpty()) {
+            resHandler.resCheckNotification(session, ErrorCheckNotification.ID_REQUIRED);
+            return;
+        }
+
+        var notification = notificationService.findById(id);
+        if (notification.isEmpty()) {
+            resHandler.resCheckNotification(session, ErrorCheckNotification.NOT_FOUND_NOTIFICATION);
+            return;
+        }
+
+        if (notification.get().isCheck()) {
+            resHandler.resCheckNotification(session, ErrorCheckNotification.ALREADY_CHECKED);
+            return;
+        }
+
+        var result = notificationService.check(notification.get());
+
+        if (result.isEmpty() || !result.get().isCheck()) {
+            resHandler.resCheckNotification(session, ErrorCheckNotification.FAILED_TO_CHECK);
+            return;
+        }
+
+        resHandler.resCheckNotification(session, result.get());
+    }
+
+    public void onRemoveNotification(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        if (connectedUser.isEmpty()) {
+            resHandler.resRemoveNotification(session, ErrorRemoveNotification.AUTH_REQUIRED);
+            return;
+        }
+
+        var bytesId = Arrays.copyOfRange(packet, 1, 17);
+        var id = Helpers.getUUIDFromByteArray(bytesId);
+
+        if (id.isEmpty()) {
+            resHandler.resRemoveNotification(session, ErrorRemoveNotification.ID_REQUIRED);
+            return;
+        }
+
+        var notification = notificationService.findById(id);
+        if (notification.isEmpty()) {
+            resHandler.resRemoveNotification(session, ErrorRemoveNotification.NOT_FOUND_NOTIFICATION);
+            return;
+        }
+
+        var result = notificationService.remove(notification.get());
+
+        if (!result) {
+            resHandler.resRemoveNotification(session, ErrorRemoveNotification.FAILED_TO_REMOVE);
+            return;
+        }
+
+        resHandler.resRemoveNotification(session, id);
     }
 
     public void onConnectedUsers(WebSocketSession session) {
@@ -312,7 +376,14 @@ public class ReqHandler {
             connectedUser.get().setName(newUserName);
             var result = userService.updateUser(connectedUser.get());
 
-            if (!result || connectedUser.get().getCurrentChatRoom().isEmpty())
+            if (!result)
+                return;
+            
+            // 다른 사용자들에게 대화명 변경 알림
+            resHandler.noticeUserNameChanged(session, connectedUser.get(), newUserName);
+
+            // 입장중인 채팅방이 있는지 확인
+            if (connectedUser.get().getCurrentChatRoom().isEmpty())
                 return;
 
             Optional<ChatRoom> currentChatRoom = Optional.empty();
@@ -326,12 +397,51 @@ public class ReqHandler {
                     currentChatRoom = chatRoomService.findPublicRoomById(connectedUser.get().getCurrentChatRoom().get().getRoomId());
                     break;
             }
-
+            
             if (currentChatRoom.isEmpty() || currentChatRoom.get().getUsers().isEmpty())
                 return;
-
+            
+            // 채팅방 입장 중이면 입장한 유저들에게 대화명 변경 알림
             resHandler.noticeRoomUserNameChanged(currentChatRoom.get(), oldUserName, newUserName);
             resHandler.noticeRoomUsersChanged(currentChatRoom.get());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void onChangeUserMessage(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        try {
+            var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
+            var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+            if (connectedUser.isEmpty() || !connectedUser.get().getId().equals(userId))
+                return;
+
+            var bytesUserMessage = Arrays.copyOfRange(packet, 17, packet.length);
+            var newUserMessage = new String(bytesUserMessage);
+            connectedUser.get().setMessage(newUserMessage);
+            var result = userService.updateUser(connectedUser.get());
+            if (result)
+                resHandler.noticeUserMessageChanged(session, connectedUser.get(), newUserMessage);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void onChangeUserProfile(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        try {
+            var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
+            var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+            if (connectedUser.isEmpty() || !connectedUser.get().getId().equals(userId))
+                return;
+
+            var bytesUserMessage = Arrays.copyOfRange(packet, 17, packet.length);
+            var newUserMessage = new String(bytesUserMessage);
+
+            var oldUserName =  connectedUser.get().getName();
+            connectedUser.get().setName(newUserMessage);
+            var result = userService.updateUser(connectedUser.get());
+            if (result)
+                resHandler.noticeUserMessageChanged(session, connectedUser.get(), newUserMessage);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

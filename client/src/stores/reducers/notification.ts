@@ -36,24 +36,31 @@ const notificationSlice = createSlice({
             state.notifications.push(action.payload);
             state.notifications = deepmerge([], state.notifications);
         },
-        removeNotification: (state, action: PayloadAction<Domains.Notification>) => {
-            if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - removeNotification: ${JSON.stringify(action.payload)}`);
-            state.notifications = state.notifications.filter(_ => _.id != action.payload.id);
-            state.notifications = deepmerge([], state.notifications);
-        },
-        checkNotification: (state, action: PayloadAction<Domains.Notification>) => {
+        checkNotification: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - checkNotification: ${JSON.stringify(action.payload)}`);
 
-            if (!action.payload || isEmpty(action.payload.id))
+            if (!action.payload || isEmpty(action.payload))
                 return;
 
-            const exists = state.notifications.find(_ => _.id == action.payload.id);
+            const exists = state.notifications.find(_ => _.id == action.payload);
             if (null == exists)
                 return;
 
+            if (exists.isCheck)
+                return;
+
             exists.isCheck = true;
+            state.notifications = deepmerge([], state.notifications);
+        },
+        removeNotification: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - removeNotification: ${JSON.stringify(action.payload)}`);
+
+            if (!action.payload || isEmpty(action.payload))
+                return;
+
+            state.notifications = state.notifications.filter(_ => _.id != action.payload);
             state.notifications = deepmerge([], state.notifications);
         },
     }
@@ -63,8 +70,8 @@ export type { NotificationState };
 export const {
     setNotifications,
     addNotification,
+    checkNotification,
     removeNotification,
-    checkNotification
 } = notificationSlice.actions;
 
 export default notificationSlice.reducer;

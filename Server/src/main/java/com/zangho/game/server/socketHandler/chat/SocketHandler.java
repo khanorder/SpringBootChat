@@ -82,6 +82,14 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onCheckAuthentication(session, connectedUser, packet);
                     break;
 
+                case REQ_CHECK_NOTIFICATION:
+                    reqHandler.onCheckNotification(session, connectedUser, packet);
+                    break;
+
+                case REQ_REMOVE_NOTIFICATION:
+                    reqHandler.onRemoveNotification(session, connectedUser, packet);
+                    break;
+
                 case REQ_CONNECTED_USERS:
                     reqHandler.onConnectedUsers(session);
                     break;
@@ -102,6 +110,14 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onChangeUserName(session, connectedUser, packet);
                     break;
 
+                case REQ_CHANGE_USER_MESSAGE:
+                    reqHandler.onChangeUserMessage(session, connectedUser, packet);
+                    break;
+
+                case REQ_CHANGE_USER_PROFILE:
+                    reqHandler.onChangeUserName(session, connectedUser, packet);
+                    break;
+
                 case REQ_CREATE_CHAT_ROOM:
                     reqHandler.onCreateChatRoom(session, connectedUser, packet);
                     break;
@@ -112,10 +128,6 @@ public class SocketHandler extends TextWebSocketHandler {
 
                 case REQ_EXIT_CHAT_ROOM:
                     reqHandler.onExitChatRoom(session, connectedUser, packet);
-                    break;
-
-                case REQ_TALK_CHAT_ROOM:
-                    reqHandler.onTalkChatRoom(session, connectedUser, packet);
                     break;
 
                 default:

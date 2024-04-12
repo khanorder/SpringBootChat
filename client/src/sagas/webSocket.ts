@@ -11,7 +11,13 @@ import {
     enterChatRoomReq,
     exitChatRoomReq,
     sendMessageReq,
-    saveUserNameReq, connectedUsersReq, followReq, unfollowReq, startChatReq
+    saveUserNameReq,
+    connectedUsersReq,
+    followReq,
+    unfollowReq,
+    startChatReq,
+    checkNotificationReq,
+    removeNotificationReq, saveUserMessageReq, saveUserProfileReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -22,25 +28,47 @@ import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
 import {
     addChatRoomRes,
-    checkAuthenticationRes, checkConnectionRes, connectedUsersRes,
+    checkAuthenticationRes,
+    checkConnectionRes,
+    connectedUsersRes,
     createChatRoomRes,
     enterChatRoomRes,
-    exitChatRoomRes, followerRes, followRes,
+    exitChatRoomRes,
+    followerRes,
+    followRes,
     historyChatRoomRes,
-    noticeChangeNameChatRoomRes, noticeConnectedUserRes, noticeDisconnectedUserRes,
+    noticeChangeNameChatRoomRes,
+    noticeConnectedUserRes,
+    noticeDisconnectedUserRes,
     noticeEnterChatRoomRes,
-    noticeExitChatRoomRes, removeChatRoomRes,
-    talkChatRoomRes, unfollowerRes, unfollowRes,
+    noticeExitChatRoomRes,
+    removeChatRoomRes,
+    talkChatRoomRes,
+    unfollowerRes,
+    unfollowRes,
     updateChatRoomRes,
-    chatRoomsRes, followsRes, followersRes, startChatRes, notificationRes
+    chatRoomsRes,
+    followsRes,
+    followersRes,
+    startChatRes,
+    notificationRes,
+    checkNotificationRes,
+    removeNotificationRes,
+    noticeUserNameChangedRes, noticeUserMessageChangedRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
     callCreateChatRoomReq,
     callEnterChatRoomReq,
-    callExitChatRoomReq, callFollowReq,
+    callExitChatRoomReq,
+    callFollowReq,
     callSaveUserNameReq,
-    callSendMessageReq, callUnfollowReq, callCheckConnectionReq, callCheckAuthenticationReq, callStartChatReq
+    callSendMessageReq,
+    callUnfollowReq,
+    callCheckConnectionReq,
+    callCheckAuthenticationReq,
+    callStartChatReq,
+    callCheckNotificationReq, callRemoveNotificationReq, callSaveUserMessageReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -255,6 +283,14 @@ function* onMessage (socket: WebSocket) {
                             yield call(notificationRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_CHECK_NOTIFICATION:
+                            yield call(checkNotificationRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_REMOVE_NOTIFICATION:
+                            yield call(removeNotificationRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_CONNECTED_USERS:
                             yield call(connectedUsersRes, packetData);
                             break;
@@ -297,6 +333,18 @@ function* onMessage (socket: WebSocket) {
 
                         case Defines.ResType.RES_START_CHAT:
                             yield call(startChatRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_USER_NAME_CHANGED:
+                            yield call(noticeUserNameChangedRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_USER_MESSAGE_CHANGED:
+                            yield call(noticeUserMessageChangedRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_USER_PROFILE_CHANGED:
+                            // yield call(startChatRes, packetData);
                             break;
 
                         case Defines.ResType.RES_CREATE_CHAT_ROOM:
@@ -418,4 +466,8 @@ export function* watchWebSocket() {
     yield takeLatest(exitChatRoomReq, callExitChatRoomReq);
     yield takeLatest(sendMessageReq, callSendMessageReq);
     yield takeLatest(saveUserNameReq, callSaveUserNameReq);
+    yield takeLatest(saveUserMessageReq, callSaveUserMessageReq);
+    // yield takeLatest(saveUserProfileReq, callSaveUserNameReq);
+    yield takeLatest(checkNotificationReq, callCheckNotificationReq);
+    yield takeLatest(removeNotificationReq, callRemoveNotificationReq);
 }

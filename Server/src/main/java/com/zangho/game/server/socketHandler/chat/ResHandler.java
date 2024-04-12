@@ -83,6 +83,78 @@ public class ResHandler {
         }
     }
 
+    public void resCheckNotification(WebSocketSession session, ErrorCheckNotification error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_NOTIFICATION, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resCheckNotification(WebSocketSession session, Notification notification) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_NOTIFICATION, ErrorCheckNotification.NONE);
+            var bytesId = Helpers.getByteArrayFromUUID(notification.getId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesId);
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resRemoveNotification(WebSocketSession session, ErrorRemoveNotification error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_NOTIFICATION, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resRemoveNotification(WebSocketSession session, String id) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_NOTIFICATION, ErrorRemoveNotification.NONE);
+            var bytesId = Helpers.getByteArrayFromUUID(id);
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesId);
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resNotificationFollower(User follower, User follow) {
+        try {
+            var notification = notificationService.createFollowNotification(follower, follow);
+            if (notification.isEmpty())
+                return;
+
+            var connectedFollowUser = userService.getConnectedUserByUserId(follow.getId());
+            if (connectedFollowUser.isEmpty() || connectedFollowUser.get().getSessionId().isEmpty())
+                return;
+
+            var optSession = sessionHandler.getSession(connectedFollowUser.get().getSessionId());
+            if (optSession.isEmpty())
+                return;
+
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATION);
+            var bytesNotificationType = new byte[]{notification.get().getType().getByte()};
+            var bytesId = Helpers.getByteArrayFromUUID(notification.get().getId());
+            var bytesSendAt = Helpers.getByteArrayFromLong(notification.get().getSendAt().getTime());
+            var bytesIsCheck = new byte[]{0};
+            var bytesHaveIcon = new byte[]{(byte)follower.getHaveProfile()};
+            var bytesFollowerId = Helpers.getByteArrayFromUUID(follower.getId());
+            var bytesFollowerNameLength = new byte[]{(byte)follower.getName().getBytes().length};
+            var bytesFollowerName = follower.getName().getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationType, bytesId, bytesSendAt, bytesIsCheck, bytesHaveIcon, bytesFollowerId, bytesFollowerNameLength, bytesFollowerName);
+            sessionHandler.sendOneSession(optSession.get(), resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
     public void resConnectedUsers(WebSocketSession session) {
         try {
             var resPacket = getConnectedUsersPackets();
@@ -149,7 +221,7 @@ public class ResHandler {
                     bytesHaveProfiles = Helpers.mergeBytePacket(bytesHaveProfiles, new byte[] {(byte)user.getHaveProfile()});
                     bytesIds = Helpers.mergeBytePacket(bytesIds, Helpers.getByteArrayFromUUID(user.getId()));
                     bytesLatestActives = Helpers.mergeBytePacket(bytesLatestActives, Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime()));
-                    bytesOnlines = Helpers.mergeBytePacket(bytesNameLengths, new byte[]{(byte)(userService.isConnectedUser(user) ? 1 : 0)});
+                    bytesOnlines = Helpers.mergeBytePacket(bytesOnlines, new byte[]{(byte)(userService.isConnectedUser(user) ? 1 : 0)});
                     bytesNameLengths = Helpers.mergeBytePacket(bytesNameLengths, new byte[]{(byte)user.getName().getBytes().length});
                     bytesMessageLengths = Helpers.mergeBytePacket(bytesMessageLengths, new byte[]{(byte)user.getMessage().getBytes().length});
                     bytesNames = Helpers.mergeBytePacket(bytesNames, user.getName().getBytes());
@@ -181,7 +253,7 @@ public class ResHandler {
                     bytesHaveProfiles = Helpers.mergeBytePacket(bytesHaveProfiles, new byte[] {(byte)user.getHaveProfile()});
                     bytesIds = Helpers.mergeBytePacket(bytesIds, Helpers.getByteArrayFromUUID(user.getId()));
                     bytesLatestActives = Helpers.mergeBytePacket(bytesLatestActives, Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime()));
-                    bytesOnlines = Helpers.mergeBytePacket(bytesNameLengths, new byte[]{(byte)(userService.isConnectedUser(user) ? 1 : 0)});
+                    bytesOnlines = Helpers.mergeBytePacket(bytesOnlines, new byte[]{(byte)(userService.isConnectedUser(user) ? 1 : 0)});
                     bytesNameLengths = Helpers.mergeBytePacket(bytesNameLengths, new byte[]{(byte)user.getName().getBytes().length});
                     bytesMessageLengths = Helpers.mergeBytePacket(bytesMessageLengths, new byte[]{(byte)user.getMessage().getBytes().length});
                     bytesNames = Helpers.mergeBytePacket(bytesNames, user.getName().getBytes());
@@ -306,36 +378,6 @@ public class ResHandler {
         }
     }
 
-    public void resNotificationFollower(User follower, User follow) {
-        try {
-            var notification = notificationService.createFollowNotification(follower, follow);
-            if (notification.isEmpty())
-                return;
-
-            var connectedFollowUser = userService.getConnectedUserByUserId(follow.getId());
-            if (connectedFollowUser.isEmpty() || connectedFollowUser.get().getSessionId().isEmpty())
-                return;
-
-            var optSession = sessionHandler.getSession(connectedFollowUser.get().getSessionId());
-            if (optSession.isEmpty())
-                return;
-
-            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATION);
-            var bytesNotificationType = new byte[]{notification.get().getType().getByte()};
-            var bytesId = Helpers.getByteArrayFromUUID(notification.get().getId());
-            var bytesSendAt = Helpers.getByteArrayFromLong(notification.get().getSendAt().getTime());
-            var bytesIsCheck = new byte[]{0};
-            var bytesHaveIcon = new byte[]{(byte)follower.getHaveProfile()};
-            var bytesFollowerId = Helpers.getByteArrayFromUUID(follower.getId());
-            var bytesFollowerNameLength = new byte[]{(byte)follower.getName().getBytes().length};
-            var bytesFollowerName = follower.getName().getBytes();
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationType, bytesId, bytesSendAt, bytesIsCheck, bytesHaveIcon, bytesFollowerId, bytesFollowerNameLength, bytesFollowerName);
-            sessionHandler.sendOneSession(optSession.get(), resPacket);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-        }
-    }
-
     public void resUnfollow(WebSocketSession session, ErrorUnfollow error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_UNFOLLOW, error);
@@ -404,6 +446,28 @@ public class ResHandler {
             var optSession = sessionHandler.getSession(connectedTargetUser.get().getSessionId());
 //            if (optSession.isPresent())
 //                return;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void noticeUserNameChanged(WebSocketSession session, User user, String newUserName) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_USER_NAME_CHANGED);
+            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId, newUserName.getBytes());
+            sessionHandler.sendOthers(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void noticeUserMessageChanged(WebSocketSession session, User user, String newUserMessage) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_USER_MESSAGE_CHANGED);
+            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId, newUserMessage.getBytes());
+            sessionHandler.sendOthers(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
