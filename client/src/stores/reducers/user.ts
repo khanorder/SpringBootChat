@@ -102,6 +102,18 @@ const userSlice = createSlice({
 
             state.connectedUsers.push(action.payload);
             state.connectedUsers = deepmerge([], state.connectedUsers);
+
+            const follow = state.follows.find(_ => _.userId == action.payload.userId);
+            if (null != follow) {
+                follow.online = true;
+                state.follows = deepmerge([], state.follows);
+            }
+
+            const follower = state.followers.find(_ => _.userId == action.payload.userId);
+            if (null != follower) {
+                follower.online = true;
+                state.followers = deepmerge([], state.followers);
+            }
         },
         removeConnectedUser: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -115,6 +127,18 @@ const userSlice = createSlice({
 
             state.connectedUsers = state.connectedUsers.filter(_ => _.userId != action.payload);
             state.connectedUsers = deepmerge([], state.connectedUsers);
+
+            const follow = state.follows.find(_ => _.userId == action.payload);
+            if (null != follow) {
+                follow.online = false;
+                state.follows = deepmerge([], state.follows);
+            }
+
+            const follower = state.followers.find(_ => _.userId == action.payload);
+            if (null != follower) {
+                follower.online = false;
+                state.followers = deepmerge([], state.followers);
+            }
         },
         setFollows: (state, action: PayloadAction<Domains.User[]>) => {
             if ('production' !== process.env.NODE_ENV)

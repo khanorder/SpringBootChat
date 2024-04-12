@@ -2,27 +2,46 @@
     display: flex
     width: 100%
 
-    .userThumb
+    .userThumbWrapper
         flex: 0 0 auto
         position: relative
-        overflow: hidden
         display: flex
         justify-content: center
         align-items: center
         margin-left: 10px
-        border-radius: 10px
         width: 40px
         height: 40px
-        background: #dfdfdf
 
-        .userThumbIcon
-            padding: 5px
-            width: 30px
-            height: 30px
+        .userThumb
+            flex: 0 0 auto
+            position: relative
+            overflow: hidden
+            display: flex
+            justify-content: center
+            align-items: center
+            border-radius: 20px
+            width: 40px
+            height: 40px
+            background: #dfdfdf
 
-        .userThumbImage
-            max-width: 40px
-            max-height: 40px
+            .userThumbIcon
+                padding: 5px
+                width: 30px
+                height: 30px
+
+            .userThumbImage
+                max-width: 40px
+                max-height: 40px
+
+        .online
+            position: absolute
+            top: -3px
+            right: -3px
+            border-radius: 6px
+            border: 2px solid #ffffff
+            width: 12px
+            height: 12px
+            background: #66bbff
 
     .userInfo
         flex: 1 0 auto

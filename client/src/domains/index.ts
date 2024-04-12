@@ -48,13 +48,15 @@ export namespace Domains {
         message: string;
         haveProfile: boolean;
         latestActive: number;
+        online: boolean;
 
-        constructor(userId: string, userName: string, message: string, haveProfile: boolean, latestActive: number) {
+        constructor(userId: string, userName: string, message: string, haveProfile: boolean, latestActive: number, online?: boolean) {
             this.userId = userId;
             this.userName = userName;
             this.message = message;
             this.haveProfile = haveProfile;
             this.latestActive = latestActive;
+            this.online = online ?? false;
         }
     }
 
@@ -115,6 +117,28 @@ export namespace Domains {
                 console.error(error);
                 return null;
             }
+        }
+    }
+
+    export class Notification {
+        id: string;
+        type: Defines.NotificationType;
+        sendAt: number;
+        isCheck: boolean;
+        haveIcon: boolean;
+        message: string;
+        targetId: string;
+        url: string;
+
+        constructor(id: string, type: Defines.NotificationType, sendAt: number, idCheck: boolean, haveIcon: boolean, message?: string, targetId?: string, url?: string) {
+            this.id = id;
+            this.type = type;
+            this.sendAt = sendAt > 0 ? sendAt : 0;
+            this.isCheck = idCheck;
+            this.haveIcon = haveIcon;
+            this.message = message ?? "";
+            this.targetId = targetId ?? "";
+            this.url = url ?? "";
         }
     }
 
@@ -201,6 +225,78 @@ export namespace Domains {
         }
     }
 
+    export class NotificationRes {
+        type: Defines.NotificationType;
+        id: string;
+        sendAt: number;
+        isCheck: boolean;
+        haveIcon: boolean;
+        message: string;
+        targetId: string;
+        url: string;
+
+        constructor(type: Defines.NotificationType, id: string, sendAt: number, isCheck: boolean, haveIcon: boolean, message: string, targetId: string, url: string) {
+            this.type = type;
+            this.id = id;
+            this.sendAt = sendAt;
+            this.isCheck = isCheck;
+            this.haveIcon = haveIcon;
+            this.targetId = targetId;
+            this.message = message;
+            this.url = url;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const type: Defines.NotificationType = bytes[0];
+                const offsetType = 1;
+                const offsetId = offsetType + 16;
+                const offsetSendAt = offsetId + 8;
+                const offsetIsCheck = offsetSendAt + 1;
+                const offsetHaveIcon = offsetIsCheck + 1;
+                const offsetTargetId = offsetHaveIcon + 16;
+
+                const bytesId = bytes.slice(offsetType, offsetId);
+                const id = Helpers.getUUIDFromByteArray(bytesId);
+                const bytesSendAt = bytes.slice(offsetId, offsetSendAt);
+                const sendAt = Helpers.getLongFromByteArray(bytesSendAt);
+                const isCheck = bytes[offsetSendAt] > 0;
+                const haveIcon = bytes[offsetIsCheck] > 0;
+                const bytesTargetId = bytes.slice(offsetHaveIcon, offsetTargetId);
+                const targetId = Helpers.getUUIDFromByteArray(bytesTargetId);
+
+                switch (type) {
+                    case Defines.NotificationType.FOLLOWER:
+                        const offsetFollowerNameLength = offsetTargetId + 1;
+                        const userFollowerLength = bytes[offsetTargetId];
+                        const bytesFollowerName = bytes.slice(offsetFollowerNameLength, offsetFollowerNameLength + userFollowerLength);
+                        const followerName = new TextDecoder().decode(bytesFollowerName);
+                        return new NotificationRes(type, id, sendAt, isCheck, haveIcon, followerName, targetId, "");
+
+                    case Defines.NotificationType.CHAT:
+                        const offsetUrlLength = offsetTargetId + 4;
+                        const offsetMessageLength = offsetUrlLength + 4;
+                        const bytesUrlLength = bytes.slice(offsetTargetId, offsetUrlLength);
+                        const urlLength = Helpers.getIntFromByteArray(bytesUrlLength);
+                        const bytesMessageLength = bytes.slice(offsetUrlLength, offsetMessageLength);
+                        const messageLength = Helpers.getIntFromByteArray(bytesMessageLength);
+                        const bytesUrl = bytes.slice(offsetMessageLength, offsetMessageLength + urlLength);
+                        const url = new TextDecoder().decode(bytesUrl);
+                        const bytesMessage = bytes.slice(offsetMessageLength + urlLength, offsetMessageLength + urlLength + messageLength);
+                        const message = new TextDecoder().decode(bytesMessage);
+                        return new NotificationRes(type, id, sendAt, isCheck, haveIcon, message, targetId, url);
+
+                    default:
+                        console.error("Not suitable notification type.");
+                        return null;
+                }
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
     export class ConnectedUsersRes {
         users: Domains.User[];
 
@@ -233,7 +329,7 @@ export namespace Domains {
                     const bytesUserName = bytes.slice(offsetUserNameAndMessage, offsetUserNameAndMessage + userNameLength);
                     const userName = new TextDecoder().decode(bytesUserName);
                     offsetUserNameAndMessage += userNameLength;
-                    users.push(new Domains.User(userId, userName, '', haveProfile, latestActive));
+                    users.push(new Domains.User(userId, userName, '', haveProfile, latestActive, true));
                 }
 
                 for (let i = 0; i < userCount; i++) {
@@ -269,7 +365,8 @@ export namespace Domains {
                 const offsetHaveProfile = offsetUserCount + userCount;
                 const offsetUserId = offsetHaveProfile + (userCount * 16);
                 const offsetLatestActive = offsetUserId + (userCount * 8);
-                const offsetUserNameLength = offsetLatestActive + userCount;
+                const offsetOnline = offsetLatestActive + (userCount);
+                const offsetUserNameLength = offsetOnline + userCount;
                 let offsetUserNameAndMessage = offsetUserNameLength + userCount;
                 const users: Domains.User[] = [];
 
@@ -279,11 +376,12 @@ export namespace Domains {
                     const userId = Helpers.getUUIDFromByteArray(bytesUserId);
                     const bytesLatestActive = bytes.slice(offsetUserId + (i * 8), offsetUserId + ((i + 1) * 8));
                     const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
-                    const userNameLength = bytes[offsetLatestActive + i];
+                    const online = bytes[offsetLatestActive + i] > 0;
+                    const userNameLength = bytes[offsetOnline + i];
                     const bytesUserName = bytes.slice(offsetUserNameAndMessage, offsetUserNameAndMessage + userNameLength);
                     const userName = new TextDecoder().decode(bytesUserName);
                     offsetUserNameAndMessage += userNameLength;
-                    users.push(new Domains.User(userId, userName, '', haveProfile, latestActive));
+                    users.push(new Domains.User(userId, userName, '', haveProfile, latestActive, online));
                 }
 
                 for (let i = 0; i < userCount; i++) {
@@ -319,7 +417,8 @@ export namespace Domains {
                 const offsetHaveProfile = offsetUserCount + userCount;
                 const offsetUserId = offsetHaveProfile + (userCount * 16);
                 const offsetLatestActive = offsetUserId + (userCount * 8);
-                const offsetUserNameLength = offsetLatestActive + userCount;
+                const offsetOnline = offsetLatestActive + (userCount);
+                const offsetUserNameLength = offsetOnline + userCount;
                 let offsetUserNameAndMessage = offsetUserNameLength + userCount;
                 const users: Domains.User[] = [];
 
@@ -329,11 +428,12 @@ export namespace Domains {
                     const userId = Helpers.getUUIDFromByteArray(bytesUserId);
                     const bytesLatestActive = bytes.slice(offsetUserId + (i * 8), offsetUserId + ((i + 1) * 8));
                     const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
-                    const userNameLength = bytes[offsetLatestActive + i];
+                    const online = bytes[offsetLatestActive + i] > 0;
+                    const userNameLength = bytes[offsetOnline + i];
                     const bytesUserName = bytes.slice(offsetUserNameAndMessage, offsetUserNameAndMessage + userNameLength);
                     const userName = new TextDecoder().decode(bytesUserName);
                     offsetUserNameAndMessage += userNameLength;
-                    users.push(new Domains.User(userId, userName, '', haveProfile, latestActive));
+                    users.push(new Domains.User(userId, userName, '', haveProfile, latestActive, online));
                 }
 
                 for (let i = 0; i < userCount; i++) {
@@ -412,17 +512,24 @@ export namespace Domains {
         static decode(bytes: Uint8Array) {
             try {
                 const haveProfile = bytes[0] > 0;
-                const bytesId = bytes.slice(1, 17);
+                const offsetHaveProfile = 1;
+                const offsetId = offsetHaveProfile + 16;
+                const offsetLatestActive = offsetId + 8;
+                const offsetOnline = offsetLatestActive + 1;
+                const offsetNameLength = offsetOnline + 1;
+                const offsetMessageLength = offsetNameLength + 1;
+                const bytesId = bytes.slice(offsetHaveProfile, offsetId);
                 const id = Helpers.getUUIDFromByteArray(bytesId);
-                const bytesLatestActive = bytes.slice(17, 25);
+                const bytesLatestActive = bytes.slice(offsetId, offsetLatestActive);
                 const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
-                const nameLength = bytes[25];
-                const messageLength = bytes[26];
-                const bytesName = bytes.slice(27, 27 + nameLength)
+                const online = bytes[offsetLatestActive] > 0;
+                const nameLength = bytes[offsetOnline];
+                const messageLength = bytes[offsetNameLength];
+                const bytesName = bytes.slice(offsetMessageLength, offsetMessageLength + nameLength)
                 const name = new TextDecoder().decode(bytesName);
-                const bytesMessage = bytes.slice(27 + nameLength, 27 + nameLength + messageLength)
+                const bytesMessage = bytes.slice(offsetMessageLength + nameLength, offsetMessageLength + nameLength + messageLength)
                 const message = new TextDecoder().decode(bytesMessage);
-                return new NoticeConnectedUserRes(new Domains.User(id, name, message, haveProfile, latestActive));
+                return new NoticeConnectedUserRes(new Domains.User(id, name, message, haveProfile, latestActive, online));
             } catch (error) {
                 console.error(error);
                 return null;
@@ -463,17 +570,24 @@ export namespace Domains {
                 let user: Domains.User|null = null;
                 if (1 < bytes.byteLength) {
                     const haveProfile = bytes[1] > 0;
-                    const bytesId = bytes.slice(2, 18);
+                    const offsetHaveProfile = 2;
+                    const offsetId = offsetHaveProfile + 16;
+                    const offsetLatestActive = offsetId + 8;
+                    const offsetOnline = offsetLatestActive + 1;
+                    const offsetNameLength = offsetOnline + 1;
+                    const offsetMessageLength = offsetNameLength + 1;
+                    const bytesId = bytes.slice(offsetHaveProfile, offsetId);
                     const id = Helpers.getUUIDFromByteArray(bytesId);
-                    const bytesLatestActive = bytes.slice(18, 25);
+                    const bytesLatestActive = bytes.slice(offsetId, offsetLatestActive);
                     const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
-                    const nameLength = bytes[26];
-                    const messageLength = bytes[27];
-                    const bytesName = bytes.slice(28, 28 + nameLength)
+                    const online = bytes[offsetLatestActive] > 0;
+                    const nameLength = bytes[offsetOnline];
+                    const messageLength = bytes[offsetNameLength];
+                    const bytesName = bytes.slice(offsetMessageLength, offsetMessageLength + nameLength)
                     const name = new TextDecoder().decode(bytesName);
-                    const bytesMessage = bytes.slice(28 + nameLength, 28 + nameLength + messageLength)
+                    const bytesMessage = bytes.slice(offsetMessageLength + nameLength, offsetMessageLength + nameLength + messageLength)
                     const message = new TextDecoder().decode(bytesMessage);
-                    user = new Domains.User(id, name, message, haveProfile, latestActive);
+                    user = new Domains.User(id, name, message, haveProfile, latestActive, online);
                 }
                 return new FollowRes(bytes[0], user);
             } catch (error) {
@@ -519,17 +633,24 @@ export namespace Domains {
                 let user: Domains.User|null = null;
                 if (1 < bytes.byteLength) {
                     const haveProfile = bytes[0] > 0;
-                    const bytesId = bytes.slice(1, 17);
+                    const offsetHaveProfile = 1;
+                    const offsetId = offsetHaveProfile + 16;
+                    const offsetLatestActive = offsetId + 8;
+                    const offsetOnline = offsetLatestActive + 1;
+                    const offsetNameLength = offsetOnline + 1;
+                    const offsetMessageLength = offsetNameLength + 1;
+                    const bytesId = bytes.slice(offsetHaveProfile, offsetId);
                     const id = Helpers.getUUIDFromByteArray(bytesId);
-                    const bytesLatestActive = bytes.slice(17, 25);
+                    const bytesLatestActive = bytes.slice(offsetId, offsetLatestActive);
                     const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
-                    const nameLength = bytes[25];
-                    const messageLength = bytes[26];
-                    const bytesName = bytes.slice(27, 27 + nameLength)
+                    const online = bytes[offsetLatestActive] > 0;
+                    const nameLength = bytes[offsetOnline];
+                    const messageLength = bytes[offsetNameLength];
+                    const bytesName = bytes.slice(offsetMessageLength, offsetMessageLength + nameLength)
                     const name = new TextDecoder().decode(bytesName);
-                    const bytesMessage = bytes.slice(27 + nameLength, 27 + nameLength + messageLength)
+                    const bytesMessage = bytes.slice(offsetMessageLength + nameLength, offsetMessageLength + nameLength + messageLength)
                     const message = new TextDecoder().decode(bytesMessage);
-                    user = new Domains.User(id, name, message, haveProfile, latestActive);
+                    user = new Domains.User(id, name, message, haveProfile, latestActive, online);
                 }
                 return new FollowerRes(user);
             } catch (error) {

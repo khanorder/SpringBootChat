@@ -3,7 +3,7 @@
     max-height: 30vh
     border-bottom: 1px solid #d9d9d9
 
-    .chatTitleWrapper
+    .titleWrapper
         display: flex
         justify-content: center
         border: 0
@@ -13,14 +13,62 @@
         font-size: 18px
         font-weight: 700
 
-        .chatHeaderLNBButtonWrapper
+        .notificationWrapper
             flex: 0 0 30px
             display: flex
             justify-content: center
             align-items: center
             margin-left: 10px
 
-            .chatHeaderLNBButton
+            .notificationButtonWrapper
+                position: relative
+                display: flex
+                justify-content: center
+                align-items: center
+
+                .notificationButton
+                    border: 0
+                    width: 20px
+                    height: 20px
+                    background: center / contain no-repeat url("/images/bell-line-icon.svg")
+
+                    &:hover
+                        cursor: pointer
+
+                .toCheckCount
+                    display: none
+                    position: absolute
+                    top: -5px
+                    right: -5px
+                    justify-content: center
+                    align-items: center
+                    border-radius: 6px
+                    padding: 2px 4px
+                    background: #ff4422
+
+                    .toCheckCountText
+                        font-size: 7px
+                        color: #ffffff
+
+
+            &.active
+                .notificationButtonWrapper
+                    .notificationButton
+                        background: center / contain no-repeat url("/images/bell-icon.svg")
+
+            &.toCheck
+                .toCheckCount
+                    display: flex
+
+
+        .lnbButtonWrapper
+            flex: 0 0 30px
+            display: flex
+            justify-content: center
+            align-items: center
+            margin-left: 10px
+
+            .lnbButton
                 position: relative
                 border: 0
                 width: 30px
@@ -52,7 +100,7 @@
                     cursor: pointer
 
             &.active
-                .chatHeaderLNBButton
+                .lnbButton
                     .lnbLine
                         &.lnbLine01
                             transition: all 0.5s
@@ -69,7 +117,7 @@
                             bottom: 9px
                             transform: rotateZ(-405deg)
 
-        .chatHeaderLeftButtons
+        .leftButtons
             flex: 0 1 auto
             display: flex
             justify-content: flex-start
@@ -114,5 +162,5 @@
 
 @media (max-width: 700px)
     .chatHeaderWrapper
-        .chatTitleWrapper
+        .titleWrapper
             width: 100%

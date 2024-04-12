@@ -32,7 +32,7 @@ import {
     noticeExitChatRoomRes, removeChatRoomRes,
     talkChatRoomRes, unfollowerRes, unfollowRes,
     updateChatRoomRes,
-    chatRoomsRes, followsRes, followersRes, startChatRes
+    chatRoomsRes, followsRes, followersRes, startChatRes, notificationRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -243,12 +243,16 @@ function* onMessage (socket: WebSocket) {
                     const packetData = Helpers.getDataBytes(event);
 
                     switch (packetFlag[0]) {
+                        case Defines.ResType.RES_CHECK_CONNECTION:
+                            yield call(checkConnectionRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_CHECK_AUTHENTICATION:
                             yield call(checkAuthenticationRes, packetData);
                             break;
 
-                        case Defines.ResType.RES_CHECK_CONNECTION:
-                            yield call(checkConnectionRes, packetData);
+                        case Defines.ResType.RES_NOTIFICATION:
+                            yield call(notificationRes, packetData);
                             break;
 
                         case Defines.ResType.RES_CONNECTED_USERS:

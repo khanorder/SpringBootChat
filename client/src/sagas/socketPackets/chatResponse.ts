@@ -33,6 +33,7 @@ import {push} from "connected-next-router";
 import isEmpty from "lodash/isEmpty";
 import {RootState} from "@/stores/reducers";
 import {setServerVersion} from "@/stores/reducers/appConfigs";
+import {addNotification} from "@/stores/reducers/notification";
 
 export function* checkConnectionRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -87,6 +88,26 @@ export function* checkAuthenticationRes(data: Uint8Array) {
 
         case Errors.CheckAuthentication.FAILED_TO_CREATE_USER:
             alert('유저 생성 실패.');
+            break;
+    }
+
+    return response;
+}
+
+export function* notificationRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - notificationRes`);
+
+    const response = Domains.NotificationRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - notificationRes: response is null.`);
+        return null;
+    }
+
+    switch (response.type) {
+        case Defines.NotificationType.FOLLOWER:
+            yield put(addNotification(new Domains.Notification(response.id, response.type, response.sendAt, response.isCheck, response.haveIcon, `'${response.message}' 님이 당신을 팔로우 했습니다.`, response.targetId)));
             break;
     }
 

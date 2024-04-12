@@ -3,6 +3,7 @@ package com.zangho.game.server.configuration;
 import com.zangho.game.server.repository.chat.ChatRepository;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
+import com.zangho.game.server.repository.user.NotificationRepository;
 import com.zangho.game.server.repository.user.RelationRepository;
 import com.zangho.game.server.repository.user.UserRepository;
 import com.zangho.game.server.service.*;
@@ -17,17 +18,19 @@ public class SpringConfiguration {
     private final ChatRepository chatRepository;
     private final UserRoomRepository userRoomRepository;
     private final RelationRepository relationRepository;
+    private final NotificationRepository notificationRepository;
 
-    public SpringConfiguration(UserRepository userRepository, ChatRoomRepository chatRoomRepository, ChatRepository chatRepository, UserRoomRepository userRoomRepository, RelationRepository relationRepository) {
+    public SpringConfiguration(UserRepository userRepository, ChatRoomRepository chatRoomRepository, ChatRepository chatRepository, UserRoomRepository userRoomRepository, RelationRepository relationRepository, NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.chatRepository = chatRepository;
         this.userRoomRepository = userRoomRepository;
         this.relationRepository = relationRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @Bean
-    public UserService userService () {
+    public UserService userService() {
         return new UserService(userRepository, chatRoomRepository, userRoomRepository, relationRepository);
     }
 
@@ -44,6 +47,11 @@ public class SpringConfiguration {
     @Bean
     public MessageService messageService() {
         return new MessageService(chatRoomService(), userRoomRepository);
+    }
+
+    @Bean
+    public NotificationService NotificationService() {
+        return new NotificationService(notificationRepository);
     }
 
 }

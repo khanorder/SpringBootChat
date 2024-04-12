@@ -20,12 +20,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final ChatRoomService chatRoomService;
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
+    private final NotificationService notificationService;
 
-    public WebSocketConfig (UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService) {
+    public WebSocketConfig (UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService) {
         this.userService = userService;
         this.chatRoomService = chatRoomService;
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
+        this.notificationService = notificationService;
     }
 
     @Bean
@@ -34,13 +36,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     @Bean
-    public ResHandler sendHandler() {
-        return new ResHandler(sessionHandler(), userService);
+    public ResHandler resHandler() {
+        return new ResHandler(sessionHandler(), userService, notificationService);
     }
 
     @Bean
-    public ReqHandler receiveHandler() {
-        return new ReqHandler(sessionHandler(), sendHandler(), userService, chatRoomService, lineNotifyService, messageService);
+    public ReqHandler reqHandler() {
+        return new ReqHandler(sessionHandler(), resHandler(), userService, chatRoomService, lineNotifyService, messageService);
     }
 
     @Override
@@ -50,7 +52,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public SocketHandler chatSocketHandler() {
-        return new SocketHandler(sessionHandler(), receiveHandler(), userService);
+        return new SocketHandler(sessionHandler(), reqHandler(), userService);
     }
 
     @Bean

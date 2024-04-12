@@ -3,6 +3,7 @@ import {routerReducer} from 'connected-next-router';
 import {HYDRATE} from 'next-redux-wrapper';
 import appConfigs from './appConfigs';
 import chat from './chat';
+import notification from './notification';
 import ui from './ui';
 import user from './user';
 import webSocket from './webSocket';
@@ -11,6 +12,7 @@ const reducers = combineReducers({
     router: routerReducer,
     appConfigs,
     chat,
+    notification,
     ui,
     user,
     webSocket

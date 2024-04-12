@@ -4,6 +4,7 @@ import {Defines} from "@/defines";
 
 interface UIState {
     activeTab: Defines.TabType;
+    isActiveNotification: boolean;
     isActiveLNB: boolean;
     isActiveCreateChatRoom: boolean;
     isActiveChatImageInput: boolean;
@@ -12,14 +13,15 @@ interface UIState {
 
 const initialState: UIState = {
     activeTab: Defines.TabType.FOLLOW,
+    isActiveNotification: false,
     isActiveLNB: false,
     isActiveCreateChatRoom: false,
     isActiveChatImageInput: false,
     isActiveChatImageDetail: false
 }
 
-const uiStateSlice = createSlice({
-    name: 'UIState',
+const uiSlice = createSlice({
+    name: 'UI',
     initialState,
     reducers: {
         setActiveTab: (state, action: PayloadAction<Defines.TabType>) => {
@@ -27,6 +29,9 @@ const uiStateSlice = createSlice({
         },
         setIsActiveLNB: (state, action: PayloadAction<boolean>) => {
             state.isActiveLNB = action.payload;
+        },
+        setIsActiveNotification: (state, action: PayloadAction<boolean>) => {
+            state.isActiveNotification = action.payload;
         },
         setIsActiveCreateChatRoom: (state, action: PayloadAction<boolean>) => {
             state.isActiveCreateChatRoom = action.payload;
@@ -36,6 +41,9 @@ const uiStateSlice = createSlice({
         },
         setIsActiveChatImageDetail: (state, action: PayloadAction<boolean>) => {
             state.isActiveChatImageDetail = action.payload;
+        },
+        toggleIsActiveNotification: (state) => {
+            state.isActiveNotification = !state.isActiveNotification;
         },
         toggleIsActiveLNB: (state) => {
             state.isActiveLNB = !state.isActiveLNB;
@@ -55,14 +63,16 @@ const uiStateSlice = createSlice({
 export type { UIState };
 export const {
     setActiveTab,
+    setIsActiveNotification,
     setIsActiveLNB,
     setIsActiveCreateChatRoom,
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
     toggleIsActiveLNB,
+    toggleIsActiveNotification,
     toggleIsActiveCreateChatRoom,
     toggleIsActiveChatImageInput,
     toggleIsActiveChatImageDetail
-} = uiStateSlice.actions;
+} = uiSlice.actions;
 
-export default uiStateSlice.reducer;
+export default uiSlice.reducer;

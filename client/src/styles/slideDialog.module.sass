@@ -14,11 +14,41 @@
         flex-direction: column
         border: 0
         border-right: 1px solid #d9d9d9
-        width: 80vw
+        width: 100vw
         height: 100vh
         background: #ffffff
         z-index: 1002
         box-shadow: 0 0 100vw #00000000
+
+        .dialogHeader
+            display: flex
+            border-bottom: 1px solid #d9d9d9
+            padding: 10px 10px 10px 15px
+            height: 46px
+
+            .dialogTitle
+                flex: 1 0 auto
+                font-size: 18px
+
+            .rightButtons
+                flex: 0 0 auto
+                display: flex
+                justify-content: right
+                align-items: center
+
+                .closeButton
+                    position: relative
+                    margin: 0
+                    border: 0
+                    padding: 0
+                    width: 30px
+                    height: 30px
+                    background: none
+
+                    .closeButtonIcon
+
+                    &:hover
+                        cursor: pointer
 
         .dialogContent
             position: relative
@@ -27,6 +57,7 @@
             align-items: flex-start
             flex: 1 1 auto
             overflow: hidden
+            padding: 0 10px
 
         .dialogButtons
             display: flex
@@ -63,3 +94,9 @@
             opacity: 1
 
 @media (max-width: 700px)
+
+@media (min-width: 640px)
+    .dialogWrapper
+
+        .dialog
+            max-width: 24rem

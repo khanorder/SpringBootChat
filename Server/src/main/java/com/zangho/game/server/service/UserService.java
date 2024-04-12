@@ -44,6 +44,10 @@ public class UserService {
         return connectedUsers.values().stream().filter(user -> !user.getSessionId().isEmpty() && user.getSessionId().equals(session.getId())).findAny();
     }
 
+    public Optional<User> getConnectedUserByUser(User user) {
+        return Optional.ofNullable(connectedUsers.get(user.getId()));
+    }
+
     public Optional<User> getConnectedUserByUserId(String userId) {
         return Optional.ofNullable(connectedUsers.get(userId));
     }
@@ -52,8 +56,17 @@ public class UserService {
         connectedUsers.remove(user.getId());
     }
 
+    public boolean isConnectedUser(User user) {
+        return isConnectedUser(user.getId());
+    }
+
+    public boolean isConnectedUser(UserInterface user) {
+        return isConnectedUser(user.getId());
+    }
+
     public boolean isConnectedUser(String userId) {
-        return connectedUsers.values().stream().anyMatch(user -> user.getId().equals(userId));
+        var optUser = Optional.ofNullable(connectedUsers.get(userId));
+        return optUser.isPresent();
     }
 
     public void addUserChatRoomInfo(User user, ChatRoom chatRoom) {

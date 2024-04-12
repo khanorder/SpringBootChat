@@ -6,6 +6,7 @@ import {Defines} from "@/defines";
 import dynamic from "next/dynamic";
 import isEmpty from "lodash/isEmpty";
 import ChatDisconnected from "@/components/chatContents/chatDisconnected";
+import NotificationDialog from "@/components/dialogs/notificationDialog";
 
 const LNBDialog = dynamic(() => import("@/components/dialogs/lnbDialog"), {ssr: false});
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
@@ -71,6 +72,7 @@ export default function Layout({children}: { children: ReactNode }) {
 
         return (
             <>
+                <NotificationDialog/>
                 <LNBDialog/>
                 <ChatHeader/>
                 {contents}

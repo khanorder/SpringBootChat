@@ -6,7 +6,7 @@ import styles from "@/styles/chatHeader.module.sass";
 import Image from "next/image";
 import ArrowLeftIcon from "public/images/arrow-left.svg";
 import {CommonAPI} from "@/apis/commonAPI";
-import {toggleIsActiveLNB} from "@/stores/reducers/ui";
+import {toggleIsActiveLNB, toggleIsActiveNotification} from "@/stores/reducers/ui";
 import {Defines} from "@/defines";
 import {useRouter} from "next/router";
 
@@ -14,6 +14,7 @@ export default function ChatHeader() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
+    const notification = useAppSelector(state => state.notification);
     const ui = useAppSelector(state => state.ui);
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
@@ -85,7 +86,7 @@ export default function ChatHeader() {
             return <></>;
 
         return (
-            <div className={styles.chatHeaderLeftButtons}>
+            <div className={styles.leftButtons}>
                 <button className={styles.chatRoomExit} onClick={exitChatRoom} title='메인화면'><Image className={styles.chatRoomExitIcon} src={ArrowLeftIcon} alt='메인화면' width={18} height={18} /></button>
             </div>
         );
@@ -95,14 +96,39 @@ export default function ChatHeader() {
         dispatch(toggleIsActiveLNB());
     }, [dispatch]);
 
+    const toggleNotification = useCallback(() => {
+        dispatch(toggleIsActiveNotification());
+    }, [dispatch]);
+
+    const notificationButton = useCallback(() => {
+        let notificationWrapperClass = styles.notificationWrapper;
+        if (ui.isActiveNotification)
+            notificationWrapperClass += ' ' + styles.active;
+
+        const toCheck = notification.notifications.filter(_ => !_.isCheck);
+        if (0 < toCheck.length)
+            notificationWrapperClass += ' ' + styles.toCheck;
+
+        return (
+            <div className={notificationWrapperClass}>
+                <div className={styles.notificationButtonWrapper}>
+                    <button className={styles.notificationButton} onClick={toggleNotification}></button>
+                    <div className={styles.toCheckCount}>
+                        <span className={styles.toCheckCountText}>{toCheck.length}</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }, [ui, notification, toggleNotification]);
+
     const lnb = useCallback(() => {
-        let lnbButtonWrapperClass = styles.chatHeaderLNBButtonWrapper;
+        let lnbButtonWrapperClass = styles.lnbButtonWrapper;
         if (ui.isActiveLNB)
             lnbButtonWrapperClass += ' ' + styles.active;
 
         return (
             <div className={lnbButtonWrapperClass}>
-                <button className={styles.chatHeaderLNBButton} onClick={toggleLNB}>
+                <button className={styles.lnbButton} onClick={toggleLNB}>
                     <div className={`${styles.lnbLine} ${styles.lnbLine01}`}></div>
                     <div className={`${styles.lnbLine} ${styles.lnbLine02}`}></div>
                     <div className={`${styles.lnbLine} ${styles.lnbLine03}`}></div>
@@ -113,10 +139,11 @@ export default function ChatHeader() {
 
     return (
         <div className={styles.chatHeaderWrapper}>
-            <div className={styles.chatTitleWrapper}>
+            <div className={styles.titleWrapper}>
                 {leftButtons()}
                 {title()}
-                { isEmpty(chat.currentChatRoomId) ? <></> : lnb()}
+                {notificationButton()}
+                {isEmpty(chat.currentChatRoomId) ? <></> : lnb()}
             </div>
         </div>
     );

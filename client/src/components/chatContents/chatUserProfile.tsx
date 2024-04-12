@@ -1,5 +1,5 @@
 import styles from "@/styles/chatUserProfile.module.sass";
-import {useEffect, useRef} from "react";
+import {useCallback, useEffect, useRef} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import Image from "next/image";
 import UserIcon from "public/images/user-circle.svg";
@@ -25,16 +25,26 @@ export default function ChatUserProfile({ userData }: ChatUserProfileProps) {
 
     return (
         <div className={styles.userProfileWrapper}>
-            <div className={styles.userThumb}>
+
+            <div className={styles.userThumbWrapper}>
+                <div className={styles.userThumb}>
+                    {
+                        userData.haveProfile
+                            ?
+                            <img className={styles.userThumbImage}
+                                 src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${userData.userId}`}
+                                 alt='사용자 프로필'/>
+                            :
+                            <Image className={styles.userThumbIcon} src={UserIcon} alt='사용자 프로필' fill={true}
+                                   priority={true}/>
+                    }
+                </div>
                 {
-                    userData.haveProfile
+                    userData.online
                         ?
-                        <img className={styles.userThumbImage}
-                             src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${userData.userId}`}
-                             alt='사용자 프로필'/>
+                        <div className={styles.online}></div>
                         :
-                        <Image className={styles.userThumbIcon} src={UserIcon} alt='사용자 프로필' fill={true}
-                               priority={true}/>
+                        <></>
                 }
             </div>
             <div className={styles.userInfo}>

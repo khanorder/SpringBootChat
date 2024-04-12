@@ -64,7 +64,7 @@ export default function ChatGNB() {
         return (
             <div className={wrapperClass}>
                 <button className={`${styles.button}`} onClick={e => onChangeTab(tab)}>
-                    <Image className={styles.buttonIcon} src={tabIcon} alt={tabName} width={38} height={38}/>
+                    <Image className={styles.buttonIcon} src={tabIcon} alt={tabName} width={28} height={28}/>
                     <span className={styles.buttonLabel}>{tabName}</span>
                 </button>
             </div>

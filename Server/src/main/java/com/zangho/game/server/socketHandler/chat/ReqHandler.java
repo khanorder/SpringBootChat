@@ -221,6 +221,7 @@ public class ReqHandler {
 
             resHandler.resFollow(session, targetUser.get());
             resHandler.resFollower(targetUser.get(), connectedUser.get());
+            resHandler.resNotificationFollower(connectedUser.get(), targetUser.get());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

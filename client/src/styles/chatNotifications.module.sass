@@ -1,0 +1,54 @@
+.chatNotificationsWrapper
+    width: 100%
+
+    .chatNotifications
+        list-style: none
+
+        .none
+            padding-top: 20px
+            text-align: center
+
+        .notification
+            display: flex
+            justify-content: flex-start
+            align-items: center
+            border-top: 1px solid #d9d9d9
+            padding-top: 10px
+            margin-top: 10px
+
+            .iconWrapper
+                flex: 0 0 auto
+                width: 40px
+                height: 40px
+
+                .iconThumb
+                    flex: 0 0 auto
+                    position: relative
+                    overflow: hidden
+                    display: flex
+                    justify-content: center
+                    align-items: center
+                    border-radius: 20px
+                    width: 40px
+                    height: 40px
+                    background: #dfdfdf
+
+                    .icon
+                        padding: 5px
+                        width: 30px
+                        height: 30px
+
+                    .iconImage
+                        max-width: 40px
+                        max-height: 40px
+
+            .infoWrapper
+                flex:  1 0 auto
+                margin-left: 10px
+
+                .message
+                    text-align: left
+                    font-size: 14px
+
+            &:first-child
+                border-top: 0
