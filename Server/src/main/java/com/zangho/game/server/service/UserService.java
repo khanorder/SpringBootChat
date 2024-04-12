@@ -90,7 +90,8 @@ public class UserService {
         var tempUser = new User("user-" + (count + 1));
         var result = userRepository.save(tempUser);
         result.setSessionId(session.getId());
-        return Optional.ofNullable(result);
+        connectedUsers.computeIfAbsent(result.getId(), key -> result);
+        return Optional.of(result);
     }
 
     public Optional<User> findUserWithChatRooms(String userId) throws Exception {

@@ -5,6 +5,7 @@ import Image from "next/image";
 import UserIcon from "../../../public/images/user-circle.svg";
 import {setUserMessage, setUserName} from "@/stores/reducers/user";
 import {saveUserMessageReq, saveUserNameReq} from "@/stores/reducers/webSocket";
+import isEmpty from "lodash/isEmpty";
 
 export default function ChatEditProfile() {
     const firstRender = useRef(true);
@@ -102,7 +103,7 @@ export default function ChatEditProfile() {
                 </div>
                 <div className={styles.separator}></div>
                 <div className={styles.userMessage}>
-                    <div className={styles.currentUserMessage}>{user.message}</div>
+                    <div className={`${styles.currentUserMessage}${isEmpty(user.message) ? ` ${styles.none}` : ""}`}>{isEmpty(user.message) ? "내 상태를 공유해보세요." : user.message}</div>
                     <div className={styles.userMessageInputWrapper}>
                         <input className={styles.userMessageInput} value={newUserMessage}
                                onKeyUp={e => onKeyUpUserMessage(e)}

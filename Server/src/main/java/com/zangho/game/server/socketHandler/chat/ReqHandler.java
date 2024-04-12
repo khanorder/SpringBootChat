@@ -112,10 +112,20 @@ public class ReqHandler {
                 return;
             }
 
+            if (clientVersionMain < sessionClientVersionMain) {
+                resHandler.resCheckConnection(session, ErrorCheckConnection.NONE);
+                return;
+            }
+
             var sessionClientVersionUpdate = packet[2];
 
             if (clientVersionUpdate > sessionClientVersionUpdate) {
                 resHandler.resCheckConnection(session, ErrorCheckConnection.UPDATE_REQUIRED);
+                return;
+            }
+
+            if (clientVersionUpdate < sessionClientVersionUpdate) {
+                resHandler.resCheckConnection(session, ErrorCheckConnection.NONE);
                 return;
             }
 

@@ -5,6 +5,7 @@ import UserIcon from "public/images/user-circle.svg";
 import {Domains} from "@/domains";
 import styles from "@/styles/chatMyProfile.module.sass";
 import {setIsActiveProfile} from "@/stores/reducers/ui";
+import isEmpty from "lodash/isEmpty";
 
 export default function ChatMyProfile() {
     const firstRender = useRef(true);
@@ -40,7 +41,7 @@ export default function ChatMyProfile() {
             </div>
             <div className={styles.userInfo}>
                 <div className={styles.userName}>{user.name}</div>
-                <div className={styles.userMessage}>{user.message}</div>
+                <div className={`${styles.userMessage}${isEmpty(user.message) ? ` ${styles.none}` : ""}`}>{isEmpty(user.message) ? "내 상태를 공유해보세요." : user.message}</div>
             </div>
         </div>
     )

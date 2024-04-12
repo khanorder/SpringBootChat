@@ -130,6 +130,10 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onExitChatRoom(session, connectedUser, packet);
                     break;
 
+                case REQ_TALK_CHAT_ROOM:
+                    reqHandler.onTalkChatRoom(session, connectedUser, packet);
+                    break;
+
                 default:
                     break;
             }
