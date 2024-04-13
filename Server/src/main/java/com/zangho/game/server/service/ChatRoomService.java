@@ -5,6 +5,7 @@ import com.zangho.game.server.domain.chat.*;
 import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.error.ErrorEnterChatRoom;
 import com.zangho.game.server.error.ErrorExitChatRoom;
+import com.zangho.game.server.error.ErrorHistoryChatRoom;
 import com.zangho.game.server.repository.chat.ChatRepository;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
@@ -173,10 +174,7 @@ public class ChatRoomService {
     }
 
     public Pair<ErrorEnterChatRoom, Optional<ChatRoom>> enterRoom(String roomId, User user) throws Exception {
-        var existsRoom = findPrivateRoomById(roomId);
-
-        if (existsRoom.isEmpty())
-            existsRoom = findPublicRoomById(roomId);
+        var existsRoom = findRoomById(roomId);
 
         if (existsRoom.isEmpty())
             return Pair.of(ErrorEnterChatRoom.NO_EXISTS_ROOM, Optional.empty());
@@ -195,11 +193,20 @@ public class ChatRoomService {
         return Pair.of(ErrorEnterChatRoom.NONE, existsRoom);
     }
 
-    public ErrorExitChatRoom exitRoom(ChatRoom chatRoom, User user) throws Exception {
-        var existsRoom = findPrivateRoomById(chatRoom.getRoomId());
+    public Pair<ErrorHistoryChatRoom, Optional<ChatRoom>> getRoomWithHistory(String roomId, User user) throws Exception {
+        var existsRoom = findRoomById(roomId);
 
         if (existsRoom.isEmpty())
-            existsRoom = findPublicRoomById(chatRoom.getRoomId());
+            return Pair.of(ErrorHistoryChatRoom.NO_EXISTS_ROOM, Optional.empty());
+
+        if (!isAvailablePrivateRoom(existsRoom.get(), user))
+            return Pair.of(ErrorHistoryChatRoom.NOT_AVAILABLE_ROOM, Optional.empty());
+
+        return Pair.of(ErrorHistoryChatRoom.NONE, existsRoom);
+    }
+
+    public ErrorExitChatRoom exitRoom(ChatRoom chatRoom, User user) throws Exception {
+        var existsRoom = findRoomById(chatRoom.getRoomId());
 
         if (existsRoom.isEmpty())
             return ErrorExitChatRoom.NO_EXISTS_ROOM;
@@ -235,14 +242,11 @@ public class ChatRoomService {
         }
     }
 
-    public void addChatToRoom(Chat chat) throws Exception {
+    public void addChatToRoom(Chat chat) {
         if (chat.getRoomId().isEmpty())
             return;
 
-        var optChatRoom = findPrivateRoomById(chat.getRoomId());
-
-        if (optChatRoom.isEmpty())
-            optChatRoom = findPublicRoomById(chat.getRoomId());
+        var optChatRoom = findRoomById(chat.getRoomId());
 
         if (optChatRoom.isEmpty())
             return;

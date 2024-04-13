@@ -23,21 +23,18 @@ export default function ChatUserProfile({ userData }: ChatUserProfileProps) {
     }, [firstRender]);
     //#endregion
 
+    const userProfileImage = useCallback(() => {
+        return (
+            <img className={styles.userThumbImage} src={userData.profileImageUrl} alt='내 프로필'/>
+        );
+    }, [userData]);
+
     return (
         <div className={styles.userProfileWrapper}>
 
             <div className={styles.userThumbWrapper}>
                 <div className={styles.userThumb}>
-                    {
-                        userData.haveProfile
-                            ?
-                            <img className={styles.userThumbImage}
-                                 src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${userData.userId}`}
-                                 alt='사용자 프로필'/>
-                            :
-                            <Image className={styles.userThumbIcon} src={UserIcon} alt='사용자 프로필' fill={true}
-                                   priority={true}/>
-                    }
+                    {userProfileImage()}
                 </div>
                 {
                     userData.online

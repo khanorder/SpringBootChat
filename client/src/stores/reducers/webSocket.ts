@@ -89,9 +89,13 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - saveUserMessageReq`);
         },
-        saveUserProfileReq: (state) => {
+        saveUserProfileReq: (state, action: PayloadAction<Domains.SaveUserProfileReq>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - saveUserProfileReq`);
+        },
+        removeUserProfileReq: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - removeUserProfileReq`);
         },
         checkNotificationReq: (state, action: PayloadAction<Domains.Notification>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -99,7 +103,11 @@ const webSocketSlice = createSlice({
         },
         removeNotificationReq: (state, action: PayloadAction<Domains.Notification>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - checkNotificationReq`);
+                console.log(`reducer - removeNotificationReq`);
+        },
+        historyChatRoomReq: (state, action: PayloadAction<Domains.ChatRoom>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - historyChatRoomReq`);
         },
     }
 });
@@ -123,8 +131,10 @@ export const {
     saveUserNameReq,
     saveUserMessageReq,
     saveUserProfileReq,
+    removeUserProfileReq,
     checkNotificationReq,
-    removeNotificationReq
+    removeNotificationReq,
+    historyChatRoomReq,
 } = webSocketSlice.actions;
 
 export default webSocketSlice.reducer;

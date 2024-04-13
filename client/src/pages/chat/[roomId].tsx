@@ -38,7 +38,6 @@ function ChatRoom({isProd, roomId, roomIdBase62, serverHost}: ChatRoomProps) {
     const chatImageInputRef = createRef<HTMLInputElement>();
     const [chatLargeImage, setChatLargeImage] = useState<string|ArrayBuffer|null>(null);
     const [chatSmallImage, setChatSmallImage] = useState<string|ArrayBuffer|null>(null);
-    const [chatDetailImageId, setChatDetailImageId] = useState<string>('');
 
     //#region OnRender
     useEffect(() => {
@@ -96,7 +95,7 @@ function ChatRoom({isProd, roomId, roomIdBase62, serverHost}: ChatRoomProps) {
 
         return (
             <>
-                <ChatContents serverHost={serverHost} setChatDetailImageId={setChatDetailImageId} />
+                <ChatContents />
                 <ChatInput
                     chatImageInputRef={chatImageInputRef}
                     chatMessageInputRef={chatMessageInputRef}
@@ -111,10 +110,7 @@ function ChatRoom({isProd, roomId, roomIdBase62, serverHost}: ChatRoomProps) {
 
     return (
         <>
-            <ChatImageDetailDialog
-                chatDetailImageId={chatDetailImageId}
-                setChatDetailImageId={setChatDetailImageId}
-                serverHost={serverHost} />
+            <ChatImageDetailDialog />
             <ChatImageInputDialog
                 chatImageInputRef={chatImageInputRef}
                 setChatSmallImage={setChatSmallImage}

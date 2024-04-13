@@ -4,6 +4,7 @@ import {Defines} from "@/defines";
 import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
 import AuthStateType = Defines.AuthStateType;
+import defaultProfileImageUrl = Domains.defaultProfileImageUrl;
 
 interface UserState {
     id: string;
@@ -11,7 +12,9 @@ interface UserState {
     message: string;
     haveProfile: boolean;
     latestActive: number;
+    profileImageUrl: string;
     authState: Defines.AuthStateType;
+    others: Domains.User[];
     connectedUsers: Domains.User[];
     follows: Domains.User[];
     followers: Domains.User[];
@@ -23,7 +26,9 @@ const initialState: UserState = {
     message: '',
     haveProfile: false,
     latestActive: 0,
+    profileImageUrl: defaultProfileImageUrl,
     authState: AuthStateType.NONE,
+    others: [],
     connectedUsers: [],
     follows: [],
     followers: []
@@ -75,17 +80,66 @@ const userSlice = createSlice({
 
             state.latestActive = 0 > action.payload ? 0 : action.payload;
         },
+        setProfileImageUrl: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setHaveProfile: ${action.payload}`);
+
+            state.haveProfile = !isEmpty(action.payload);
+            state.profileImageUrl = isEmpty(action.payload) ? defaultProfileImageUrl : action.payload;
+        },
         setAuthState: (state, action: PayloadAction<Defines.AuthStateType>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setAuthState: ${JSON.stringify(Defines.AuthStateType[action.payload])}`);
 
             state.authState = action.payload;
         },
+        setOthers: (state, action: PayloadAction<Domains.User[]>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setOthers: ${JSON.stringify(action.payload)}`);
+
+            state.others = action.payload.filter(_ => _.userId != state.id);
+        },
+        addOthers: (state, action: PayloadAction<Domains.User>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - addOthers: ${JSON.stringify(action.payload)}`);
+
+            if (!action || !action.payload || isEmpty(action.payload.userId))
+                return;
+
+            if (null != state.others.find(_ => _.userId == action.payload.userId))
+                return;
+
+            if (action.payload.userId == state.id)
+                return;
+
+            state.others.push(action.payload);
+            state.others = deepmerge([], state.others);
+        },
+        removeOthers: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - removeOthers: ${action.payload}`);
+
+            if (!action || isEmpty(action.payload))
+                return;
+
+            if (null == state.others.find(_ => _.userId == action.payload))
+                return;
+
+            state.others = state.others.filter(_ => _.userId != action.payload);
+            state.others = deepmerge([], state.others);
+        },
         setConnectedUsers: (state, action: PayloadAction<Domains.User[]>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setConnectedUsers: ${JSON.stringify(action.payload)}`);
 
             state.connectedUsers = action.payload.filter(_ => _.userId != state.id);
+            for (let i = 0; i < state.connectedUsers.length; i++) {
+                const connected = state.connectedUsers[i];
+                const other = state.others.find(_ => _.userId == connected.userId);
+                if (null == other)
+                    state.others.push(connected);
+            }
+            state.others = deepmerge([], state.others);
         },
         addConnectedUser: (state, action: PayloadAction<Domains.User>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -102,6 +156,15 @@ const userSlice = createSlice({
 
             state.connectedUsers.push(action.payload);
             state.connectedUsers = deepmerge([], state.connectedUsers);
+
+            const other = state.others.find(_ => _.userId == action.payload.userId);
+            if (null != other) {
+                other.online = true;
+                state.others = deepmerge([], state.others);
+            } else {
+                state.others.push(action.payload);
+                state.others = deepmerge([], state.others);
+            }
 
             const follow = state.follows.find(_ => _.userId == action.payload.userId);
             if (null != follow) {
@@ -128,6 +191,12 @@ const userSlice = createSlice({
             state.connectedUsers = state.connectedUsers.filter(_ => _.userId != action.payload);
             state.connectedUsers = deepmerge([], state.connectedUsers);
 
+            const other = state.others.find(_ => _.userId == action.payload);
+            if (null != other) {
+                other.online = false;
+                state.others = deepmerge([], state.others);
+            }
+
             const follow = state.follows.find(_ => _.userId == action.payload);
             if (null != follow) {
                 follow.online = false;
@@ -145,6 +214,14 @@ const userSlice = createSlice({
                 console.log(`reducer - setFollows: ${JSON.stringify(action.payload)}`);
 
             state.follows = action.payload.filter(_ => _.userId != state.id);
+
+            for (let i = 0; i < state.follows.length; i++) {
+                const follow = state.follows[i];
+                const other = state.others.find(_ => _.userId == follow.userId);
+                if (null == other)
+                    state.others.push(follow);
+            }
+            state.others = deepmerge([], state.others);
         },
         addFollow: (state, action: PayloadAction<Domains.User>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -161,6 +238,12 @@ const userSlice = createSlice({
 
             state.follows.push(action.payload);
             state.follows = deepmerge([], state.follows);
+
+            const other = state.others.find(_ => _.userId == action.payload.userId);
+            if (null == other) {
+                state.others.push(action.payload);
+                state.others = deepmerge([], state.others);
+            }
         },
         removeFollow: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -180,6 +263,14 @@ const userSlice = createSlice({
                 console.log(`reducer - setFollowers: ${JSON.stringify(action.payload)}`);
 
             state.followers = action.payload.filter(_ => _.userId != state.id);
+
+            for (let i = 0; i < state.followers.length; i++) {
+                const follower = state.followers[i];
+                const other = state.others.find(_ => _.userId == follower.userId);
+                if (null == other)
+                    state.others.push(follower);
+            }
+            state.others = deepmerge([], state.others);
         },
         addFollower: (state, action: PayloadAction<Domains.User>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -196,6 +287,12 @@ const userSlice = createSlice({
 
             state.followers.push(action.payload);
             state.followers = deepmerge([], state.followers);
+
+            const other = state.others.find(_ => _.userId == action.payload.userId);
+            if (null == other) {
+                state.others.push(action.payload);
+                state.others = deepmerge([], state.others);
+            }
         },
         removeFollower: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -219,7 +316,7 @@ const userSlice = createSlice({
                 return;
             }
 
-            if ('name' != action.payload.dataType && 'message' != action.payload.dataType) {
+            if ('name' != action.payload.dataType && 'message' != action.payload.dataType && 'profile' != action.payload.dataType) {
                 console.log(`reducer - updateUsersData: not suitable dataType.`);
                 return;
             }
@@ -234,12 +331,18 @@ const userSlice = createSlice({
                 return;
             }
 
+            const other = state.others.find(_ => _.userId == action.payload.userId);
             const connectedUser = state.connectedUsers.find(_ => _.userId == action.payload.userId);
             const follow = state.follows.find(_ => _.userId == action.payload.userId);
             const follower = state.followers.find(_ => _.userId == action.payload.userId);
 
             switch (action.payload.dataType) {
                 case "name":
+                    if (null != other) {
+                        other.userName = action.payload.userData;
+                        state.others = deepmerge([], state.others);
+                    }
+
                     if (null != connectedUser) {
                         connectedUser.userName = action.payload.userData;
                         state.connectedUsers = deepmerge([], state.connectedUsers);
@@ -257,6 +360,11 @@ const userSlice = createSlice({
                     break;
 
                 case "message":
+                    if (null != other) {
+                        other.message = action.payload.userData;
+                        state.others = deepmerge([], state.others);
+                    }
+
                     if (null != connectedUser) {
                         connectedUser.message = action.payload.userData;
                         state.connectedUsers = deepmerge([], state.connectedUsers);
@@ -272,13 +380,59 @@ const userSlice = createSlice({
                         state.followers = deepmerge([], state.followers);
                     }
                     break;
+
+                case "profile":
+                    if (null != other) {
+                        if (isEmpty(action.payload.userData)) {
+                            other.haveProfile = false;
+                            other.profileImageUrl = defaultProfileImageUrl;
+                        } else {
+                            other.haveProfile = true;
+                            other.profileImageUrl = action.payload.userData;
+                        }
+                        state.others = deepmerge([], state.others);
+                    }
+
+                    if (null != connectedUser) {
+                        if (isEmpty(action.payload.userData)) {
+                            connectedUser.haveProfile = false;
+                            connectedUser.profileImageUrl = defaultProfileImageUrl;
+                        } else {
+                            connectedUser.haveProfile = true;
+                            connectedUser.profileImageUrl = action.payload.userData;
+                        }
+                        state.connectedUsers = deepmerge([], state.connectedUsers);
+                    }
+
+                    if (null != follow) {
+                        if (isEmpty(action.payload.userData)) {
+                            follow.haveProfile = false;
+                            follow.profileImageUrl = defaultProfileImageUrl;
+                        } else {
+                            follow.haveProfile = true;
+                            follow.profileImageUrl = action.payload.userData;
+                        }
+                        state.follows = deepmerge([], state.follows);
+                    }
+
+                    if (null != follower) {
+                        if (isEmpty(action.payload.userData)) {
+                            follower.haveProfile = false;
+                            follower.profileImageUrl = defaultProfileImageUrl;
+                        } else {
+                            follower.haveProfile = true;
+                            follower.profileImageUrl = action.payload.userData;
+                        }
+                        state.followers = deepmerge([], state.followers);
+                    }
+                    break;
             }
         },
     }
 });
 
 export interface UpdateUsersDataProps {
-    dataType: 'name'|'message'
+    dataType: 'name'|'message'|'profile'
     userId: string;
     userData: string;
 }
@@ -290,6 +444,7 @@ export const {
     setUserMessage,
     setHaveProfile,
     setLatestActive,
+    setProfileImageUrl,
     setAuthState,
     setConnectedUsers,
     addConnectedUser,

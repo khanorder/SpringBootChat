@@ -16,6 +16,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class ReqHandler {
 
@@ -439,19 +440,66 @@ public class ReqHandler {
 
     public void onChangeUserProfile(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
-            var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
-            var userId = Helpers.getUUIDFromByteArray(bytesUserId);
-            if (connectedUser.isEmpty() || !connectedUser.get().getId().equals(userId))
+            if (connectedUser.isEmpty()) {
+                resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.AUTH_REQUIRED);
                 return;
+            }
 
-            var bytesUserMessage = Arrays.copyOfRange(packet, 17, packet.length);
-            var newUserMessage = new String(bytesUserMessage);
+            var offsetBytesSmallImageLength = 5;
+            var offsetBytesLargeImageLength = offsetBytesSmallImageLength + 4;
+            var bytesSmallImageLength = Arrays.copyOfRange(packet, 1, offsetBytesSmallImageLength);
+            var bytesLargeImageLength = Arrays.copyOfRange(packet, offsetBytesSmallImageLength, offsetBytesLargeImageLength);
+            var smallImageLength = Helpers.getIntFromByteArray(bytesSmallImageLength);
+            var largeImageLength = Helpers.getIntFromByteArray(bytesLargeImageLength);
+            var offsetBytesSmallImage = offsetBytesLargeImageLength + smallImageLength;
+            var bytesSmallImage = Arrays.copyOfRange(packet, offsetBytesLargeImageLength, offsetBytesSmallImage);
+            var bytesLargeImage = Arrays.copyOfRange(packet, offsetBytesSmallImage, offsetBytesSmallImage + largeImageLength);
 
-            var oldUserName =  connectedUser.get().getName();
-            connectedUser.get().setName(newUserMessage);
+            var smallData = new String(bytesSmallImage);
+            var largeData = new String(bytesLargeImage);
+
+            var pattern = Pattern.compile("(?<=^data:)[^;]+");
+            var matcher = pattern.matcher(smallData);
+            if (!matcher.find()) {
+                resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.NOT_SUITABLE_DATA);
+                return;
+            }
+
+            var mime = matcher.group();
+            connectedUser.get().setProfileMime(mime);
+            connectedUser.get().setProfileThumb(smallData.replaceAll("^(data:)[^,]+(base64,)", ""));
+            connectedUser.get().setProfileImage(largeData.replaceAll("^(data:)[^,]+(base64,)", ""));
             var result = userService.updateUser(connectedUser.get());
-            if (result)
-                resHandler.noticeUserMessageChanged(session, connectedUser.get(), newUserMessage);
+            if (!result) {
+                resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.FAILED_TO_CHANGE);
+                return;
+            }
+
+            resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.NONE);
+            resHandler.noticeUserProfileChanged(session, connectedUser.get());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void onRemoveUserProfile(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        try {
+            if (connectedUser.isEmpty()) {
+                resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.AUTH_REQUIRED);
+                return;
+            }
+
+            connectedUser.get().setProfileMime("");
+            connectedUser.get().setProfileThumb("");
+            connectedUser.get().setProfileImage("");
+            var result = userService.updateUser(connectedUser.get());
+            if (!result) {
+                resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.FAILED_TO_REMOVE);
+                return;
+            }
+
+            resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.NONE);
+            resHandler.noticeUserProfileRemoved(session, connectedUser.get());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -544,10 +592,7 @@ public class ReqHandler {
                 return;
             }
 
-            var existsRoom = chatRoomService.findPrivateRoomById(roomId);
-
-            if (existsRoom.isEmpty())
-                existsRoom = chatRoomService.findPublicRoomById(roomId);
+            var existsRoom = chatRoomService.findRoomById(roomId);
 
             if (existsRoom.isEmpty()) {
                 resHandler.resExitChatRoom(session, ErrorExitChatRoom.NO_EXISTS_ROOM);
@@ -594,9 +639,7 @@ public class ReqHandler {
 
             var bytesRoomId = Arrays.copyOfRange(packet, 18, 34);
             var roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-            var existsRoom = chatRoomService.findPrivateRoomById(roomId);
-            if (existsRoom.isEmpty())
-                existsRoom = chatRoomService.findPublicRoomById(roomId);
+            var existsRoom = chatRoomService.findRoomById(roomId);
 
             if (existsRoom.isEmpty()) {
                 resHandler.resTalkChatRoom(session, ErrorTalkChatRoom.NO_EXISTS_ROOM);
@@ -650,6 +693,27 @@ public class ReqHandler {
             resHandler.noticeTalkChatRoom(existsRoom.get(), talkPacket);
             messageService.notifyBrowserUserInRoom(existsRoom.get(), userName, chatMessage);
             chatRoomService.addChatToRoom(chat);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void onHistoryChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        try {
+            if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
+                resHandler.resEnterChatRoom(session, ErrorEnterChatRoom.AUTH_REQUIRED);
+                return;
+            }
+
+            var bytesRoomId = Arrays.copyOfRange(packet, 1, 17);
+            var roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
+
+            var result = chatRoomService.getRoomWithHistory(roomId, connectedUser.get());
+            if (!result.getLeft().equals(ErrorHistoryChatRoom.NONE) || result.getRight().isEmpty()) {
+                return;
+            }
+
+            resHandler.resHistoryChatRoom(session, result.getRight().get());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

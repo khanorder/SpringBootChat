@@ -53,7 +53,7 @@ export default function ProfileDialog() {
                         <ChatEditProfile/>
                     </div>
                     <div className={styles.dialogButtons}>
-                        <button className={`${styles.dialogButton} ${stylesCommon.button}`} onClick={hideDialog} title="닫기">닫기</button>
+                        <button className={`${styles.dialogButton} ${stylesCommon.button}`} onClick={hideDialog} title="확인">확인</button>
                     </div>
                 </div>
                 <div className={styles.dialogPane} onClick={hideDialog}></div>

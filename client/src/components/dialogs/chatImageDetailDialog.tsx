@@ -5,15 +5,12 @@ import Image from "next/image";
 import CloseIcon from "../../../public/images/close-circle.svg";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
+import {setDetailImageId} from "@/stores/reducers/chat";
 
-export interface ChatImageDetailDialogProps {
-    serverHost: string;
-    chatDetailImageId: string;
-    setChatDetailImageId: Dispatch<SetStateAction<string>>;
-}
-
-export default function ChatImageDetailDialog ({ serverHost, chatDetailImageId, setChatDetailImageId }: ChatImageDetailDialogProps) {
+export default function ChatImageDetailDialog () {
     const firstRender = useRef(true);
+    const appConfigs = useAppSelector(state => state.appConfigs);
+    const chat = useAppSelector(state => state.chat);
     const ui = useAppSelector(state => state.ui);
     const dispatch = useAppDispatch();
     const [dialogWrapperClass, setDialogWrapperClass] = useState<string>(styles.dialogWrapper);
@@ -39,8 +36,8 @@ export default function ChatImageDetailDialog ({ serverHost, chatDetailImageId, 
 
     const hideDialog = useCallback(() => {
         dispatch(setIsActiveChatImageDetail(false));
-        setChatDetailImageId('');
-    }, [setChatDetailImageId, dispatch]);
+        dispatch(setDetailImageId(''));
+    }, [dispatch]);
 
     const dialog = useCallback(() => {
         return (
@@ -50,10 +47,10 @@ export default function ChatImageDetailDialog ({ serverHost, chatDetailImageId, 
                     <div className={styles.dialogContent}>
                         <div className={styles.chatImageDetailEmpty} onClick={hideDialog}>&nbsp;</div>
                         {
-                            chatDetailImageId
+                            chat.chatDetailImageId
                                 ?
                                 <img className={styles.chatImageDetail}
-                                     src={(chatDetailImageId ? `${serverHost}/api/chatImage/${chatDetailImageId}` : Picture)}
+                                     src={(chat.chatDetailImageId ? `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/chatImage/${chat.chatDetailImageId}` : Picture)}
                                      alt='상세 이미지'/>
                                 :
                                 <></>
@@ -69,7 +66,7 @@ export default function ChatImageDetailDialog ({ serverHost, chatDetailImageId, 
                 <div className={styles.dialogPane} onClick={hideDialog}></div>
             </div>
         );
-    }, [chatDetailImageId, dialogWrapperClass, hideDialog, serverHost]);
+    }, [appConfigs, chat, dialogWrapperClass, hideDialog]);
 
     return dialog();
 }

@@ -6,11 +6,13 @@ import isEmpty from "lodash/isEmpty";
 interface ChatState {
     currentChatRoomId: string;
     chatRooms: Domains.ChatRoom[];
+    chatDetailImageId: string;
 }
 
 const initialState: ChatState = {
     currentChatRoomId: "",
-    chatRooms: []
+    chatRooms: [],
+    chatDetailImageId: ""
 }
 
 const chatSlice = createSlice({
@@ -112,6 +114,12 @@ const chatSlice = createSlice({
             chatRoom.chatDatas = action.payload.chatDatas;
             state.chatRooms = deepmerge([], state.chatRooms);
         },
+        setDetailImageId: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setDetailImageId: ${action.payload}`);
+
+            state.chatDetailImageId = action.payload;
+        },
     }
 });
 
@@ -150,6 +158,7 @@ export const {
     setChatRoomUsers,
     addChatData,
     setChatDatas,
+    setDetailImageId,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

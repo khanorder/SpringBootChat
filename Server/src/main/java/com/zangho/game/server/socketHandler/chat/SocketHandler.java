@@ -115,7 +115,11 @@ public class SocketHandler extends TextWebSocketHandler {
                     break;
 
                 case REQ_CHANGE_USER_PROFILE:
-                    reqHandler.onChangeUserName(session, connectedUser, packet);
+                    reqHandler.onChangeUserProfile(session, connectedUser, packet);
+                    break;
+
+                case REQ_REMOVE_USER_PROFILE:
+                    reqHandler.onRemoveUserProfile(session, connectedUser, packet);
                     break;
 
                 case REQ_CREATE_CHAT_ROOM:
@@ -132,6 +136,10 @@ public class SocketHandler extends TextWebSocketHandler {
 
                 case REQ_TALK_CHAT_ROOM:
                     reqHandler.onTalkChatRoom(session, connectedUser, packet);
+                    break;
+
+                case REQ_HISTORY_CHAT_ROOM:
+                    reqHandler.onHistoryChatRoom(session, connectedUser, packet);
                     break;
 
                 default:

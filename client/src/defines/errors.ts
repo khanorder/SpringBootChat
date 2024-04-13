@@ -34,6 +34,25 @@ export namespace Errors {
         FAILED_TO_START_CHAT = 3,
     }
 
+    export enum ChangeUserProfile {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        DATA_TOO_LONG = 2,
+        NOT_SUITABLE_DATA = 3,
+        SMALL_IMAGE_REQUIRED = 4,
+        LARGE_IMAGE_REQUIRED = 5,
+        SMALL_IMAGE_BYTES_TOO_LONG = 6,
+        LARGE_IMAGE_BYTES_TOO_LONG = 7,
+        FAILED_TO_CHANGE = 8,
+    }
+
+    export enum RemoveUserProfile {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        NOT_HAVE_PROFILE = 2,
+        FAILED_TO_REMOVE = 3,
+    }
+
     export enum CreateChatRoom {
         NONE = 0,
         NOT_ALLOWED_OPEN_TYPE = 1,

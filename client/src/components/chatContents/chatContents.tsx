@@ -16,13 +16,13 @@ import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 import {Domains} from "@/domains";
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
+const ChatMessage = dynamic(() => import("@/components/chatContents/chatMessage"), { ssr: false });
 
 export interface ChatContentsProps {
-    serverHost: string;
     setChatDetailImageId: Dispatch<SetStateAction<string>>;
 } 
 
-export default function ChatContents({serverHost, setChatDetailImageId}: ChatContentsProps) {
+export default function ChatContents() {
     const firstRender = useRef(true);
     const chatContentsRef = createRef<HTMLUListElement>();
     const appConfigs = useAppSelector(state => state.appConfigs);
@@ -46,14 +46,6 @@ export default function ChatContents({serverHost, setChatDetailImageId}: ChatCon
 
     }, [firstRender, chat]);
 
-    const openChatImageDetailDialog = useCallback((chatId: string) => {
-        if (isEmpty(chatId))
-            return;
-
-        setChatDetailImageId(chatId);
-        dispatch(setIsActiveChatImageDetail(true));
-    }, [setChatDetailImageId, dispatch]);
-
     const list = useCallback(() => {
         let chatDatas: Domains.Chat[] = [];
         if (chat && !isEmpty(chat.currentChatRoomId)) {
@@ -66,48 +58,7 @@ export default function ChatContents({serverHost, setChatDetailImageId}: ChatCon
         if (0 < chatDatas.length) {
             for (let i = 0; i < chatDatas.length; i++) {
                 let chatData = chatDatas[i];
-                const isMine = user.id == chatData.userId;
-                let chatContentsClass = styles.chatContents + (isMine ? ` ${styles.mine}` : '');
-                let chatMessageClass = styles.chatMessage + (isMine ? ` ${styles.mine}` : '');
-
-                switch (chatData.type) {
-                    case Defines.ChatType.NOTICE:
-                        contents.push(<li key={i} className={styles.chatNotice}>{chatData.message}</li>);
-                        break;
-
-                    case Defines.ChatType.TALK:
-                        contents.push(
-                            <li key={i} className={chatContentsClass}>
-                                <div className={styles.chatWrapper}>
-                                    {isMine ? <></> : <div className={styles.chatUserName}>{chatData.userName}</div>}
-                                    <div className={chatMessageClass}>
-                                        <NL2BR text={chatData.message} />
-                                    </div>
-                                    <div className={styles.chatTime}>{dayjs(chatData.time).fromNow(true)}</div>
-                                </div>
-                            </li>
-                        );
-                        break;
-
-                    case Defines.ChatType.IMAGE:
-                        chatContentsClass += ' ' + styles.chatContentsImage;
-                        chatMessageClass += ' ' + styles.chatMessageImage;
-                        contents.push(
-                            <li key={i} className={chatContentsClass}>
-                                <div className={styles.chatWrapper}>
-                                    {isMine ? <></> : <div className={styles.chatUserName}>{chatData.userName}</div>}
-                                    <div className={chatMessageClass}>
-                                        <img className={styles.chatImage}
-                                             src={`${serverHost}/api/chatSmallImage/${chatData.id}`}
-                                             alt={chatData.id + ' 이미지'}
-                                             onClick={e => openChatImageDetailDialog(chatData.id)}/>
-                                    </div>
-                                    <div className={styles.chatTime}>{dayjs(chatData.time).fromNow(true)}</div>
-                                </div>
-                            </li>
-                        );
-                        break;
-                }
+                contents.push(<ChatMessage key={i} data={chatData} />);
             }
         } else {
             contents.push(<li key={'none'} className={styles.chatNone}>{appConfigs.isProd ? '채팅 내용이 없습니다.' : ''}</li>);
@@ -118,7 +69,7 @@ export default function ChatContents({serverHost, setChatDetailImageId}: ChatCon
                 {contents}
             </ul>
         );
-    }, [appConfigs, chat, openChatImageDetailDialog, serverHost, user, chatContentsRef]);
+    }, [appConfigs, chat, user, chatContentsRef]);
 
     return (
         <div className={styles.chatContentsWrapper}>

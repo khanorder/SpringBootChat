@@ -70,14 +70,16 @@ export default function ChatHeader() {
                 title = chatRoom.roomName;
         } else {
             if ("/" == router.pathname) {
-                    title = "친구";
+                title = "친구";
             } else if ("/rooms" == router.pathname) {
                 title = "채팅";
+            } else {
+                title = appConfigs.name;
             }
         }
 
         return (
-            <span className={styles.chatTitle}>{appConfigs.isProd ? title : <>&nbsp;</>}</span>
+            <span className={styles.chatTitle}>{title}</span>
         );
     }, [appConfigs, chat, router]);
 

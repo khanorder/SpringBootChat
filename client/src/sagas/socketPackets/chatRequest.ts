@@ -329,6 +329,74 @@ export function* callSaveUserMessageReq() {
     webSocketState.socket.send(packet);
 }
 
+export function* callSaveUserProfileReq(action: PayloadAction<Domains.SaveUserProfileReq>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSaveUserProfileReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserProfileReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: not found user id.`);
+        return;
+    }
+
+    if (!action || !action.payload) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: parameters are null.`);
+
+        alert('프로필 이미지를 선택해주세요.');
+        return;
+    }
+
+    if (isEmpty(action.payload.smallData) || isEmpty(action.payload.largeData)) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: upload image is null.`);
+
+        alert('프로필 이미지를 선택해주세요.');
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_PROFILE]);
+    const bytesSmallImage = new Uint8Array(Buffer.from(action.payload.smallData.trim(), 'utf8'));
+    const bytesLargeImage = new Uint8Array(Buffer.from(action.payload.largeData.trim(), 'utf8'));
+    const bytesSmallLength = Helpers.getByteArrayFromInt(bytesSmallImage.byteLength);
+    const bytesLargeLength = Helpers.getByteArrayFromInt(bytesLargeImage.byteLength);
+    const packet = Helpers.mergeBytesPacket([flag, bytesSmallLength, bytesLargeLength, bytesSmallImage, bytesLargeImage]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callRemoveUserProfileReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callRemoveUserProfileReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveUserProfileReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveUserProfileReq: not found user id.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_USER_PROFILE]);
+    const packet = Helpers.mergeBytesPacket([flag]);
+    webSocketState.socket.send(packet);
+}
+
 export function* callCheckNotificationReq(action: PayloadAction<Domains.Notification>) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callCheckNotificationReq`);
@@ -380,5 +448,29 @@ export function* callRemoveNotificationReq(action: PayloadAction<Domains.Notific
     const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_NOTIFICATION]);
     const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
     const packet = Helpers.mergeBytesPacket([flag, bytesId]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callHistoryChatRoomReq(action: PayloadAction<Domains.ChatRoom>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callHistoryChatRoomReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callHistoryChatRoomReq: socket is not available.`);
+        return;
+    }
+
+    if (!action.payload || isEmpty(action.payload.roomId)) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callHistoryChatRoomReq: not chatRoom id.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_HISTORY_CHAT_ROOM]);
+    const bytesRoomId = Helpers.getByteArrayFromUUID(action.payload.roomId.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesRoomId]);
     webSocketState.socket.send(packet);
 }

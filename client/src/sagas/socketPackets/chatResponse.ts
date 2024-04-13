@@ -24,7 +24,7 @@ import {
     setFollows,
     setUserMessage,
     setUserId,
-    setUserName, setHaveProfile, setLatestActive, updateUsersData
+    setUserName, setHaveProfile, setLatestActive, updateUsersData, setProfileImageUrl, UserState
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -32,7 +32,7 @@ import {v4 as uuid} from "uuid";
 import {push} from "connected-next-router";
 import isEmpty from "lodash/isEmpty";
 import {RootState} from "@/stores/reducers";
-import {setServerVersion} from "@/stores/reducers/appConfigs";
+import {AppConfigsState, setServerVersion} from "@/stores/reducers/appConfigs";
 import {addNotification, checkNotification, removeNotification} from "@/stores/reducers/notification";
 
 export function* checkConnectionRes(data: Uint8Array) {
@@ -69,13 +69,19 @@ export function* checkAuthenticationRes(data: Uint8Array) {
         return null;
     }
 
+
     switch (response.result) {
         case Errors.CheckAuthentication.NONE:
+            const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+
             yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
             yield put(setUserId(response.userId));
             yield put(setUserName(response.userName));
             yield put(setUserMessage(response.userMessage));
             yield put(setHaveProfile(response.haveProfile));
+            if (response.haveProfile)
+                yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${response.userId}?${(new Date()).getTime()}`));
+
             yield put(setLatestActive(response.latestActive));
             Helpers.setCookie("userId", response.userId, 3650);
 
@@ -177,6 +183,16 @@ export function* connectedUsersRes(data: Uint8Array) {
         return null;
     }
 
+    if (0 < response.users.length) {
+        const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+
+        for (let i = 0; i < response.users.length; i++) {
+            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
+            response.users[i].updateProfile(profileImage);
+        }
+    }
+
     yield put(setConnectedUsers(response.users));
     return response;
 }
@@ -195,6 +211,11 @@ export function* noticeConnectedUserRes(data: Uint8Array) {
     if (null == response.user) {
         return null;
     }
+
+    const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+    const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
+    response.user.updateProfile(profileImage);
 
     yield put(addConnectedUser(response.user));
     return response;
@@ -230,6 +251,16 @@ export function* followsRes(data: Uint8Array) {
         return null;
     }
 
+    if (0 < response.users.length) {
+        const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+
+        for (let i = 0; i < response.users.length; i++) {
+            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
+            response.users[i].updateProfile(profileImage);
+        }
+    }
+
     yield put(setFollows(response.users));
     return response;
 }
@@ -243,6 +274,16 @@ export function* followersRes(data: Uint8Array) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - followersRes: response is null.`);
         return null;
+    }
+
+    if (0 < response.users.length) {
+        const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+
+        for (let i = 0; i < response.users.length; i++) {
+            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
+            response.users[i].updateProfile(profileImage);
+        }
     }
 
     yield put(setFollowers(response.users));
@@ -274,8 +315,13 @@ export function* followRes(data: Uint8Array) {
     
     switch (response.result) {
         case Errors.Follow.NONE:
-            if (null != response.user)
+            if (null != response.user) {
+                const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+                const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+                const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
+                response.user.updateProfile(profileImage);
                 yield put(addFollow(response.user));
+            }
             break;
 
         case Errors.Follow.AUTH_REQUIRED:
@@ -354,8 +400,13 @@ export function* followerRes(data: Uint8Array) {
         return null;
     }
 
-    if (null != response.user)
+    if (null != response.user) {
+        const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+        const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
+        response.user.updateProfile(profileImage);
         yield put(addFollower(response.user));
+    }
 
     return response;
 }
@@ -435,6 +486,86 @@ export function* noticeUserMessageChangedRes(data: Uint8Array) {
     }
 
     yield put(updateUsersData({ dataType: "message", userId: response.userId, userData: response.userMessage }));
+    return response;
+}
+
+export function* changeUserProfileRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - changeUserProfileRes`);
+
+    const response = Domains.ChangeUserProfileRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - changeUserProfileRes: response is null.`);
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.ChangeUserProfile.NONE:
+            const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+            const userState: UserState = yield select((state: RootState) => state.user);
+            yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${userState.id}?${(new Date()).getTime()}`));
+            break;
+
+        default:
+            alert("프로필 변경 실패!");
+            break;
+    }
+    return response;
+}
+
+export function* noticeUserProfileChangedRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeUserProfileChangedRes`);
+
+    const response = Domains.NoticeUserProfileChangedRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeUserProfileChangedRes: response is null.`);
+        return null;
+    }
+
+    const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${response.userId}?${(new Date()).getTime()}`;
+    yield put(updateUsersData({ dataType: "profile", userId: response.userId, userData: imagePath }));
+    return response;
+}
+
+export function* removeUserProfileRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - removeUserProfileRes`);
+
+    const response = Domains.RemoveUserProfileRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - removeUserProfileRes: response is null.`);
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.RemoveUserProfile.NONE:
+            yield put(setProfileImageUrl(''));
+            break;
+
+        default:
+            alert("프로필 변경 실패!");
+            break;
+    }
+    return response;
+}
+
+export function* noticeUserProfileRemovedRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeUserProfileRemovedRes`);
+
+    const response = Domains.NoticeUserProfileRemovedRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeUserProfileRemovedRes: response is null.`);
+        return null;
+    }
+
+    yield put(updateUsersData({ dataType: "profile", userId: response.userId, userData: "" }));
     return response;
 }
 

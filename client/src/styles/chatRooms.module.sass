@@ -71,18 +71,29 @@
 
                     .chatRoomNameWrapper
                         display: flex
-                        align-items: center
+                        flex-direction: column
+                        justify-content: center
+                        align-items: flex-start
 
                         .chatRoomName
+                            flex: 0 0 20px
+                            height: 20px
                             font-size: 18px
+                            line-height: 1em
                             font-weight: 500
 
-                        .chatRoomUserCount
-                            font-size: 11px
-                            margin-left: 15px
-                            background: #d9d9d9
-                            padding: 3px 8px
-                            border-radius: 15px
+                        .latestMessage
+                            flex: 0 0 20px
+                            height: 20px
+                            font-size: 13px
+                            font-weight: 400
+
+                        //.chatRoomUserCount
+                        //    font-size: 11px
+                        //    margin-left: 15px
+                        //    background: #d9d9d9
+                        //    padding: 3px 8px
+                        //    border-radius: 15px
 
                     .chatRoomPreviewWrapper
                         text-align: left
@@ -104,7 +115,7 @@
                             background-color: #cfcfcf
 
     &.dev
-        opacity: 0.2
+        opacity: 1
 
 @media (max-width: 700px)
     .chatRoomListWrapper

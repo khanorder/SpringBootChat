@@ -51,22 +51,33 @@
 
             .infoWrapper
                 display: flex
-                flex:  1 0 auto
+                flex:  1 1 calc(100% - 110px)
                 margin-left: 10px
+                width: calc(100% - 110px)
 
                 .messageWrapper
-                    flex: 1 0 auto
+                    flex: 1 1 calc(100% - 60px)
                     display: flex
                     flex-direction: column
                     justify-content: center
                     align-items: flex-start
+                    width: calc(100% - 60px)
 
                     .message
+                        width: 100%
                         text-align: left
                         font-size: 14px
+                        overflow: hidden
+                        white-space: nowrap
+                        text-overflow: ellipsis
 
                 .sendAtWrapper
-                    flex: 0 0 auto
+                    display: flex
+                    justify-content: flex-end
+                    align-items: center
+                    flex: 0 0 50px
+                    margin-left: 10px
+                    width: 50px
 
                     .sendAt
                         font-size: 12px

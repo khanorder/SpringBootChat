@@ -489,6 +489,48 @@ public class ResHandler {
         }
     }
 
+    public void resChangeUserProfile(WebSocketSession session, ErrorChangeUserProfile error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_CHANGE_USER_PROFILE, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void noticeUserProfileChanged(WebSocketSession session, User user) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_USER_PROFILE_CHANGED);
+            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId);
+            sessionHandler.sendOthers(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resRemoveUserProfile(WebSocketSession session, ErrorRemoveUserProfile error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_USER_PROFILE, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void noticeUserProfileRemoved(WebSocketSession session, User user) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_USER_PROFILE_REMOVED);
+            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId);
+            sessionHandler.sendOthers(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
     public void resCreateChatRoom(WebSocketSession session, ErrorCreateChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CREATE_CHAT_ROOM, error);

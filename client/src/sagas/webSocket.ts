@@ -17,7 +17,7 @@ import {
     unfollowReq,
     startChatReq,
     checkNotificationReq,
-    removeNotificationReq, saveUserMessageReq, saveUserProfileReq
+    removeNotificationReq, saveUserMessageReq, saveUserProfileReq, removeUserProfileReq, historyChatRoomReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -54,7 +54,11 @@ import {
     notificationRes,
     checkNotificationRes,
     removeNotificationRes,
-    noticeUserNameChangedRes, noticeUserMessageChangedRes
+    noticeUserNameChangedRes,
+    noticeUserMessageChangedRes,
+    changeUserProfileRes,
+    noticeUserProfileChangedRes,
+    removeUserProfileRes, noticeUserProfileRemovedRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -68,7 +72,11 @@ import {
     callCheckConnectionReq,
     callCheckAuthenticationReq,
     callStartChatReq,
-    callCheckNotificationReq, callRemoveNotificationReq, callSaveUserMessageReq
+    callCheckNotificationReq,
+    callRemoveNotificationReq,
+    callSaveUserMessageReq,
+    callSaveUserProfileReq,
+    callRemoveUserProfileReq, callHistoryChatRoomReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -343,8 +351,20 @@ function* onMessage (socket: WebSocket) {
                             yield call(noticeUserMessageChangedRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_CHANGE_USER_PROFILE:
+                            yield call(changeUserProfileRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_NOTICE_USER_PROFILE_CHANGED:
-                            // yield call(startChatRes, packetData);
+                            yield call(noticeUserProfileChangedRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_REMOVE_USER_PROFILE:
+                            yield call(removeUserProfileRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_USER_PROFILE_REMOVED:
+                            yield call(noticeUserProfileRemovedRes, packetData);
                             break;
 
                         case Defines.ResType.RES_CREATE_CHAT_ROOM:
@@ -467,7 +487,9 @@ export function* watchWebSocket() {
     yield takeLatest(sendMessageReq, callSendMessageReq);
     yield takeLatest(saveUserNameReq, callSaveUserNameReq);
     yield takeLatest(saveUserMessageReq, callSaveUserMessageReq);
-    // yield takeLatest(saveUserProfileReq, callSaveUserNameReq);
+    yield takeLatest(saveUserProfileReq, callSaveUserProfileReq);
+    yield takeLatest(removeUserProfileReq, callRemoveUserProfileReq);
     yield takeLatest(checkNotificationReq, callCheckNotificationReq);
     yield takeLatest(removeNotificationReq, callRemoveNotificationReq);
+    yield takeLatest(historyChatRoomReq, callHistoryChatRoomReq);
 }

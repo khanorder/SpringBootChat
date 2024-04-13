@@ -5,6 +5,7 @@ import {Defines} from "@/defines";
 interface UIState {
     activeTab: Defines.TabType;
     isActiveProfile: boolean;
+    isActiveProfileImageInput: boolean;
     isActiveNotification: boolean;
     isActiveLNB: boolean;
     isActiveCreateChatRoom: boolean;
@@ -15,6 +16,7 @@ interface UIState {
 const initialState: UIState = {
     activeTab: Defines.TabType.FOLLOW,
     isActiveProfile: false,
+    isActiveProfileImageInput: false,
     isActiveNotification: false,
     isActiveLNB: false,
     isActiveCreateChatRoom: false,
@@ -31,6 +33,9 @@ const uiSlice = createSlice({
         },
         setIsActiveProfile: (state, action: PayloadAction<boolean>) => {
             state.isActiveProfile = action.payload;
+        },
+        setIsActiveProfileImageInput: (state, action: PayloadAction<boolean>) => {
+            state.isActiveProfileImageInput = action.payload;
         },
         setIsActiveNotification: (state, action: PayloadAction<boolean>) => {
             state.isActiveNotification = action.payload;
@@ -49,6 +54,9 @@ const uiSlice = createSlice({
         },
         toggleIsActiveProfile: (state) => {
             state.isActiveProfile = !state.isActiveProfile;
+        },
+        toggleIsActiveProfileImageInput: (state) => {
+            state.isActiveProfileImageInput = !state.isActiveProfileImageInput;
         },
         toggleIsActiveNotification: (state) => {
             state.isActiveNotification = !state.isActiveNotification;
@@ -72,6 +80,7 @@ export type { UIState };
 export const {
     setActiveTab,
     setIsActiveProfile,
+    setIsActiveProfileImageInput,
     setIsActiveNotification,
     setIsActiveLNB,
     setIsActiveCreateChatRoom,
@@ -79,6 +88,7 @@ export const {
     setIsActiveChatImageDetail,
     toggleIsActiveNotification,
     toggleIsActiveProfile,
+    toggleIsActiveProfileImageInput,
     toggleIsActiveLNB,
     toggleIsActiveCreateChatRoom,
     toggleIsActiveChatImageInput,

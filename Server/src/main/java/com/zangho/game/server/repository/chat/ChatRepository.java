@@ -18,7 +18,14 @@ public interface ChatRepository extends JpaRepository<Chat, String> {
 
     List<Chat> findByRoomId(String roomId);
 
-    @Query(value = "SELECT * FROM chats AS a WHERE a.roomId = :roomId AND a.sendAt >= DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 12 HOUR) ORDER BY a.sendAt LIMIT 100", nativeQuery = true)
+    @Query(
+            value = "SELECT * " +
+                    "FROM chats AS a " +
+                    //"WHERE a.roomId = :roomId AND a.sendAt >= DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 12 HOUR) " +
+                    "WHERE a.roomId = :roomId " +
+                    "ORDER BY a.sendAt LIMIT 100",
+            nativeQuery = true
+    )
     List<Chat> findByRoomIdLatest(@Param("roomId") String roomId);
 
     @Override

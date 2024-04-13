@@ -1,6 +1,7 @@
 import {Helpers} from "@/helpers";
 import {Errors} from "@/defines/errors";
 import {Defines} from "@/defines";
+import isEmpty from "lodash/isEmpty";
 
 export namespace Domains {
 
@@ -42,12 +43,15 @@ export namespace Domains {
         }
     }
 
+    export const defaultProfileImageUrl: string = '/images/user-circle.svg';
+
     export class User {
         userId: string;
         userName: string;
         message: string;
         haveProfile: boolean;
         latestActive: number;
+        profileImageUrl: string = defaultProfileImageUrl;
         online: boolean;
 
         constructor(userId: string, userName: string, message: string, haveProfile: boolean, latestActive: number, online?: boolean) {
@@ -56,7 +60,18 @@ export namespace Domains {
             this.message = message;
             this.haveProfile = haveProfile;
             this.latestActive = latestActive;
+            this.profileImageUrl = defaultProfileImageUrl;
             this.online = online ? online : false;
+        }
+
+        updateProfile(profileImageUrl: string) {
+            if (isEmpty(profileImageUrl)) {
+                this.haveProfile = false;
+                this.profileImageUrl = defaultProfileImageUrl;
+            } else {
+                this.haveProfile = true;
+                this.profileImageUrl = profileImageUrl;
+            }
         }
     }
 
@@ -817,6 +832,80 @@ export namespace Domains {
         }
     }
 
+    export class ChangeUserProfileRes {
+        result: Errors.ChangeUserProfile;
+
+        constructor(result: Errors.ChangeUserProfile) {
+            this.result = result;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                return new ChangeUserProfileRes(bytes[0]);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NoticeUserProfileChangedRes {
+        userId: string;
+
+        constructor(userId: string) {
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetUserId = 16;
+                const bytesUserId = bytes.slice(0, offsetUserId);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                return new NoticeUserProfileChangedRes(userId);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class RemoveUserProfileRes {
+        result: Errors.RemoveUserProfile;
+
+        constructor(result: Errors.RemoveUserProfile) {
+            this.result = result;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                return new RemoveUserProfileRes(bytes[0]);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NoticeUserProfileRemovedRes {
+        userId: string;
+
+        constructor(userId: string) {
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetUserId = 16;
+                const bytesUserId = bytes.slice(0, offsetUserId);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                return new NoticeUserProfileRemovedRes(userId);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
     export class CreateChatRoomReq {
         openType: Defines.RoomOpenType;
         roomName: string;
@@ -1207,6 +1296,16 @@ export namespace Domains {
 
         getChatData() {
             return new Chat(this.type, this.roomId, this.userId, this.id, this.time, this.userName, this.message);
+        }
+    }
+
+    export class SaveUserProfileReq {
+        largeData: string;
+        smallData: string;
+
+        constructor(largeData: string, smallData: string) {
+            this.largeData = largeData;
+            this.smallData = smallData;
         }
     }
 
