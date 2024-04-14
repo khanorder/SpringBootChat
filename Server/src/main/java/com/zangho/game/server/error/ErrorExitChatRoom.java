@@ -4,7 +4,7 @@ import com.zangho.game.server.define.Types;
 
 public enum ErrorExitChatRoom implements Types {
     NONE(0),
-    NOT_FOUND_USER(1),
+    AUTH_REQUIRED(1),
     ROOM_REMOVED(2),
     NO_EXISTS_ROOM(3),
     NOT_IN_ROOM(4),

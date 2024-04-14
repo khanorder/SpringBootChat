@@ -17,7 +17,12 @@ import {
     unfollowReq,
     startChatReq,
     checkNotificationReq,
-    removeNotificationReq, saveUserMessageReq, saveUserProfileReq, removeUserProfileReq, historyChatRoomReq
+    removeNotificationReq,
+    saveUserMessageReq,
+    saveUserProfileReq,
+    removeUserProfileReq,
+    historyChatRoomReq,
+    removeChatRoomReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -76,7 +81,7 @@ import {
     callRemoveNotificationReq,
     callSaveUserMessageReq,
     callSaveUserProfileReq,
-    callRemoveUserProfileReq, callHistoryChatRoomReq
+    callRemoveUserProfileReq, callHistoryChatRoomReq, callRemoveChatRoomReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -482,6 +487,7 @@ export function* watchWebSocket() {
     yield takeLatest(unfollowReq, callUnfollowReq);
     yield takeLatest(startChatReq, callStartChatReq);
     yield takeLatest(createChatRoomReq, callCreateChatRoomReq);
+    yield takeLatest(removeChatRoomReq, callRemoveChatRoomReq);
     yield takeLatest(enterChatRoomReq, callEnterChatRoomReq);
     yield takeLatest(exitChatRoomReq, callExitChatRoomReq);
     yield takeLatest(sendMessageReq, callSendMessageReq);

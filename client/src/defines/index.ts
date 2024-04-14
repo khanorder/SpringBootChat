@@ -15,10 +15,11 @@ export namespace Defines {
         REQ_CHANGE_USER_PROFILE = 11,
         REQ_REMOVE_USER_PROFILE = 12,
         REQ_CREATE_CHAT_ROOM = 13,
-        REQ_ENTER_CHAT_ROOM = 14,
-        REQ_EXIT_CHAT_ROOM = 15,
-        REQ_TALK_CHAT_ROOM = 16,
-        REQ_HISTORY_CHAT_ROOM = 17,
+        REQ_REMOVE_CHAT_ROOM = 14,
+        REQ_ENTER_CHAT_ROOM = 15,
+        REQ_EXIT_CHAT_ROOM = 16,
+        REQ_TALK_CHAT_ROOM = 17,
+        REQ_HISTORY_CHAT_ROOM = 18,
         REQ_TEST = 255,
     }
 
@@ -76,9 +77,9 @@ export namespace Defines {
     }
 
     export enum RoomOpenType {
-        PRIVATE = 0,
-        PUBLIC = 1,
-        FOLLOW = 2,
+        PREPARED = 0,
+        PRIVATE = 1,
+        PUBLIC = 2,
     }
 
     export enum TabType {

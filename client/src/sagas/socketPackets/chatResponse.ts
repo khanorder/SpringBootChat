@@ -762,7 +762,7 @@ export function* noticeEnterChatRoomRes(data: Uint8Array) {
         return null;
     }
 
-    const enterNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.userName}'님이 입장했습니다.`);
+    const enterNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.userName}'님이 입장했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: enterNotice}));
     return response;
 }
@@ -779,7 +779,7 @@ export function* noticeExitChatRoomRes(data: Uint8Array) {
         return null;
     }
 
-    const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.userName}'님이 퇴장했습니다.`);
+    const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.userName}'님이 퇴장했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: exitNotice}));
     return response;
 }
@@ -796,7 +796,7 @@ export function* noticeChangeNameChatRoomRes(data: Uint8Array) {
         return null;
     }
 
-    const changeNameNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), '', `'${response?.oldUserName}'님이 '${response?.newUserName}'으로 대화명을 변경했습니다.`);
+    const changeNameNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.oldUserName}'님이 '${response?.newUserName}'으로 대화명을 변경했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: changeNameNotice}));
     return response;
 }

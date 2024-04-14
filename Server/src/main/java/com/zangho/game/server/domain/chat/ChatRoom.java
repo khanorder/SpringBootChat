@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -30,16 +31,21 @@ public class ChatRoom {
     @Column(nullable = false)
     private RoomOpenType openType;
 
+    @Nonnull
+    @Column(length = 36, nullable = false)
+    private String ownerId;
+
     @Transient
     private ConcurrentHashMap<String, UserRoom> users;
 
     @Transient
     private ConcurrentLinkedQueue<Chat> chats;
 
-    public ChatRoom(@Nonnull String roomId, @Nonnull String roomName, @Nonnull RoomOpenType openType) {
+    public ChatRoom(@Nonnull String roomId, @Nonnull String roomName, @Nonnull RoomOpenType openType, @Nonnull String ownerId) {
         this.roomId = roomId;
         this.roomName = roomName;
         this.openType = openType;
+        this.ownerId = ownerId;
         this.users = new ConcurrentHashMap<>();
         this.chats = new ConcurrentLinkedQueue<>();
     }
@@ -48,6 +54,7 @@ public class ChatRoom {
         this.roomId = "";
         this.roomName = "";
         this.openType = RoomOpenType.PRIVATE;
+        this.ownerId = "";
         this.users = new ConcurrentHashMap<>();
         this.chats = new ConcurrentLinkedQueue<>();
     }
@@ -66,13 +73,21 @@ public class ChatRoom {
     }
 
     @Transient
+    public void addUserToRoom(UserRoom userRoom) {
+        if (checkUserInRoom(userRoom.getUserId()))
+            return;
+
+        this.getUsers().put(userRoom.getUserId(), userRoom);
+    }
+
+    @Transient
     public boolean checkUserInRoom(String userId) {
         return users.containsKey(userId);
     }
 
     @Transient
-    public UserRoom getUserRoom(User user) {
-        return this.getUsers().get(user.getId());
+    public Optional<UserRoom> getUserRoom(User user) {
+        return Optional.ofNullable(this.getUsers().get(user.getId()));
     }
 
 }

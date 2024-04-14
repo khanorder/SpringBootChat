@@ -397,17 +397,7 @@ public class ReqHandler {
             if (connectedUser.get().getCurrentChatRoom().isEmpty())
                 return;
 
-            Optional<ChatRoom> currentChatRoom = Optional.empty();
-
-            switch (connectedUser.get().getCurrentChatRoom().get().getOpenType()) {
-                case PRIVATE:
-                    currentChatRoom = chatRoomService.findPrivateRoomById(connectedUser.get().getCurrentChatRoom().get().getRoomId());
-                    break;
-
-                case PUBLIC:
-                    currentChatRoom = chatRoomService.findPublicRoomById(connectedUser.get().getCurrentChatRoom().get().getRoomId());
-                    break;
-            }
+            Optional<ChatRoom> currentChatRoom = chatRoomService.findRoomById(connectedUser.get().getCurrentChatRoom().get().getRoomId());
             
             if (currentChatRoom.isEmpty() || currentChatRoom.get().getUsers().isEmpty())
                 return;
@@ -507,6 +497,11 @@ public class ReqHandler {
 
     public void onCreateChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
+            if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
+                resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.AUTH_REQUIRED);
+                return;
+            }
+
             var roomOpenType = RoomOpenType.getType(packet[1]);
             if (roomOpenType.isEmpty()) {
                 resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.NOT_ALLOWED_OPEN_TYPE);
@@ -517,11 +512,6 @@ public class ReqHandler {
             var userId = Helpers.getUUIDFromByteArray(bytesUserId);
             var roomName = new String(bytesRoomName);
 
-            if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
-                resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.NOT_FOUND_USER);
-                return;
-            }
-
             if (!connectedUser.get().getId().equals(userId)) {
                 resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.NOT_MATCHED_USER);
                 return;
@@ -529,7 +519,7 @@ public class ReqHandler {
 
             var chatRoom = chatRoomService.createRoom(roomName, connectedUser.get(), roomOpenType.get());
             if (chatRoom.isEmpty()) {
-                resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.FAILED_TO_CREATE_CHAT_ROOM);
+                resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.FAILED_TO_CREATE);
                 return;
             }
 
@@ -542,10 +532,47 @@ public class ReqHandler {
             if (isDevelopment)
                 logger.info(chatRoom.get().getOpenType().getNumber() + ", " + chatRoom.get().getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName());
 
-            resHandler.sendAddChatRoom(session, chatRoom.get());
-            resHandler.resCreateChatRoom(session,chatRoom.get());
+            resHandler.resAddChatRoom(session, chatRoom.get());
+            resHandler.resCreateChatRoom(session, chatRoom.get());
             resHandler.noticeRoomUsersChanged(chatRoom.get());
             lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void onRemoveChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        try {
+            if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
+                resHandler.resRemoveChatRoom(session, ErrorRemoveChatRoom.AUTH_REQUIRED);
+                return;
+            }
+
+            if (17 > packet.length) {
+                resHandler.resRemoveChatRoom(session, ErrorRemoveChatRoom.REQUIRED_ROOM_ID);
+                return;
+            }
+
+            var bytesRoomId = Arrays.copyOfRange(packet, 1, 17);
+            var roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
+
+            if (roomId.isEmpty()) {
+                resHandler.resRemoveChatRoom(session, ErrorRemoveChatRoom.REQUIRED_ROOM_ID);
+                return;
+            }
+
+            var result = chatRoomService.removeUserRoom(roomId, connectedUser.get());
+
+            if (ErrorRemoveChatRoom.NONE == result.getLeft()) {
+                if (result.getRight().isEmpty()) {
+                    resHandler.resRemoveChatRoom(session, ErrorRemoveChatRoom.NOT_FOUND_CHAT_ROOM);
+                } else {
+                    resHandler.resRemoveChatRoom(session, result.getRight().get());
+                }
+            } else {
+                resHandler.resRemoveChatRoom(session, result.getLeft());
+            }
+
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -569,7 +596,7 @@ public class ReqHandler {
 
             var existsRoom = result.getRight();
 
-            resHandler.sendAddChatRoom(existsRoom.get());
+            resHandler.resAddChatRoom(existsRoom.get());
             resHandler.resEnterChatRoom(session, existsRoom.get());
             resHandler.noticeEnterChatRoom(existsRoom.get(), connectedUser.get());
             resHandler.noticeRoomUsersChanged(existsRoom.get());
@@ -588,7 +615,7 @@ public class ReqHandler {
             var roomId = Helpers.getUUIDFromByteArray(roomIdBytes);
 
             if (connectedUser.isEmpty()) {
-                resHandler.resExitChatRoom(session, ErrorExitChatRoom.NOT_FOUND_USER);
+                resHandler.resExitChatRoom(session, ErrorExitChatRoom.AUTH_REQUIRED);
                 return;
             }
 
@@ -626,6 +653,11 @@ public class ReqHandler {
 
     public void onTalkChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
+            if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
+                resHandler.resTalkChatRoom(session, ErrorTalkChatRoom.AUTH_REQUIRED);
+                return;
+            }
+
             var chatOptType = ChatType.getType(packet[1]);
             if (chatOptType.isEmpty()) {
                 resHandler.resTalkChatRoom(session, ErrorTalkChatRoom.NOT_AVAILABLE_CHAT_TYPE);
@@ -646,52 +678,25 @@ public class ReqHandler {
                 return;
             }
 
-            var userRoom = existsRoom.get().getUserRoom(connectedUser.get());
+            var optUserRoom = existsRoom.get().getUserRoom(connectedUser.get());
 
-            if (null == userRoom) {
+            if (optUserRoom.isEmpty()) {
                 resHandler.resTalkChatRoom(session, ErrorTalkChatRoom.NOT_IN_ROOM);
                 return;
             }
 
-            var bytesUserId = Arrays.copyOfRange(packet, 34, 50);
-            var userId = Helpers.getUUIDFromByteArray(bytesUserId);
-
-            if (connectedUser.get().getId().isEmpty()) {
-                resHandler.resTalkChatRoom(session, ErrorTalkChatRoom.NOT_FOUND_USER);
-                return;
-            }
-
-            if (!userRoom.getUserId().equals(userId)) {
-                resHandler.resTalkChatRoom(session, ErrorTalkChatRoom.NOT_MATCHED_USER);
-                return;
-            }
-
-            var userName = connectedUser.get().getName();
-            var bytesUserName = userName.getBytes();
-            var bytesUserNameBytesLength = new byte[] {(byte)bytesUserName.length};
             var bytesChatMessageBytesLength = Arrays.copyOfRange(packet, 50, 54);
             var chatMessageBytesLength = Helpers.getIntFromByteArray(bytesChatMessageBytesLength);
             var bytesChatMessage = Arrays.copyOfRange(packet, 54, 54 + chatMessageBytesLength);
             var chatMessage = new String(bytesChatMessage);
             var sendAt = new Date();
-            var bytesNow = Helpers.getByteArrayFromLong(sendAt.getTime());
-            var chat = new Chat(chatId, roomId, userId, userName, chatType, chatMessage, sendAt);
+            var chat = new Chat(chatId, roomId, connectedUser.get().getId(), chatType, chatMessage, sendAt);
             if (isDevelopment && ChatType.IMAGE != chatType)
-                logger.info(chatType + ", " + roomId + ", " + userId + ", " + userName + ", " + chatMessage + ", " + sendAt + ", " + chatId);
+                logger.info(chatType + ", " + roomId + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName() + ", " + chatMessage + ", " + sendAt + ", " + chatId);
 
-            var talkPacket = Helpers.mergeBytePacket(
-                    (new byte[]{chatType.getByte()}),
-                    bytesRoomId,
-                    bytesUserId,
-                    bytesChatId,
-                    bytesNow,
-                    (bytesUserNameBytesLength),
-                    bytesChatMessageBytesLength,
-                    bytesUserName,
-                    bytesChatMessage
-            );
-            resHandler.noticeTalkChatRoom(existsRoom.get(), talkPacket);
-            messageService.notifyBrowserUserInRoom(existsRoom.get(), userName, chatMessage);
+
+            resHandler.noticeTalkChatRoom(existsRoom.get(), chat);
+            messageService.notifyBrowserUserInRoom(existsRoom.get(), connectedUser.get().getName(), chatMessage);
             chatRoomService.addChatToRoom(chat);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

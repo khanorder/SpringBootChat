@@ -126,6 +126,10 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onCreateChatRoom(session, connectedUser, packet);
                     break;
 
+                case REQ_REMOVE_CHAT_ROOM:
+                    reqHandler.onRemoveChatRoom(session, connectedUser, packet);
+                    break;
+
                 case REQ_ENTER_CHAT_ROOM:
                     reqHandler.onEnterChatRoom(session, connectedUser, packet);
                     break;

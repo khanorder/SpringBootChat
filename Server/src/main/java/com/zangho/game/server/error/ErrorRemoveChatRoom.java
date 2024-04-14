@@ -2,17 +2,17 @@ package com.zangho.game.server.error;
 
 import com.zangho.game.server.define.Types;
 
-public enum ErrorCreateChatRoom implements Types {
+public enum ErrorRemoveChatRoom implements Types {
     NONE(0),
     AUTH_REQUIRED(1),
-    NOT_ALLOWED_OPEN_TYPE(2),
-    NOT_MATCHED_USER(3),
-    EXISTS_ROOM(4),
-    FAILED_TO_CREATE(5),
-    REQUIRED_ROOM_ID(6);
+    REQUIRED_ROOM_ID(2),
+    NOT_FOUND_CHAT_ROOM(3),
+    NOT_ALLOWED_OPEN_TYPE(4),
+    NOT_IN_ROOM(5),
+    FAILED_TO_REMOVE(6);
 
     private final int number;
-    private ErrorCreateChatRoom(int number) {
+    private ErrorRemoveChatRoom(int number) {
         this.number = number;
     }
 

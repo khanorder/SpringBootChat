@@ -32,9 +32,6 @@ public class ChatService {
         if (chat.getUserId().isEmpty())
             return Optional.empty();
 
-        if (chat.getUserName().isEmpty())
-            return Optional.empty();
-
         if (ChatType.IMAGE != chat.getType() && chat.getMessage().isEmpty())
             return Optional.empty();
 
@@ -42,8 +39,8 @@ public class ChatService {
         return Optional.ofNullable(resultChat);
     }
 
-    public Optional<Chat> saveChat(String chatId, String roomId, String userId, String userName, ChatType chatType, String message, Date sendAt) throws Exception {
-        return saveChat(new Chat(chatId, roomId, userId, userName, chatType, message, sendAt));
+    public Optional<Chat> saveChat(String chatId, String roomId, String userId, ChatType chatType, String message, Date sendAt) throws Exception {
+        return saveChat(new Chat(chatId, roomId, userId, chatType, message, sendAt));
     }
 
 }

@@ -1,6 +1,5 @@
 package com.zangho.game.server.socketHandler.chat;
 
-import com.zangho.game.server.define.NotificationType;
 import com.zangho.game.server.define.ResType;
 import com.zangho.game.server.define.RoomOpenType;
 import com.zangho.game.server.domain.chat.Chat;
@@ -18,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -552,7 +552,7 @@ public class ResHandler {
         }
     }
 
-    public void sendAddChatRoom(WebSocketSession session, ChatRoom chatRoom) {
+    public void resAddChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var resPacket = getAddChatRoomPackets(chatRoom);
             switch (chatRoom.getOpenType()) {
@@ -569,7 +569,7 @@ public class ResHandler {
         }
     }
 
-    public void sendAddChatRoom(ChatRoom chatRoom) {
+    public void resAddChatRoom(ChatRoom chatRoom) {
         try {
             var resPacket = getAddChatRoomPackets(chatRoom);
             switch (chatRoom.getOpenType()) {
@@ -605,6 +605,27 @@ public class ResHandler {
         return resPacket;
     }
 
+    public void resRemoveChatRoom(WebSocketSession session, ErrorRemoveChatRoom error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_CHAT_ROOM, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resRemoveChatRoom(WebSocketSession session, ChatRoom chatRoom) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_CHAT_ROOM, ErrorRemoveChatRoom.NONE);
+            var bytesRoomId = Helpers.getByteArrayFromUUID(chatRoom.getRoomId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesRoomId);
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
     public void resEnterChatRoom(WebSocketSession session, ErrorEnterChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_ENTER_CHAT_ROOM, error);
@@ -628,7 +649,7 @@ public class ResHandler {
 
     public void noticeEnterChatRoom(ChatRoom chatRoom, User user) {
         try {
-            if (RoomOpenType.PRIVATE == chatRoom.getOpenType())
+            if (!chatRoom.getOpenType().equals(RoomOpenType.PUBLIC))
                 return;
 
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_ENTER_CHAT_ROOM);
@@ -688,9 +709,7 @@ public class ResHandler {
             var bytesHistoryUserId = new byte[0];
             var bytesHistoryChatType = new byte[0];
             var bytesHistorySendAt = new byte[0];
-            var bytesHistoryUserNameLength = new byte[0];
             var bytesHistoryMessageLength = new byte[0];
-            var bytesHistoryUserName = new byte[0];
             var bytesHistoryMessage = new byte[0];
 
             for (Chat chat : chatRoom.getChats()) {
@@ -698,9 +717,7 @@ public class ResHandler {
                 bytesHistoryUserId = Helpers.mergeBytePacket(bytesHistoryUserId, Helpers.getByteArrayFromUUID(chat.getUserId()));
                 bytesHistoryChatType = Helpers.mergeBytePacket(bytesHistoryChatType, new byte[] {chat.getType().getByte()});
                 bytesHistorySendAt = Helpers.mergeBytePacket(bytesHistorySendAt, Helpers.getByteArrayFromLong(chat.getSendAt().getTime()));
-                bytesHistoryUserNameLength = Helpers.mergeBytePacket(bytesHistoryUserNameLength, new byte[] {(byte)chat.getUserName().getBytes().length});
                 bytesHistoryMessageLength = Helpers.mergeBytePacket(bytesHistoryMessageLength, Helpers.getByteArrayFromInt(chat.getMessage().getBytes().length));
-                bytesHistoryUserName = Helpers.mergeBytePacket(bytesHistoryUserName, chat.getUserName().getBytes());
                 bytesHistoryMessage = Helpers.mergeBytePacket(bytesHistoryMessage, chat.getMessage().getBytes());
             }
 
@@ -712,9 +729,7 @@ public class ResHandler {
                     bytesHistoryUserId,
                     bytesHistoryChatType,
                     bytesHistorySendAt,
-                    bytesHistoryUserNameLength,
                     bytesHistoryMessageLength,
-                    bytesHistoryUserName,
                     bytesHistoryMessage
             );
             sessionHandler.sendOneSession(session, resPacket);
@@ -735,7 +750,7 @@ public class ResHandler {
 
     public void noticeRoomUserExited(ChatRoom chatRoom, User user) {
         try {
-            if (RoomOpenType.PRIVATE == chatRoom.getOpenType())
+            if (!chatRoom.getOpenType().equals(RoomOpenType.PUBLIC))
                 return;
 
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_EXIT_CHAT_ROOM);
@@ -756,9 +771,27 @@ public class ResHandler {
         }
     }
 
-    public void noticeTalkChatRoom(ChatRoom chatRoom, byte[] talkPacket) {
+    public void noticeTalkChatRoom(ChatRoom chatRoom, Chat chat) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_TALK_CHAT_ROOM, ErrorTalkChatRoom.NONE);
+
+            var bytesRoomId = Helpers.getByteArrayFromUUID(chat.getRoomId());
+            var bytesUserId = Helpers.getByteArrayFromUUID(chat.getUserId());
+            var bytesChatId = Helpers.getByteArrayFromUUID(chat.getChatId());
+            var bytesChatMessageBytesLength = Helpers.getByteArrayFromInt(chat.getMessage().getBytes().length);
+            var bytesChatMessage = chat.getMessage().getBytes();
+            var bytesNow = Helpers.getByteArrayFromLong(chat.getSendAt().getTime());
+
+            var talkPacket = Helpers.mergeBytePacket(
+                    (new byte[]{chat.getType().getByte()}),
+                    bytesRoomId,
+                    bytesUserId,
+                    bytesChatId,
+                    bytesNow,
+                    bytesChatMessageBytesLength,
+                    bytesChatMessage
+            );
+
             var resPacket = Helpers.mergeBytePacket(packetFlag, talkPacket);
             sessionHandler.sendEachSessionInRoom(chatRoom, resPacket);
         } catch (Exception ex) {

@@ -2,7 +2,6 @@ import {useCallback, useEffect, useRef} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import Image from "next/image";
 import ModifyIcon from "public/images/modify-icon.svg";
-import {Domains} from "@/domains";
 import styles from "@/styles/chatMyProfile.module.sass";
 import {setIsActiveProfile} from "@/stores/reducers/ui";
 import isEmpty from "lodash/isEmpty";

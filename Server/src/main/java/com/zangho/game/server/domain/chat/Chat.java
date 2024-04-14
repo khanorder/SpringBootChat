@@ -31,10 +31,6 @@ public class Chat {
     String userId;
 
     @Nonnull
-    @Column(length = 10, nullable = false)
-    String userName;
-
-    @Nonnull
     @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
     ChatType type;

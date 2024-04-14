@@ -55,12 +55,22 @@ export namespace Errors {
 
     export enum CreateChatRoom {
         NONE = 0,
-        NOT_ALLOWED_OPEN_TYPE = 1,
-        NOT_FOUND_USER = 2,
+        AUTH_REQUIRED = 1,
+        NOT_ALLOWED_OPEN_TYPE = 2,
         NOT_MATCHED_USER = 3,
         EXISTS_ROOM = 4,
-        FAILED_TO_CREATE_CHAT_ROOM = 5,
+        FAILED_TO_CREATE = 5,
         REQUIRED_ROOM_ID = 6,
+    }
+
+    export enum RemoveChatRoom {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        REQUIRED_ROOM_ID = 2,
+        NOT_FOUND_CHAT_ROOM = 3,
+        NOT_ALLOWED_OPEN_TYPE = 4,
+        NOT_IN_ROOM = 5,
+        FAILED_TO_REMOVE = 6,
     }
 
     export enum Follow {
@@ -83,7 +93,7 @@ export namespace Errors {
 
     export enum ExitChatRoom {
         NONE = 0,
-        NOT_FOUND_USER = 1,
+        AUTH_REQUIRED = 1,
         ROOM_REMOVED = 2,
         NO_EXISTS_ROOM = 3,
         NOT_IN_ROOM = 4,
@@ -103,10 +113,10 @@ export namespace Errors {
 
     export enum TalkChatRoom {
         NONE,
-        ROOM_REMOVED = 1,
-        NO_EXISTS_ROOM = 2,
-        NOT_IN_ROOM = 3,
-        NOT_FOUND_USER = 4,
+        NOT_FOUND_USER = 1,
+        ROOM_REMOVED = 2,
+        NO_EXISTS_ROOM = 3,
+        NOT_IN_ROOM = 4,
         NOT_MATCHED_USER = 5,
         NOT_AVAILABLE_CHAT_TYPE = 6,
         FAILED_TO_SEND = 7,

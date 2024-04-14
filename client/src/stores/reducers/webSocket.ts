@@ -77,6 +77,10 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - exitChatRoomReq`);
         },
+        removeChatRoomReq: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - removeChatRoomReq`);
+        },
         sendMessageReq: (state, action: PayloadAction<Domains.SendMessage>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - sendMessage`);
@@ -127,6 +131,7 @@ export const {
     createChatRoomReq,
     enterChatRoomReq,
     exitChatRoomReq,
+    removeChatRoomReq,
     sendMessageReq,
     saveUserNameReq,
     saveUserMessageReq,

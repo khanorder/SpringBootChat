@@ -4,16 +4,14 @@ import {Item, ItemParams, Menu, useContextMenu} from "react-contexify";
 import {Domains} from "@/domains";
 import {followReq, startChatReq, unfollowReq} from "@/stores/reducers/webSocket";
 import styles from "@/styles/chatUsers.module.sass";
-import stylesMyProfile from "@/styles/chatMyProfile.module.sass";
+import stylesCtxMenu from "@/styles/chatContextMenu.module.sass";
 import Image from "next/image";
 import AddUserIcon from "public/images/add-user.svg";
 import ChatIcon from "public/images/chat.svg";
 import CloseIcon from "public/images/close.svg";
 import 'react-contexify/ReactContexify.css';
 import dynamic from "next/dynamic";
-import {Defines} from "@/defines";
-import UserIcon from "../../../public/images/user-circle.svg";
-import ChatMyProfile from "@/components/chatContents/chatMyProfile";
+const ChatMyProfile = dynamic(() => import("@/components/chatContents/chatMyProfile"), { ssr: false });
 const ChatUserProfile = dynamic(() => import("@/components/chatContents/chatUserProfile"), { ssr: false });
 
 enum UserListType {
@@ -164,21 +162,21 @@ export default function ChatUsers() {
 
     const followMenu = useCallback(() => {
         return (
-            <Menu className={styles.userMenu} id={FOLLOW_MENU_ID}>
-                <Item className={styles.userMenuItem} id="unfollow" onClick={handleItemClick}>
-                    <div className={styles.userMenuItemContent}>
-                        <div className={styles.userMenuItemIconWrapper}>
-                            <Image className={styles.userMenuItemIcon} src={CloseIcon} alt='언팔로우' width={15} height={15} />
+            <Menu className={stylesCtxMenu.menu} id={FOLLOW_MENU_ID}>
+                <Item className={stylesCtxMenu.menuItem} id="unfollow" onClick={handleItemClick}>
+                    <div className={stylesCtxMenu.menuItemContent}>
+                        <div className={stylesCtxMenu.menuItemIconWrapper}>
+                            <Image className={stylesCtxMenu.menuItemIcon} src={CloseIcon} alt='언팔로우' width={15} height={15} />
                         </div>
-                        <div className={styles.userMenuName}>언팔로우</div>
+                        <div className={stylesCtxMenu.menuName}>언팔로우</div>
                     </div>
                 </Item>
-                <Item className={styles.userMenuItem} id="startChat" onClick={handleItemClick}>
-                    <div className={styles.userMenuItemContent}>
-                        <div className={styles.userMenuItemIconWrapper}>
-                            <Image className={styles.userMenuItemIcon} src={ChatIcon} alt='채팅하기' width={15} height={15} />
+                <Item className={stylesCtxMenu.menuItem} id="startChat" onClick={handleItemClick}>
+                    <div className={stylesCtxMenu.menuItemContent}>
+                        <div className={stylesCtxMenu.menuItemIconWrapper}>
+                            <Image className={stylesCtxMenu.menuItemIcon} src={ChatIcon} alt='채팅하기' width={15} height={15} />
                         </div>
-                        <div className={styles.userMenuName}>채팅하기</div>
+                        <div className={stylesCtxMenu.menuName}>채팅하기</div>
                     </div>
                 </Item>
             </Menu>
@@ -187,21 +185,21 @@ export default function ChatUsers() {
 
     const followerMenu = useCallback(() => {
         return (
-            <Menu className={styles.userMenu} id={NORMAL_MENU_ID}>
-                <Item className={styles.userMenuItem} id="follow" onClick={handleItemClick}>
-                    <div className={styles.userMenuItemContent}>
-                        <div className={styles.userMenuItemIconWrapper}>
-                            <Image className={styles.userMenuItemIcon} src={AddUserIcon} alt='팔로우' width={15} height={15} />
+            <Menu className={stylesCtxMenu.menu} id={NORMAL_MENU_ID}>
+                <Item className={stylesCtxMenu.menuItem} id="follow" onClick={handleItemClick}>
+                    <div className={stylesCtxMenu.menuItemContent}>
+                        <div className={stylesCtxMenu.menuItemIconWrapper}>
+                            <Image className={stylesCtxMenu.menuItemIcon} src={AddUserIcon} alt='팔로우' width={15} height={15} />
                         </div>
-                        <div className={styles.userMenuName}>팔로우</div>
+                        <div className={stylesCtxMenu.menuName}>팔로우</div>
                     </div>
                 </Item>
-                <Item className={styles.userMenuItem} id="startChat" onClick={handleItemClick}>
-                    <div className={styles.userMenuItemContent}>
-                        <div className={styles.userMenuItemIconWrapper}>
-                            <Image className={styles.userMenuItemIcon} src={ChatIcon} alt='채팅하기' width={15} height={15} />
+                <Item className={stylesCtxMenu.menuItem} id="startChat" onClick={handleItemClick}>
+                    <div className={stylesCtxMenu.menuItemContent}>
+                        <div className={stylesCtxMenu.menuItemIconWrapper}>
+                            <Image className={stylesCtxMenu.menuItemIcon} src={ChatIcon} alt='채팅하기' width={15} height={15} />
                         </div>
-                        <div className={styles.userMenuName}>채팅하기</div>
+                        <div className={stylesCtxMenu.menuName}>채팅하기</div>
                     </div>
                 </Item>
             </Menu>

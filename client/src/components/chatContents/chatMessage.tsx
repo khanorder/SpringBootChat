@@ -46,7 +46,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
 
         return (
             <div className={styles.chatUserProfileWrapper}>
-                <img className={styles.chatUserProfile} src={userInfo ? userInfo.profileImageUrl : defaultProfileImageUrl} title={data.userName} alt={data.userName} />
+                <img className={styles.chatUserProfile} src={userInfo ? userInfo.profileImageUrl : defaultProfileImageUrl} title={userInfo ? userInfo.userName : "알 수 없음"} alt={userInfo ? userInfo.userName : "알 수 없음"} />
             </div>
         );
     }, [data, user]);

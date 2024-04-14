@@ -1,5 +1,5 @@
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import {useCallback, useEffect, useRef} from "react";
+import {MouseEventHandler, useCallback, useEffect, useRef} from "react";
 import styles from "@/styles/chatRooms.module.sass";
 import {Helpers} from "@/helpers";
 import {Defines} from "@/defines";
@@ -9,9 +9,10 @@ import {Domains} from "@/domains";
 
 export interface ChatRoomProps {
     chatRoom: Domains.ChatRoom;
+    onContextMenu: MouseEventHandler<HTMLElement>;
 }
 
-export default function ChatRoom({ chatRoom }: ChatRoomProps) {
+export default function ChatRoom({ chatRoom, onContextMenu }: ChatRoomProps) {
     const user = useAppSelector(state => state.user);
     const webSocket = useAppSelector(state => state.webSocket);
     const dispatch = useAppDispatch();
@@ -48,11 +49,20 @@ export default function ChatRoom({ chatRoom }: ChatRoomProps) {
     const enterButton = useCallback(() => {
         const latestMessage = 0 < chatRoom.chatDatas.length ? chatRoom.chatDatas[chatRoom.chatDatas.length - 1] : null;
         let roomNameIconClass = styles.chatRoomNameIcon;
-        if (Defines.RoomOpenType.PRIVATE == chatRoom.openType)
-            roomNameIconClass += ` ${styles.privateRoom}`;
-        
+        switch (chatRoom.openType) {
+            case Defines.RoomOpenType.PREPARED:
+                roomNameIconClass += ` ${styles.preparedRoom}`;
+                break
+
+            case Defines.RoomOpenType.PRIVATE:
+                roomNameIconClass += ` ${styles.privateRoom}`;
+                break
+
+        }
+
         return (
-            <button className={styles.chatRoomEnterButton} onClick={e => enterChatRoom(chatRoom.roomId)}
+            <button className={styles.chatRoomEnterButton}
+                    onClick={e => enterChatRoom(chatRoom.roomId)}
                     title={`'${chatRoom.roomName}' 채팅방 입장`}>
                 <div className={roomNameIconClass}>
                     <div className={styles.chatRoomNameIconText}>
@@ -68,13 +78,13 @@ export default function ChatRoom({ chatRoom }: ChatRoomProps) {
                         <div className={styles.chatRoomPreview}></div>
                     </div>
                 </div>
-                <div className={styles.chatRoomOpenType}>{Helpers.getChatRoomOpenTypeName(chatRoom.openType)}</div>
+                {/*<div className={styles.chatRoomOpenType}>{Helpers.getChatRoomOpenTypeName(chatRoom.openType)}</div>*/}
             </button>
         );
     }, [chatRoom, enterChatRoom]);
 
     return (
-        <li className={styles.chatRoomListItem}>
+        <li className={styles.chatRoomListItem} onContextMenu={onContextMenu}>
             {enterButton()}
         </li>
     );

@@ -76,14 +76,14 @@ export namespace Domains {
     }
 
     export class SendMessage {
-        type: Defines.ChatType;
         id: string;
+        type: Defines.ChatType;
         roomId: string;
         message: string;
 
-        constructor(type: Defines.ChatType, id: string, roomId: string, message: string) {
-            this.type = type;
+        constructor(id: string, type: Defines.ChatType, roomId: string, message: string) {
             this.id = id;
+            this.type = type;
             this.roomId = roomId;
             this.message = message;
         }
@@ -95,16 +95,14 @@ export namespace Domains {
         userId: string;
         id: string;
         time: number;
-        userName: string;
         message: string;
 
-        constructor(type: Defines.ChatType, roomId: string, userId: string, id: string, time: number, userName: string, message: string) {
+        constructor(type: Defines.ChatType, roomId: string, userId: string, id: string, time: number, message: string) {
             this.type = type;
             this.roomId = roomId;
             this.userId = userId;
             this.id = id;
             this.time = time;
-            this.userName = userName;
             this.message = message;
         }
 
@@ -127,7 +125,7 @@ export namespace Domains {
                 const bytesMessage = bytes.slice(62 + userNameByteLength, 62 + userNameByteLength + messageByteLength);
                 const message = new TextDecoder().decode(bytesMessage);
 
-                return new Chat(type, roomId, userId, id, time, userName, message);
+                return new Chat(type, roomId, userId, id, time, message);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -969,18 +967,20 @@ export namespace Domains {
     }
 
     export class RemoveChatRoomRes {
+        result: Errors.RemoveChatRoom
         roomId: string;
 
-        constructor(roomId: string) {
+        constructor(result: Errors.RemoveChatRoom, roomId: string) {
+            this.result = result;
             this.roomId = roomId;
         }
 
         static decode(bytes: Uint8Array) {
             try {
-                const bytesRoomId= bytes.slice(0, 16);
+                const bytesRoomId= bytes.slice(1, 17);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
 
-                return new RemoveChatRoomRes(roomId);
+                return new RemoveChatRoomRes(bytes[0], roomId);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1155,16 +1155,14 @@ export namespace Domains {
         userIds: string[];
         types: Defines.ChatType[];
         sendAts: number[];
-        userNames: string[];
         messages: string[];
 
-        constructor(roomId: string, chatIds: string[], userIds: string[], types: Defines.ChatType[], sendAts: number[], userNames: string[], messages: string[]) {
+        constructor(roomId: string, chatIds: string[], userIds: string[], types: Defines.ChatType[], sendAts: number[], messages: string[]) {
             this.roomId = roomId;
             this.chatIds = chatIds;
             this.userIds = userIds;
             this.types = types;
             this.sendAts = sendAts;
-            this.userNames = userNames;
             this.messages = messages;
         }
 
@@ -1176,9 +1174,7 @@ export namespace Domains {
                 const userIds: string[] = [];
                 const types: Defines.ChatType[] = [];
                 const sendAts: number[] = [];
-                const userNameLengths: number[] = [];
                 const messageLengths: number[] = [];
-                const userNames: string[] = [];
                 const messages: string[] = [];
 
                 const offsetBytesRoomId = 20;
@@ -1186,8 +1182,7 @@ export namespace Domains {
                 const offsetBytesUserIds = offsetBytesChatIds + (16 * count);
                 const offsetBytesTypes = offsetBytesUserIds + (count);
                 const offsetBytesSendAts = offsetBytesTypes + (count * 8);
-                const offsetBytesUserNameLength = offsetBytesSendAts + (count);
-                const offsetBytesMessageLength = offsetBytesUserNameLength + (4 * count);
+                const offsetBytesMessageLength = offsetBytesSendAts + (4 * count);
 
                 for (let i = 0; i < count; i++) {
                     let bytesChatId = bytes.slice(offsetBytesRoomId + (i * 16), offsetBytesRoomId + ((i + 1) * 16));
@@ -1202,28 +1197,18 @@ export namespace Domains {
                     let bytesSendAt = bytes.slice(offsetBytesTypes + (i * 8), offsetBytesTypes + ((i + 1) * 8));
                     sendAts.push(Helpers.getLongFromByteArray(bytesSendAt));
 
-                    let userNameLength = bytes[offsetBytesSendAts + i];
-                    userNameLengths.push(userNameLength);
-
-                    let bytesMessage = bytes.slice(offsetBytesUserNameLength + (i * 4), offsetBytesUserNameLength + ((i + 1) * 4));
+                    let bytesMessage = bytes.slice(offsetBytesSendAts + (i * 4), offsetBytesSendAts + ((i + 1) * 4));
                     messageLengths.push(Helpers.getIntFromByteArray(bytesMessage));
                 }
 
-                let offsetBytesUserNames = offsetBytesMessageLength;
-                for (let i = 0; i < userNameLengths.length; i++) {
-                    let bytesUserName = bytes.slice(offsetBytesUserNames, offsetBytesUserNames + userNameLengths[i]);
-                    userNames.push(new TextDecoder().decode(bytesUserName));
-                    offsetBytesUserNames += userNameLengths[i];
-                }
-
-                let offsetBytesMessages = offsetBytesUserNames;
+                let offsetBytesMessages = offsetBytesMessageLength;
                 for (let i = 0; i < messageLengths.length; i++) {
                     let bytesMessage = bytes.slice(offsetBytesMessages, offsetBytesMessages + messageLengths[i]);
                     messages.push(new TextDecoder().decode(bytesMessage));
                     offsetBytesMessages += messageLengths[i];
                 }
 
-                return new Domains.HistoryChatRoomRes(roomId, chatIds, userIds, types, sendAts, userNames, messages);
+                return new Domains.HistoryChatRoomRes(roomId, chatIds, userIds, types, sendAts, messages);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1234,7 +1219,7 @@ export namespace Domains {
             const histories: Domains.Chat[] = [];
             try {
                 for (let i = 0; i < this.chatIds.length; i++) {
-                    histories.push(new Chat(this.types[i], this.roomId, this.userIds[i], this.chatIds[i], this.sendAts[i], this.userNames[i], this.messages[i]));
+                    histories.push(new Chat(this.types[i], this.roomId, this.userIds[i], this.chatIds[i], this.sendAts[i], this.messages[i]));
                 }
             } catch (error) {
                 console.error(error);
@@ -1250,44 +1235,46 @@ export namespace Domains {
         userId: string;
         id: string;
         time: number;
-        userName: string;
         message: string;
 
-        constructor(result: Errors.TalkChatRoom, type: Defines.ChatType, roomId: string, userId: string, id: string, time: number, userName: string, message: string) {
+        constructor(result: Errors.TalkChatRoom, type: Defines.ChatType, roomId: string, userId: string, id: string, time: number, message: string) {
             this.result = result;
             this.type = type;
             this.roomId = roomId;
             this.userId = userId;
             this.id = id;
             this.time = time;
-            this.userName = userName;
             this.message = message;
         }
 
         static decode(bytes: Uint8Array) {
             try {
+                const offsetResult = 1;
                 const result = bytes[0];
                 if (1 == bytes.length)
-                    return new TalkChatRoomRes(result, Defines.ChatType.TALK, '', '', '', (new Date()).getTime(), '', '');
+                    return new TalkChatRoomRes(result, Defines.ChatType.TALK, '', '', '', (new Date()).getTime(), '');
 
-                const type = bytes[1];
-                const bytesRoomId= bytes.slice(2, 18);
+                const offsetType = offsetResult + 1;
+                const offsetRoomId = offsetType + 16;
+                const offsetUserId = offsetRoomId + 16;
+                const offsetId = offsetUserId + 16;
+                const offsetTime = offsetId + 8;
+                const offsetMessageBytesLength = offsetTime + 4;
+                const type = bytes[offsetResult];
+                const bytesRoomId= bytes.slice(offsetType, offsetRoomId);
                 const roomId= Helpers.getUUIDFromByteArray(bytesRoomId);
-                const bytesUserId = bytes.slice(18, 34);
+                const bytesUserId = bytes.slice(offsetRoomId, offsetUserId);
                 const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                const bytesId = bytes.slice(34, 50);
+                const bytesId = bytes.slice(offsetUserId, offsetId);
                 const id = Helpers.getUUIDFromByteArray(bytesId);
-                const bytesTime = bytes.slice(50, 58);
+                const bytesTime = bytes.slice(offsetId, offsetTime);
                 const time = Helpers.getLongFromByteArray(bytesTime);
-                const userNameByteLength = bytes[58];
-                const bytesMessageByteLength = bytes.slice(59, 63);
+                const bytesMessageByteLength = bytes.slice(offsetTime, offsetMessageBytesLength);
                 const messageByteLength = Helpers.getIntFromByteArray(bytesMessageByteLength);
-                const bytesUserName = bytes.slice(63, 63 + userNameByteLength);
-                const userName = new TextDecoder().decode(bytesUserName);
-                const bytesMessage = bytes.slice(63 + userNameByteLength, 63 + userNameByteLength + messageByteLength);
+                const bytesMessage = bytes.slice(offsetMessageBytesLength, offsetMessageBytesLength + messageByteLength);
                 const message = new TextDecoder().decode(bytesMessage);
 
-                return new TalkChatRoomRes(result, type, roomId, userId, id, time, userName, message);
+                return new TalkChatRoomRes(result, type, roomId, userId, id, time, message);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1295,7 +1282,7 @@ export namespace Domains {
         }
 
         getChatData() {
-            return new Chat(this.type, this.roomId, this.userId, this.id, this.time, this.userName, this.message);
+            return new Chat(this.type, this.roomId, this.userId, this.id, this.time, this.message);
         }
     }
 

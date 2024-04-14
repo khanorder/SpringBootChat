@@ -69,6 +69,14 @@ public class UserService {
         return optUser.isPresent();
     }
 
+    public Optional<ChatRoomInfo> getEnteredChatRoomInfo(User user) {
+        var currentUser = connectedUsers.get(user.getId());
+        if (null == currentUser)
+            return Optional.empty();
+
+        return currentUser.getCurrentChatRoom();
+    }
+
     public void addUserChatRoomInfo(User user, ChatRoom chatRoom) {
         if (user.getId().isEmpty())
             return;
@@ -115,8 +123,8 @@ public class UserService {
             availableChatRooms = chatRoomRepository.findAvailableChatRoomInfos(userId);
 
             // 입장했던 채팅방만
-            var userChatRooms = chatRoomRepository.findInUserChatRoomInfos(userId);
-            user.get().setChatRoomList(new ConcurrentLinkedQueue<>(getRoomInfosByUserId(userChatRooms)));
+            //var userChatRooms = chatRoomRepository.findInUserChatRoomInfos(userId);
+            user.get().setChatRoomList(new ConcurrentLinkedQueue<>(getRoomInfosByUserId(availableChatRooms)));
             user.get().setSessionId(session.getId());
 
             var follows = findFollows(user.get());

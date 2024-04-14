@@ -33,7 +33,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
             value = "SELECT a.roomId AS roomId, a.roomName AS roomName, a.openType AS openType, (SELECT COUNT(c.roomId) FROM user_rooms AS c WHERE c.roomId = a.roomId) AS userCount " +
                     "FROM chat_rooms AS a " +
                     "LEFT JOIN user_rooms AS b ON a.roomId = b.roomId " +
-                    "WHERE b.userId = :userId",
+                    "WHERE (a.openType = 0 AND a.ownerId = :userId) OR (a.openType = 1 AND b.userId = :userId)",
             nativeQuery = true
     )
     List<ChatRoomInfoInterface> findInUserChatRoomInfos(@Param("userId") String userId);
@@ -42,7 +42,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
             value = "SELECT a.roomId AS roomId, a.roomName AS roomName, a.openType AS openType, (SELECT COUNT(c.roomId) FROM user_rooms AS c WHERE c.roomId = a.roomId) AS userCount " +
                     "FROM chat_rooms AS a " +
                     "LEFT JOIN user_rooms AS b ON a.roomId = b.roomId " +
-                    "WHERE b.userId = :userId OR a.openType = 1 " +
+                    "WHERE (a.openType = 0 AND a.ownerId = :userId) OR (a.openType = 1 AND b.userId = :userId) OR a.openType = 2 " +
                     "GROUP BY a.roomId",
             nativeQuery = true
     )

@@ -7,9 +7,9 @@ import java.util.Optional;
 
 @Getter
 public enum RoomOpenType implements Types {
-    PRIVATE(0),
-    PUBLIC(1),
-    FOLLOW(2);
+    PREPARED(0),
+    PRIVATE(1),
+    PUBLIC(2);
 
     private final int number;
 

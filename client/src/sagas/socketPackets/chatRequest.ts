@@ -8,6 +8,7 @@ import {PayloadAction} from "@reduxjs/toolkit";
 import {Domains} from "@/domains";
 import isEmpty from "lodash/isEmpty";
 import {AppConfigsState} from "@/stores/reducers/appConfigs";
+import {ChatState} from "@/stores/reducers/chat";
 
 export function* callCheckAuthenticationReq(socket: WebSocket) {
     if ('production' !== process.env.NODE_ENV)
@@ -185,6 +186,41 @@ export function* callCreateChatRoomReq(action: PayloadAction<Domains.CreateChatR
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesChatRoomName = new Uint8Array(Buffer.from(action.payload.roomName.trim(), 'utf-8'));
     const packet = Helpers.mergeBytesPacket([flag, bytesRoomOpenType, bytesUserId, bytesChatRoomName]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callRemoveChatRoomReq(action: PayloadAction<string>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callRemoveChatRoomReq`);
+
+    if (isEmpty(action.payload)) {
+        alert("삭제할 채팅방 아이디가 필요합니다.");
+        return;
+    }
+
+    const chat: ChatState = yield select((state: RootState) => state.chat);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveChatRoomReq: socket is not available.`);
+        return;
+    }
+
+    const existsChatRoom = chat.chatRooms.find(_ => _.roomId == action.payload);
+    if (!existsChatRoom) {
+        alert("이용중인 채팅방이 아닙니다.");
+        return;
+    }
+
+    if (Defines.RoomOpenType.PUBLIC == existsChatRoom.openType) {
+        alert("삭제할 수있는 채팅방이 아닙니다.");
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_CHAT_ROOM]);
+    const bytesRoomId = Helpers.getByteArrayFromUUID(action.payload.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesRoomId]);
     webSocketState.socket.send(packet);
 }
 
