@@ -73,6 +73,12 @@ export namespace Errors {
         FAILED_TO_REMOVE = 6,
     }
 
+    export enum GetUserInfo {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        NOT_FOUND_USER = 2,
+    }
+
     export enum Follow {
         NONE = 0,
         AUTH_REQUIRED = 1,

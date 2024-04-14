@@ -82,6 +82,25 @@ export function* callConnectedUsersReq() {
     webSocketState.socket.send(flag);
 }
 
+export function* callGetUserInfoReq(action: PayloadAction<string>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callGetUserInfoReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callGetUserInfoReq: socket is not available.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_GET_USER_INFO]);
+    const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId]);
+    webSocketState.socket.send(packet);
+}
+
 export function* callFollowReq(action: PayloadAction<Domains.User>) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callFollowReq`);
@@ -290,10 +309,9 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
     const bytesChatType = new Uint8Array([action.payload.type]);
     const bytesChatId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
     const bytesChatRoomId = Helpers.getByteArrayFromUUID(action.payload.roomId.trim());
-    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
     const bytesMessage = new Uint8Array(Buffer.from(action.payload.message.trim(), 'utf8'));
     const bytesMessageLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
-    const packet = Helpers.mergeBytesPacket([flag, bytesChatType, bytesChatId, bytesChatRoomId, bytesUserId, bytesMessageLength, bytesMessage]);
+    const packet = Helpers.mergeBytesPacket([flag, bytesChatType, bytesChatId, bytesChatRoomId, bytesMessageLength, bytesMessage]);
     webSocketState.socket.send(packet);
 }
 

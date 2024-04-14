@@ -1,26 +1,16 @@
 import {
     createRef,
-    Dispatch,
     ReactElement,
-    SetStateAction,
     useCallback,
     useEffect,
     useRef
 } from "react";
 import styles from "@/styles/chat.module.sass";
-import {Defines} from "@/defines";
-import {dayjs} from "@/helpers/localizedDayjs";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
-import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 import {Domains} from "@/domains";
-const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 const ChatMessage = dynamic(() => import("@/components/chatContents/chatMessage"), { ssr: false });
-
-export interface ChatContentsProps {
-    setChatDetailImageId: Dispatch<SetStateAction<string>>;
-} 
 
 export default function ChatContents() {
     const firstRender = useRef(true);

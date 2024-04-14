@@ -619,6 +619,43 @@ export namespace Domains {
         }
     }
 
+    export class GetUserInfoRes {
+        result: Errors.GetUserInfo;
+        user: Domains.User|null;
+
+        constructor(result: Errors.GetUserInfo, user?: Domains.User) {
+            this.result = result;
+            this.user = 'undefined' != typeof user && null != user ? user : null;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const haveProfile = bytes[1] > 0;
+                const offsetHaveProfile = 2;
+                const offsetId = offsetHaveProfile + 16;
+                const offsetLatestActive = offsetId + 8;
+                const offsetOnline = offsetLatestActive + 1;
+                const offsetNameLength = offsetOnline + 1;
+                const offsetMessageLength = offsetNameLength + 1;
+                const bytesId = bytes.slice(offsetHaveProfile, offsetId);
+                const id = Helpers.getUUIDFromByteArray(bytesId);
+                const bytesLatestActive = bytes.slice(offsetId, offsetLatestActive);
+                const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
+                const online = bytes[offsetLatestActive] > 0;
+                const nameLength = bytes[offsetOnline];
+                const messageLength = bytes[offsetNameLength];
+                const bytesName = bytes.slice(offsetMessageLength, offsetMessageLength + nameLength)
+                const name = new TextDecoder().decode(bytesName);
+                const bytesMessage = bytes.slice(offsetMessageLength + nameLength, offsetMessageLength + nameLength + messageLength)
+                const message = new TextDecoder().decode(bytesMessage);
+                return new GetUserInfoRes(bytes[0], new Domains.User(id, name, message, haveProfile, latestActive, online));
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
     export class FollowRes {
         result: Errors.Follow;
         user: Domains.User|null
@@ -1027,15 +1064,13 @@ export namespace Domains {
         }
     }
 
-    export class UpdateChatRoomUsersRes {
+    export class UpdateChatRoomRes {
         roomId: string;
         userIds: string[];
-        userNames: string[];
 
-        constructor(roomId: string, userIds: string[], userNames: string[]) {
+        constructor(roomId: string, userIds: string[]) {
             this.roomId = roomId;
             this.userIds = userIds;
-            this.userNames = userNames;
         }
 
         static decode(bytes: Uint8Array) {
@@ -1045,29 +1080,14 @@ export namespace Domains {
                 const bytesUserCount= bytes.slice(16, 20);
                 const userCount= Helpers.getIntFromByteArray(bytesUserCount);
                 const userIds: string[] = [];
-                const userNames: string[] = [];
-                const userNameLengths: number[] = [];
                 for (let i = 0; i < userCount; i++) {
                     let userIdOffset= 20 + (i * 16);
                     let bytesUserId= bytes.slice(userIdOffset, userIdOffset + 16);
                     let userId = Helpers.getUUIDFromByteArray(bytesUserId);
                     userIds.push(userId);
-                    let userNameLengthOffset= (20 + userCount * 16) + i;
-                    let bytesUserNameLength= bytes.slice(userNameLengthOffset, userNameLengthOffset + 1);
-                    userNameLengths.push(bytesUserNameLength[0]);
-                    let bytesUserNameOffset= 0;
-                    if (0 < userNameLengths.length && 0 < i) {
-                        let prevUserNameLengths = userNameLengths.slice(0, i);
-                        if (0 < prevUserNameLengths.length)
-                            bytesUserNameOffset = prevUserNameLengths.reduce((p, c) => p + c);
-                    }
-                    let userNameOffset = 20 + (userCount * 16) + userCount + bytesUserNameOffset;
-                    let bytesUserName = bytes.slice(userNameOffset, userNameOffset + userNameLengths[i]);
-                    let userName =  new TextDecoder().decode(bytesUserName);
-                    userNames.push(userName);
                 }
 
-                return new UpdateChatRoomUsersRes(roomId, userIds, userNames);
+                return new UpdateChatRoomRes(roomId, userIds);
             } catch (error) {
                 console.error(error);
                 return null;

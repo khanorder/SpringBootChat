@@ -17,8 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -202,6 +200,34 @@ public class ResHandler {
             logger.error(ex.getMessage(), ex);
         }
         return resPacket;
+    }
+
+    public void resGetUserInfo(WebSocketSession session, ErrorGetUserInfo error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_USER_INFO, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resGetUserInfo(WebSocketSession session, User user) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_USER_INFO, ErrorGetUserInfo.NONE);
+            var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
+            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
+            var bytesLatestActive = Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime());
+            var bytesOnline = new byte[] {(byte)(userService.isConnectedUser(user.getId()) ? 1 : 0)};
+            var bytesUserName = user.getName().getBytes();
+            var bytesUserNameLength = new byte[] {(byte)bytesUserName.length};
+            var bytesMessage = user.getMessage().getBytes();
+            var bytesMessageLength = new byte[] {(byte)bytesMessage.length};
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesUserId, bytesLatestActive, bytesOnline, bytesUserNameLength, bytesMessageLength, bytesUserName, bytesMessage);
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
     }
 
     public void resFollows(WebSocketSession session, ConcurrentLinkedQueue<UserInterface> follows) {
@@ -577,6 +603,7 @@ public class ResHandler {
                     if (chatRoom.getUsers().isEmpty())
                         return;
 
+                    logger.info("resAddChatRoom: " + chatRoom.getOpenType().name() + ", users: " + chatRoom.getUsers().size());
                     sessionHandler.sendEachSessionInRoom(chatRoom, resPacket);
                     break;
 
@@ -662,7 +689,7 @@ public class ResHandler {
         }
     }
 
-    public void noticeRoomUsersChanged(ChatRoom chatRoom) {
+    public void noticeUpdateChatRoom(ChatRoom chatRoom) {
         try {
             if (chatRoom.getUsers().isEmpty())
                 return;
@@ -674,8 +701,6 @@ public class ResHandler {
             var bytesUserCount = Helpers.getByteArrayFromInt(chatRoom.getUsers().size());
 
             var bytesUserIds = new byte[0];
-            var bytesUserNameLengths = new byte[0];
-            var bytesUserNames = new byte[0];
             var userIds = chatRoom.getUsers().keys();
             while (userIds.hasMoreElements()) {
                 var userId = userIds.nextElement();
@@ -685,12 +710,9 @@ public class ResHandler {
 
                 var user = optUser.get();
                 bytesUserIds = Helpers.mergeBytePacket(bytesUserIds, Helpers.getByteArrayFromUUID(user.getId()));
-                var bytesUserName = user.getName().getBytes();
-                bytesUserNameLengths = Helpers.mergeBytePacket(bytesUserNameLengths, new byte[] {(byte)bytesUserName.length});
-                bytesUserNames = Helpers.mergeBytePacket(bytesUserNames, bytesUserName);
             }
 
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesRoomId, bytesUserCount, bytesUserIds, bytesUserNameLengths, bytesUserNames);
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesRoomId, bytesUserCount, bytesUserIds);
             sessionHandler.sendEachSessionInRoom(chatRoom, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

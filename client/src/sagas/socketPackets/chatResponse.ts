@@ -24,7 +24,7 @@ import {
     setFollows,
     setUserMessage,
     setUserId,
-    setUserName, setHaveProfile, setLatestActive, updateUsersData, setProfileImageUrl, UserState
+    setUserName, setHaveProfile, setLatestActive, updateUsersData, setProfileImageUrl, UserState, addOthers
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -237,6 +237,30 @@ export function* noticeDisconnectedUserRes(data: Uint8Array) {
     }
 
     yield put(removeConnectedUser(response.userId));
+    return response;
+}
+
+export function* getUserInfoRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - getUserInfoRes`);
+
+    const response = Domains.GetUserInfoRes.decode(data);
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - getUserInfoRes: response is null.`);
+        return null;
+    }
+
+    if (null == response.user) {
+        return null;
+    }
+
+    const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+    const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
+    response.user.updateProfile(profileImage);
+    yield put(addOthers(response.user));
     return response;
 }
 
@@ -658,7 +682,7 @@ export function* updateChatRoomRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`packet - updateChatRoomRes`);
 
-    const response = Domains.UpdateChatRoomUsersRes.decode(data);
+    const response = Domains.UpdateChatRoomRes.decode(data);
 
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
@@ -670,7 +694,7 @@ export function* updateChatRoomRes(data: Uint8Array) {
     if (response && 0 < response.userIds.length) {
         const list: Domains.User[] = [];
         for (let i = 0; i < response.userIds.length; i++)
-            list.push(new Domains.User(response.userIds[i], response.userNames[i], '', false, 0));
+            list.push(new Domains.User(response.userIds[i], "", "", false, 0));
 
         yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: list}));
     }

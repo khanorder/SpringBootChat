@@ -22,7 +22,7 @@ import {
     saveUserProfileReq,
     removeUserProfileReq,
     historyChatRoomReq,
-    removeChatRoomReq
+    removeChatRoomReq, getUserInfoReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -63,7 +63,7 @@ import {
     noticeUserMessageChangedRes,
     changeUserProfileRes,
     noticeUserProfileChangedRes,
-    removeUserProfileRes, noticeUserProfileRemovedRes
+    removeUserProfileRes, noticeUserProfileRemovedRes, getUserInfoRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -81,7 +81,7 @@ import {
     callRemoveNotificationReq,
     callSaveUserMessageReq,
     callSaveUserProfileReq,
-    callRemoveUserProfileReq, callHistoryChatRoomReq, callRemoveChatRoomReq
+    callRemoveUserProfileReq, callHistoryChatRoomReq, callRemoveChatRoomReq, callGetUserInfoReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -308,6 +308,10 @@ function* onMessage (socket: WebSocket) {
                             yield call(connectedUsersRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_GET_USER_INFO:
+                            yield call(getUserInfoRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_NOTICE_CONNECTED_USER:
                             yield call(noticeConnectedUserRes, packetData);
                             break;
@@ -483,6 +487,7 @@ export function* watchWebSocket() {
     yield takeLatest(initSocket, callInitSocket);
     yield takeLatest(startReconnecting, callStartReconnecting);
     yield takeLatest(connectedUsersReq, callConnectedUsersReq);
+    yield takeLatest(getUserInfoReq, callGetUserInfoReq);
     yield takeLatest(followReq, callFollowReq);
     yield takeLatest(unfollowReq, callUnfollowReq);
     yield takeLatest(startChatReq, callStartChatReq);

@@ -94,6 +94,10 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onConnectedUsers(session);
                     break;
 
+                case REQ_GET_USER_INFO:
+                    reqHandler.onGetUserInfo(session, connectedUser, packet);
+                    break;
+
                 case REQ_FOLLOW:
                     reqHandler.onFollow(session, connectedUser, packet);
                     break;

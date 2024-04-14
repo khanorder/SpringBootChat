@@ -41,20 +41,16 @@ public class ChatRoomService {
         this.publicChatRooms = new ConcurrentHashMap<>();
     }
 
-    public List<ChatRoom> findAllPublicChatRooms() throws Exception {
-        return new ArrayList<>(publicChatRooms.values());
-    }
-
-    public List<ChatRoom> findAllPrivateChatRooms() throws Exception {
-        return new ArrayList<>(privateChatRooms.values());
-    }
-
-    public List<ChatRoom> findAllPublicChatRoomsByUserId(String userId) throws Exception {
-        return new ArrayList<>(publicChatRooms.values().stream().filter(chatRoom -> chatRoom.getUsers().containsKey(userId)).toList());
+    public List<ChatRoom> findAllPreparedChatRoomsByUserId(String userId) throws Exception {
+        return new ArrayList<>(preparedChatRooms.values().stream().filter(chatRoom -> chatRoom.getUsers().containsKey(userId)).toList());
     }
 
     public List<ChatRoom> findAllPrivateChatRoomsByUserId(String userId) throws Exception {
         return new ArrayList<>(privateChatRooms.values().stream().filter(chatRoom -> chatRoom.getUsers().containsKey(userId)).toList());
+    }
+
+    public List<ChatRoom> findAllPublicChatRoomsByUserId(String userId) throws Exception {
+        return new ArrayList<>(publicChatRooms.values().stream().filter(chatRoom -> chatRoom.getUsers().containsKey(userId)).toList());
     }
 
     public List<ChatRoom> findAllChatRoomsByUserId(String userId) throws Exception {
@@ -86,19 +82,7 @@ public class ChatRoomService {
                     dbChatRoom.get().setChats(new ConcurrentLinkedQueue<>(dbChats));
 
                 chatRoom.set(dbChatRoom.get());
-                switch (chatRoom.get().getOpenType()) {
-                    case PREPARED:
-                        preparedChatRooms.put(chatRoom.get().getRoomId(), chatRoom.get());
-                        break;
-
-                    case PRIVATE:
-                        privateChatRooms.put(chatRoom.get().getRoomId(), chatRoom.get());
-                        break;
-
-                    case PUBLIC:
-                        publicChatRooms.put(chatRoom.get().getRoomId(), chatRoom.get());
-                        break;
-                }
+                addChatRoomMemory(chatRoom.get());
             }
         }
         return Optional.ofNullable(chatRoom.get());
@@ -110,8 +94,9 @@ public class ChatRoomService {
             return createOneToOneChatRoom(user, targetUser);
 
         var result = enterRoom(chatRoomInfo.get().getRoomId(), user);
-        if (result.getLeft().equals(ErrorEnterChatRoom.NONE) && result.getRight().isPresent())
+        if (result.getLeft().equals(ErrorEnterChatRoom.NONE) && result.getRight().isPresent()) {
             return result.getRight();
+        }
 
         return Optional.empty();
     }
@@ -122,19 +107,7 @@ public class ChatRoomService {
             var chatRoom = new ChatRoom(roomId, name, roomOpenType, user.getId());
 
             chatRoom.addUserToRoom(user);
-            switch (roomOpenType) {
-                case PREPARED:
-                    preparedChatRooms.put(roomId, chatRoom);
-                    break;
-
-                case PRIVATE:
-                    privateChatRooms.put(roomId, chatRoom);
-                    break;
-
-                case PUBLIC:
-                    publicChatRooms.put(roomId, chatRoom);
-                    break;
-            }
+            addChatRoomMemory(chatRoom);
             chatRoomRepository.save(chatRoom);
             userService.addUserChatRoomInfo(user, chatRoom);
             user.setCurrentChatRoom(Optional.of(chatRoom.getInfo()));
@@ -147,13 +120,14 @@ public class ChatRoomService {
 
     public Optional<ChatRoom> createOneToOneChatRoom(User user, User targetUser) {
         try {
-            var chatRoom = createRoom(targetUser.getName(), user, RoomOpenType.PREPARED);
-            if (chatRoom.isEmpty())
+            var optChatRoom = createRoom(targetUser.getName(), user, RoomOpenType.PREPARED);
+            if (optChatRoom.isEmpty())
                 return Optional.empty();
 
             // 1:1 대화상대의 정보를 채팅방 사용자 정보에 추가
-            userRoomRepository.save(new UserRoom(targetUser.getId(), chatRoom.get().getRoomId()));
-            return chatRoom;
+            userRoomRepository.save(new UserRoom(targetUser.getId(), optChatRoom.get().getRoomId()));
+            optChatRoom.get().addUserToRoom(targetUser);
+            return optChatRoom;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             return Optional.empty();
@@ -203,7 +177,7 @@ public class ChatRoomService {
             return ErrorExitChatRoom.NO_EXISTS_ROOM;
 
         if (existsRoom.get().getUsers().isEmpty()) {
-            removeRoomMemory(existsRoom.get().getOpenType(), chatRoom.getRoomId());
+            removeChatRoomMemory(existsRoom.get().getOpenType(), chatRoom.getRoomId());
             return ErrorExitChatRoom.ROOM_REMOVED;
         }
 
@@ -214,7 +188,7 @@ public class ChatRoomService {
         existsRoom.get().getUsers().remove(user.getId());
 
         if (existsRoom.get().getUsers().isEmpty()) {
-            removeRoomMemory(existsRoom.get().getOpenType(), chatRoom.getRoomId());
+            removeChatRoomMemory(existsRoom.get().getOpenType(), chatRoom.getRoomId());
             return ErrorExitChatRoom.ROOM_REMOVED;
         }
 
@@ -241,21 +215,59 @@ public class ChatRoomService {
         existsRoom.get().getUsers().remove(user.getId());
 
         if (existsRoom.get().getUsers().isEmpty())
-            removeRoomMemory(existsRoom.get().getOpenType(), roomId);
+            removeChatRoomMemory(existsRoom.get().getOpenType(), roomId);
 
         return Pair.of(ErrorRemoveChatRoom.NONE, existsRoom);
     }
 
-    public void removeRoomMemory(RoomOpenType openType, String roomId) throws Exception {
-        switch (openType) {
-            case PRIVATE:
-                privateChatRooms.remove(roomId);
-                break;
+    public void addChatRoomMemory(ChatRoom chatRoom) {
+        try {
+            switch (chatRoom.getOpenType()) {
+                case PREPARED:
+                    preparedChatRooms.put(chatRoom.getRoomId(), chatRoom);
+                    break;
 
-            case PUBLIC:
-                publicChatRooms.remove(roomId);
-                break;
+                case PRIVATE:
+                    privateChatRooms.put(chatRoom.getRoomId(), chatRoom);
+                    break;
+
+                case PUBLIC:
+                    publicChatRooms.put(chatRoom.getRoomId(), chatRoom);
+                    break;
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
         }
+    }
+
+    public void removeChatRoomMemory(RoomOpenType openType, String roomId) {
+        try {
+            switch (openType) {
+                case PREPARED:
+                    preparedChatRooms.remove(roomId);
+                    break;
+
+                case PRIVATE:
+                    privateChatRooms.remove(roomId);
+                    break;
+
+                case PUBLIC:
+                    publicChatRooms.remove(roomId);
+                    break;
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void startPreparedChatRoom(ChatRoom chatRoom) {
+        if (!chatRoom.getOpenType().equals(RoomOpenType.PREPARED))
+            return;
+
+        chatRoom.setOpenType(RoomOpenType.PRIVATE);
+        removeChatRoomMemory(RoomOpenType.PREPARED, chatRoom.getRoomId());
+        addChatRoomMemory(chatRoom);
+        chatRoomRepository.save(chatRoom);
     }
 
     public void addChatToRoom(Chat chat) {

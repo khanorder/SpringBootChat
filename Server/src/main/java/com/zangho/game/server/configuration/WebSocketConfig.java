@@ -32,7 +32,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public SessionHandler sessionHandler() {
-        return new SessionHandler();
+        return new SessionHandler(userService);
     }
 
     @Bean

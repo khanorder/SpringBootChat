@@ -1,6 +1,7 @@
 package com.zangho.game.server.socketHandler.chat;
 
 import com.zangho.game.server.domain.chat.ChatRoom;
+import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,11 +18,13 @@ public class SessionHandler {
 
     private final Logger logger = LoggerFactory.getLogger(SessionHandler.class);
     private final boolean isDevelopment;
+    private final UserService userService;
     private final ConcurrentHashMap<String, WebSocketSession> connectedSessions;
 
-    public SessionHandler() {
+    public SessionHandler(UserService userService) {
         var config = System.getProperty("Config");
         isDevelopment = null == config || !config.equals("production");
+        this.userService = userService;
         this.connectedSessions = new ConcurrentHashMap<>();
     }
 
@@ -88,7 +91,13 @@ public class SessionHandler {
             return;
 
         var sessionIds = new HashSet<String>();
-        chatRoom.getUsers().forEach((key, value) -> sessionIds.add(value.getSessionId()));
+        chatRoom.getUsers().forEach((key, value) -> {
+            var optUser = userService.getConnectedUserByUserId(value.getUserId());
+            if (optUser.isEmpty())
+                return;
+
+            sessionIds.add(optUser.get().getSessionId());
+        });
         sendEachSession(sessionIds, packet);
     }
 

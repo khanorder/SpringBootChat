@@ -34,28 +34,10 @@ public class UserRoom {
     @Column(length = 1023)
     private Subscription subscription;
 
-    @Transient
-    private String sessionId;
-
     public UserRoom() {
         this.userId = "";
         this.roomId = "";
         this.subscription = null;
-        this.sessionId = "";
-    }
-
-    public UserRoom(@NonNull String userId, @NonNull String roomId, Subscription subscription) {
-        this.userId = userId;
-        this.roomId = roomId;
-        this.subscription = subscription;
-        this.sessionId = "";
-    }
-
-    public UserRoom(@NonNull String userId, @NonNull String roomId, String sessionId) {
-        this.userId = userId;
-        this.roomId = roomId;
-        this.subscription = null;
-        this.sessionId = sessionId;
     }
 
 }

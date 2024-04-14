@@ -9,6 +9,8 @@ import isEmpty from "lodash/isEmpty";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import {setDetailImageId} from "@/stores/reducers/chat";
 import defaultProfileImageUrl = Domains.defaultProfileImageUrl;
+import {addOthers} from "@/stores/reducers/user";
+import {getUserInfoReq} from "@/stores/reducers/webSocket";
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
 export interface ChatMessageProps {
@@ -36,30 +38,40 @@ export default function ChatMessage({data}: ChatMessageProps) {
         dispatch(setDetailImageId(chatId));
         dispatch(setIsActiveChatImageDetail(true));
     }, [dispatch]);
+    
+    const getUserInfo = useCallback((): Domains.User => {
+        let userInfo = user.others.find(_ => _.userId == data.userId);
+        if (!userInfo) {
+            userInfo = new Domains.User(data.userId, "알 수 없음", "", false, (new Date()).getTime(), false);
+            userInfo.profileImageUrl = defaultProfileImageUrl;
+            dispatch(getUserInfoReq(data.userId));
+        }
+        return userInfo;
+    }, [user, data, dispatch]);
 
     const userProfile = useCallback(() => {
         const isMine = user.id == data.userId;
         if (isMine)
             return;
 
-        const userInfo = user.others.find(_ => _.userId == data.userId);
+        const userInfo = getUserInfo();
 
         return (
             <div className={styles.chatUserProfileWrapper}>
-                <img className={styles.chatUserProfile} src={userInfo ? userInfo.profileImageUrl : defaultProfileImageUrl} title={userInfo ? userInfo.userName : "알 수 없음"} alt={userInfo ? userInfo.userName : "알 수 없음"} />
+                <img className={styles.chatUserProfile} src={userInfo.profileImageUrl} title={userInfo.userName} alt={userInfo.userName} />
             </div>
         );
-    }, [data, user]);
+    }, [user, data, getUserInfo]);
 
     const userName = useCallback(() => {
         const isMine = user.id == data.userId;
         if (isMine)
             return;
 
-        const userInfo = user.others.find(_ => _.userId == data.userId);
+        const userInfo = getUserInfo();
 
-        return <div className={styles.chatUserName}>{userInfo ? userInfo.userName : "알 수 없음"}</div>;
-    }, [data, user]);
+        return <div className={styles.chatUserName}>{userInfo.userName}</div>;
+    }, [user, data, getUserInfo]);
 
     const chatElement = useCallback(() => {
         const isMine = user.id == data.userId;

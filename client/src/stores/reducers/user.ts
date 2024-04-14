@@ -106,10 +106,10 @@ const userSlice = createSlice({
             if (!action || !action.payload || isEmpty(action.payload.userId))
                 return;
 
-            if (null != state.others.find(_ => _.userId == action.payload.userId))
+            if (action.payload.userId == state.id)
                 return;
 
-            if (action.payload.userId == state.id)
+            if (null != state.others.find(_ => _.userId == action.payload.userId))
                 return;
 
             state.others.push(action.payload);
@@ -446,6 +446,8 @@ export const {
     setLatestActive,
     setProfileImageUrl,
     setAuthState,
+    setOthers,
+    addOthers,
     setConnectedUsers,
     addConnectedUser,
     removeConnectedUser,

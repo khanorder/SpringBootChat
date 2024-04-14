@@ -83,6 +83,6 @@ public class User implements UserInterface {
 
     @Transient
     public UserRoom getUserRoom(String roomId) {
-        return new UserRoom(this.id, roomId, this.sessionId);
+        return new UserRoom(this.id, roomId);
     }
 }
