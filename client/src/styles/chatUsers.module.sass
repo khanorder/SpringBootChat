@@ -1,8 +1,11 @@
 .usersWrapper
+    display: flex
+    flex-direction: column
+    flex: 1 1 auto
     width: 100%
+    overflow: hidden
 
     .userSections
-        height: calc(100% - 25vh)
         overflow-y: auto
 
         &::-webkit-scrollbar
@@ -41,4 +44,8 @@
                     width: 100%
 
     &.dev
-        opacity: 0.2
+        opacity: 1
+
+@media (max-width: 700px)
+    .usersWrapper
+        max-height: calc(100% - 156px)

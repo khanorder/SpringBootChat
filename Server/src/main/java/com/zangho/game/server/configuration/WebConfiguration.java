@@ -10,7 +10,7 @@ public class WebConfiguration implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "https://chat.baejangho.com", "https://chat-api.baejangho.com");
+                .allowedOrigins("http://localhost:3000", "http://192.168.100.4:3000", "https://chat.baejangho.com", "https://chat-api.baejangho.com");
         WebMvcConfigurer.super.addCorsMappings(registry);
     }
 }

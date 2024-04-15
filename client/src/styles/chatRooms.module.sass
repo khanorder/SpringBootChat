@@ -1,5 +1,6 @@
 .chatRoomListWrapper
     position: relative
+    flex: 1 1 auto
     width: 100%
     overflow-y: auto
 
@@ -131,11 +132,11 @@
             text-align: center
 
     &.dev
-        opacity: 0.3
+        opacity: 1
 
 @media (max-width: 700px)
     .chatRoomListWrapper
-        width: 100%
+        max-height: calc(100% - 176px)
 
         .chatRoomList
 

@@ -1,9 +1,11 @@
 .chatGNBWrapper
+    flex: 0 0 auto
     position: fixed
     left: 0
     border-right: 1px solid #d9d9d9
     height: 100vh
     background: #ffffff
+    z-index: 2
 
     .buttonWrapper
         flex: 0 0 auto
@@ -44,11 +46,11 @@
     &.dev
         .buttonWrapper
             .button
-                .buttonIcon
-                    opacity: 0.1
-
-                .buttonLabel
-                    opacity: 0.1
+                //.buttonIcon
+                //    opacity: 0.1
+                //
+                //.buttonLabel
+                //    opacity: 0.1
 
 @media (max-width: 700px)
     .chatGNBWrapper
@@ -58,5 +60,4 @@
         border-top: 1px solid #d9d9d9
         border-right: 0
         width: 100%
-        height: auto
         max-height: 60px

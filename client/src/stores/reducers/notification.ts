@@ -34,6 +34,25 @@ const notificationSlice = createSlice({
                 return;
 
             state.notifications.push(action.payload);
+            state.notifications = state.notifications.sort((a, b) => b.sendAt - a.sendAt);
+            state.notifications = deepmerge([], state.notifications);
+        },
+        addNotifications: (state, action: PayloadAction<Domains.Notification[]>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - addNotifications: ${JSON.stringify(action.payload)}`);
+
+            if (!action.payload || 1 > action.payload.length)
+                return;
+
+            for (let i = 0; i < action.payload.length; i++) {
+                const notification = action.payload[i];
+                const exists = state.notifications.find(_ => _.id == notification.id);
+                if (null != exists)
+                    return;
+
+                state.notifications.push(notification);
+            }
+            state.notifications = state.notifications.sort((a, b) => b.sendAt - a.sendAt);
             state.notifications = deepmerge([], state.notifications);
         },
         checkNotification: (state, action: PayloadAction<string>) => {
@@ -70,6 +89,7 @@ export type { NotificationState };
 export const {
     setNotifications,
     addNotification,
+    addNotifications,
     checkNotification,
     removeNotification,
 } = notificationSlice.actions;

@@ -41,7 +41,13 @@ import {push} from "connected-next-router";
 import isEmpty from "lodash/isEmpty";
 import {RootState} from "@/stores/reducers";
 import {AppConfigsState, setServerVersion} from "@/stores/reducers/appConfigs";
-import {addNotification, checkNotification, removeNotification} from "@/stores/reducers/notification";
+import {
+    addNotification,
+    addNotifications,
+    checkNotification,
+    removeNotification,
+    setNotifications
+} from "@/stores/reducers/notification";
 
 export function* checkConnectionRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -131,6 +137,40 @@ export function* notificationRes(data: Uint8Array) {
             yield put(addNotification(new Domains.Notification(response.id, response.type, response.sendAt, response.isCheck, "", response.targetId, response.url)));
             break;
     }
+
+    return response;
+}
+
+export function* notificationsStartChatRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - notificationsStartChatRes`);
+
+    const response = Domains.NotificationsStartChatRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - notificationsStartChatRes: response is null.`);
+        return null;
+    }
+
+    yield put(addNotifications(response.notifications));
+
+    return response;
+}
+
+export function* notificationsFollowerRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - notificationsFollowerRes`);
+
+    const response = Domains.NotificationsFollowerRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - notificationsFollowerRes: response is null.`);
+        return null;
+    }
+
+    yield put(addNotifications(response.notifications));
 
     return response;
 }

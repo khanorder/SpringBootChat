@@ -13,10 +13,7 @@ const ChatNotifications = dynamic(() => import("@/components/chatContents/chatNo
 export default function NotificationDialog() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
-    const notification = useAppSelector(state => state.notification);
     const ui = useAppSelector(state => state.ui);
-    const user = useAppSelector(state => state.user);
-    const webSocket = useAppSelector(state => state.webSocket);
     const dispatch = useAppDispatch();
 
     //#region OnRender

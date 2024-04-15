@@ -67,7 +67,11 @@ import {
     noticeUserProfileRemovedRes,
     getUserInfoRes,
     noticeAddChatRoomUserRes,
-    noticeRemoveChatRoomUserRes, openPreparedChatRoomRes, latestActiveUsersRes
+    noticeRemoveChatRoomUserRes,
+    openPreparedChatRoomRes,
+    latestActiveUsersRes,
+    notificationsStartChatRes,
+    notificationsFollowerRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -298,6 +302,14 @@ function* onMessage (socket: WebSocket) {
 
                         case Defines.ResType.RES_NOTIFICATION:
                             yield call(notificationRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTIFICATIONS_START_CHAT:
+                            yield call(notificationsStartChatRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTIFICATIONS_FOLLOWER:
+                            yield call(notificationsFollowerRes, packetData);
                             break;
 
                         case Defines.ResType.RES_CHECK_NOTIFICATION:

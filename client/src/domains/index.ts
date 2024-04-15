@@ -305,6 +305,83 @@ export namespace Domains {
         }
     }
 
+    export class NotificationsStartChatRes {
+        notifications: Domains.Notification[];
+
+        constructor(notifications: Domains.Notification[]) {
+            this.notifications = notifications;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const result: Notification[] = [];
+                const count: number = bytes[0];
+                if (1 > count)
+                    return new NotificationsStartChatRes(result);
+
+                const offsetCount = 1;
+                const offsetId = offsetCount + (16 * count);
+                const offsetSendAt = offsetId + (8 * count);
+                const offsetIsCheck = offsetSendAt + count;
+                const offsetTargetId = offsetIsCheck + (16 * count);
+
+                for (let i = 0; i < count; i++) {
+                    const bytesId= bytes.slice(offsetCount + (i * 16), offsetCount + ((i + 1) * 16));
+                    const id = Helpers.getUUIDFromByteArray(bytesId);
+                    const bytesSendAt = bytes.slice(offsetId + (i * 8), offsetId + ((i + 1) * 8));
+                    const sendAt = Helpers.getLongFromByteArray(bytesSendAt);
+                    const isCheck = bytes[offsetSendAt + i] > 0;
+                    const bytesTargetId = bytes.slice(offsetIsCheck + (i * 16), offsetIsCheck + ((i + 1) * 16));
+                    const targetId = Helpers.getUUIDFromByteArray(bytesTargetId);
+                    const bytesChatRoomId = bytes.slice(offsetTargetId + (i * 16), offsetTargetId + ((i + 1) * 16));
+                    const chatRoomId = Helpers.getUUIDFromByteArray(bytesChatRoomId);
+                    result.push(new Notification(id, Defines.NotificationType.START_CHAT, sendAt, isCheck, "", targetId, chatRoomId));
+                }
+                return new NotificationsFollowerRes(result);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class NotificationsFollowerRes {
+        notifications: Domains.Notification[];
+
+        constructor(notifications: Domains.Notification[]) {
+            this.notifications = notifications;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const result: Notification[] = [];
+                const count: number = bytes[0];
+                if (1 > count)
+                    return new NotificationsFollowerRes(result);
+
+                const offsetCount = 1;
+                const offsetId = offsetCount + (16 * count);
+                const offsetSendAt = offsetId + (8 * count);
+                const offsetIsCheck = offsetSendAt + count;
+
+                for (let i = 0; i < count; i++) {
+                    const bytesId= bytes.slice(offsetCount + (i * 16), offsetCount + ((i + 1) * 16));
+                    const id = Helpers.getUUIDFromByteArray(bytesId);
+                    const bytesSendAt = bytes.slice(offsetId + (i * 8), offsetId + ((i + 1) * 8));
+                    const sendAt = Helpers.getLongFromByteArray(bytesSendAt);
+                    const isCheck = bytes[offsetSendAt + i] > 0;
+                    const bytesTargetId = bytes.slice(offsetIsCheck + (i * 16), offsetIsCheck + ((i + 1) * 16));
+                    const targetId = Helpers.getUUIDFromByteArray(bytesTargetId);
+                    result.push(new Notification(id, Defines.NotificationType.FOLLOWER, sendAt, isCheck, "", targetId, ""));
+                }
+                return new NotificationsFollowerRes(result);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
     export class CheckNotificationRes {
         result: Errors.CheckNotification;
         id: string;

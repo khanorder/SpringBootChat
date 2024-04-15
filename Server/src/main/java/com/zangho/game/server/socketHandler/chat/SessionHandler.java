@@ -36,11 +36,11 @@ public class SessionHandler {
         connectedSessions.remove(session.getId());
     }
 
-    public Optional<WebSocketSession> getSession(String sessionId) throws Exception {
+    public Optional<WebSocketSession> getSession(String sessionId) {
         return Optional.ofNullable(connectedSessions.get(sessionId));
     }
 
-    public void sendOneSession(WebSocketSession session, byte[] packet) throws Exception {
+    public void sendOneSession(WebSocketSession session, byte[] packet) {
         try {
             if (null == session) {
                 logger.info("session is null.");
@@ -60,7 +60,7 @@ public class SessionHandler {
         }
     }
 
-    public void sendEachSession(Set<String> sessionIds, byte[] packet) throws Exception {
+    public void sendEachSession(Set<String> sessionIds, byte[] packet) {
         if (sessionIds.isEmpty())
             return;
 
@@ -86,7 +86,7 @@ public class SessionHandler {
         });
     }
 
-    public void sendEachSessionInRoom(ChatRoom chatRoom, byte[] packet) throws Exception {
+    public void sendEachSessionInRoom(ChatRoom chatRoom, byte[] packet) {
         if (chatRoom.getUsers().isEmpty())
             return;
 

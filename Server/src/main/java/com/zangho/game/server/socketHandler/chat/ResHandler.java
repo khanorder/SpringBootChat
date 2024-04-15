@@ -1,5 +1,6 @@
 package com.zangho.game.server.socketHandler.chat;
 
+import com.zangho.game.server.define.NotificationType;
 import com.zangho.game.server.define.ResType;
 import com.zangho.game.server.define.RoomOpenType;
 import com.zangho.game.server.domain.chat.Chat;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ResHandler {
@@ -42,6 +44,14 @@ public class ResHandler {
         this.sessionHandler = sessionHandler;
         this.userService = userService;
         this.notificationService = notificationService;
+    }
+
+    public Optional<WebSocketSession> getSessionByUserId(String userId) {
+        var connectedOtherUser = userService.getConnectedUserByUserId(userId);
+        if (connectedOtherUser.isEmpty() || connectedOtherUser.get().getSessionId().isEmpty())
+            return Optional.empty();
+
+        return sessionHandler.getSession(connectedOtherUser.get().getSessionId());
     }
 
     public void resCheckConnection(WebSocketSession session, ErrorCheckConnection error) {
@@ -124,34 +134,46 @@ public class ResHandler {
         }
     }
 
+    public byte[] getNotificationPacket(Notification notification) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATION);
+            var bytesNotificationType = new byte[]{notification.getType().getByte()};
+            var bytesId = Helpers.getByteArrayFromUUID(notification.getId());
+            var bytesSendAt = Helpers.getByteArrayFromLong(notification.getSendAt().getTime());
+            var bytesIsCheck = new byte[]{(byte)(notification.isCheck() ? 1 : 0)};
+            var bytesTargetId = Helpers.getByteArrayFromUUID(notification.getTargetId());
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationType, bytesId, bytesSendAt, bytesIsCheck, bytesTargetId);
+            switch (notification.getType()) {
+                case START_CHAT:
+                    var bytesChatRoomId = Helpers.getByteArrayFromUUID(notification.getUrl());
+                    resPacket = Helpers.mergeBytePacket(resPacket, bytesChatRoomId);
+                    break;
+            }
+            return resPacket;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return new byte[0];
+        }
+    }
+
     public void resNotificationFollower(User follower, User follow) {
         try {
             var notification = notificationService.createNotificationFollow(follower, follow);
             if (notification.isEmpty())
                 return;
 
-            var connectedFollowUser = userService.getConnectedUserByUserId(follow.getId());
-            if (connectedFollowUser.isEmpty() || connectedFollowUser.get().getSessionId().isEmpty())
-                return;
-
-            var optSession = sessionHandler.getSession(connectedFollowUser.get().getSessionId());
+            var optSession = getSessionByUserId(follow.getId());
             if (optSession.isEmpty())
                 return;
 
-            var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATION);
-            var bytesNotificationType = new byte[]{notification.get().getType().getByte()};
-            var bytesId = Helpers.getByteArrayFromUUID(notification.get().getId());
-            var bytesSendAt = Helpers.getByteArrayFromLong(notification.get().getSendAt().getTime());
-            var bytesIsCheck = new byte[]{0};
-            var bytesFollowerId = Helpers.getByteArrayFromUUID(follower.getId());
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationType, bytesId, bytesSendAt, bytesIsCheck, bytesFollowerId);
+            var resPacket = getNotificationPacket(notification.get());
             sessionHandler.sendOneSession(optSession.get(), resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
     }
 
-    public void resNotificationStartChat(WebSocketSession session, User startUser, ChatRoom chatRoom) {
+    public void resNotificationStartChat(User startUser, ChatRoom chatRoom) {
         try {
             if (chatRoom.getUsers().isEmpty())
                 return;
@@ -164,23 +186,64 @@ public class ResHandler {
                 if (notification.isEmpty())
                     continue;
 
-                var connectedOtherUser = userService.getConnectedUserByUserId(userRoom.getUserId());
-                if (connectedOtherUser.isEmpty() || connectedOtherUser.get().getSessionId().isEmpty())
-                    return;
-
-                var optSession = sessionHandler.getSession(connectedOtherUser.get().getSessionId());
+                var optSession = getSessionByUserId(userRoom.getUserId());
                 if (optSession.isEmpty())
                     return;
 
-                var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATION);
-                var bytesNotificationType = new byte[]{notification.get().getType().getByte()};
-                var bytesId = Helpers.getByteArrayFromUUID(notification.get().getId());
-                var bytesSendAt = Helpers.getByteArrayFromLong(notification.get().getSendAt().getTime());
-                var bytesIsCheck = new byte[]{0};
-                var bytesStartUserId = Helpers.getByteArrayFromUUID(startUser.getId());
-                var bytesChatRoomId = Helpers.getByteArrayFromUUID(chatRoom.getRoomId());
-                var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationType, bytesId, bytesSendAt, bytesIsCheck, bytesStartUserId, bytesChatRoomId);
+                var resPacket = getNotificationPacket(notification.get());
                 sessionHandler.sendOneSession(optSession.get(), resPacket);
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resNotifications(WebSocketSession session, List<Notification> notifications) {
+        try {
+            var startChatNotifications = notifications.stream().filter(notification -> notification.getType().equals(NotificationType.START_CHAT)).toList();
+            if (!startChatNotifications.isEmpty()) {
+                var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATIONS_START_CHAT);
+                var bytesNotificationCount = new byte[] {(byte)startChatNotifications.size()};
+                var bytesIds = new byte[0];
+                var bytesSendAts = new byte[0];
+                var bytesIsChecks = new byte[0];
+                var bytesTargetIds = new byte[0];
+                var bytesChatRoomIds = new byte[0];
+                for (int i = 0; i < startChatNotifications.size(); i++) {
+                    var notification = startChatNotifications.get(i);
+                    bytesIds = Helpers.mergeBytePacket(bytesIds, Helpers.getByteArrayFromUUID(notification.getId()));
+                    bytesSendAts = Helpers.mergeBytePacket(bytesSendAts, Helpers.getByteArrayFromLong(notification.getSendAt().getTime()));
+                    bytesIsChecks = Helpers.mergeBytePacket(bytesIsChecks, new byte[] {(byte)(notification.isCheck() ? 1 : 0)});
+                    bytesTargetIds = Helpers.mergeBytePacket(bytesTargetIds, Helpers.getByteArrayFromUUID(notification.getTargetId()));
+                    bytesChatRoomIds = Helpers.mergeBytePacket(bytesChatRoomIds, Helpers.getByteArrayFromUUID(notification.getUrl()));
+                }
+                var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationCount, bytesIds, bytesSendAts, bytesIsChecks, bytesTargetIds, bytesChatRoomIds);
+                sessionHandler.consoleLogPackets(resPacket, "startChatNotifications");
+                sessionHandler.sendOneSession(session, resPacket);
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+
+        try {
+            var followerNotifications = notifications.stream().filter(notification -> notification.getType().equals(NotificationType.FOLLOWER)).toList();
+            if (!followerNotifications.isEmpty()) {
+                var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATIONS_FOLLOWER);
+                var bytesNotificationCount = new byte[] {(byte)followerNotifications.size()};
+                var bytesIds = new byte[0];
+                var bytesSendAts = new byte[0];
+                var bytesIsChecks = new byte[0];
+                var bytesTargetIds = new byte[0];
+                for (int i = 0; i < followerNotifications.size(); i++) {
+                    var notification = followerNotifications.get(i);
+                    bytesIds = Helpers.mergeBytePacket(bytesIds, Helpers.getByteArrayFromUUID(notification.getId()));
+                    bytesSendAts = Helpers.mergeBytePacket(bytesSendAts, Helpers.getByteArrayFromLong(notification.getSendAt().getTime()));
+                    bytesIsChecks = Helpers.mergeBytePacket(bytesIsChecks, new byte[] {(byte)(notification.isCheck() ? 1 : 0)});
+                    bytesTargetIds = Helpers.mergeBytePacket(bytesTargetIds, Helpers.getByteArrayFromUUID(notification.getTargetId()));
+                }
+                var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationCount, bytesIds, bytesSendAts, bytesIsChecks, bytesTargetIds);
+                sessionHandler.consoleLogPackets(resPacket, "followerNotifications");
+                sessionHandler.sendOneSession(session, resPacket);
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

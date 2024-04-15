@@ -30,7 +30,12 @@ export default function ChatNotifications() {
     
     const checkNotification = useCallback((notification: Domains.Notification) => {
         dispatch(setIsActiveNotification(false));
-        dispatch(enterChatRoomReq(notification.url));
+        switch (notification.type) {
+            case Defines.NotificationType.START_CHAT:
+                dispatch(enterChatRoomReq(notification.url));
+                break;
+        }
+        dispatch(checkNotificationReq(notification));
     }, [dispatch]);
 
     const removeNotification = useCallback((notification: Domains.Notification) => {

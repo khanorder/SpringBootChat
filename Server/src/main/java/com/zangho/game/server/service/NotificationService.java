@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 public class NotificationService {
@@ -22,6 +23,10 @@ public class NotificationService {
 
     public Optional<Notification> findById(String id) {
         return notificationRepository.findById(id);
+    }
+
+    public List<Notification> findLatestByUserId(String userId) {
+        return notificationRepository.findTop50ByUserIdOrderBySendAtDesc(userId);
     }
 
     public Optional<Notification> createNotificationFollow(User follower, User follow) {
@@ -39,6 +44,7 @@ public class NotificationService {
         try {
             var notification = new Notification(NotificationType.START_CHAT, targetUserId, new Date());
             notification.setTargetId(startUserId);
+            notification.setUrl(chatRoom.getRoomId());
             return Optional.ofNullable(notificationRepository.save(notification));
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

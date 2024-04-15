@@ -170,6 +170,10 @@ public class ReqHandler {
             resHandler.resFollowers(session, optUser.get().getFollowerList());
             resHandler.resChatRooms(session, chatRooms);
 
+            var notifications = notificationService.findLatestByUserId(optUser.get().getId());
+            if (!notifications.isEmpty())
+                resHandler.resNotifications(session, notifications);
+
             // 접속 전체알림
             resHandler.noticeConnectedUser(session, optUser.get());
             userService.updateActiveUser(optUser.get());
@@ -709,7 +713,7 @@ public class ReqHandler {
                 chatRoomService.startPreparedChatRoom(existsRoom.get());
                 resHandler.resAddChatRoom(existsRoom.get());
                 resHandler.resOpenPreparedChatRoom(session, existsRoom.get());
-                resHandler.resNotificationStartChat(session, connectedUser.get(), existsRoom.get());
+                resHandler.resNotificationStartChat(connectedUser.get(), existsRoom.get());
             }
 
             resHandler.noticeTalkChatRoom(existsRoom.get(), chat);
