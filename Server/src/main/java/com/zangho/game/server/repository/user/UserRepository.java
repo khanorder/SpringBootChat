@@ -16,6 +16,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Override
     <S extends User> List<S> findAll(Example<S> example);
 
+    List<User> findTop20ByOrderByLatestActiveAtDesc();
+
     @Override
     @NonNull
     Optional<User> findById(@NonNull String id);

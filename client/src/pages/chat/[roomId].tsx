@@ -1,13 +1,11 @@
 import {createRef, ReactElement, useCallback, useEffect, useRef, useState} from "react";
 import {GetServerSideProps} from "next";
-import styles from "@/styles/chat.module.sass";
+import styles from "@/styles/chatRoom.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq} from "@/stores/reducers/webSocket";
 import {Helpers} from "@/helpers";
-import Head from "next/head";
 import dynamic from "next/dynamic";
 import {setIsProd} from "@/stores/reducers/appConfigs";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
@@ -22,12 +20,10 @@ interface ChatRoomProps {
     isProd: boolean;
     roomId: string;
     roomIdBase62: string;
-    // roomName: string;
-    // roomOpenType: Defines.RoomOpenType;
     serverHost: string;
 }
 
-function ChatRoom({isProd, roomId, roomIdBase62, serverHost}: ChatRoomProps) {
+function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
@@ -152,26 +148,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
     const serverHost = process.env.SERVER_HOST ?? 'localhost:8080';
     const serverHostProp = ('production' === process.env.NODE_ENV ? 'https://' : 'http://') + serverHost;
-    // let roomNameProp: string = '';
-    // let roomOpenTypeProp: Defines.RoomOpenType = Defines.RoomOpenType.PRIVATE;
-    //
-    // const url = serverHostProp + "/api/room/" + roomUUID;
-    // try {
-    //     const response = await fetch(`${url}`, {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' }
-    //     });
-    //
-    //     if (200 == response.status) {
-    //         const json = await response.json();
-    //         if (json.roomId && json.roomName) {
-    //             roomNameProp = json.roomName;
-    //             roomOpenTypeProp = json.roomOpenType;
-    //         }
-    //     }
-    // } catch (error) {
-    //     console.error(error);
-    // }
 
     return {
         props: {
@@ -179,8 +155,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             roomId: roomUUID,
             roomIdBase62: roomId,
             serverHost: serverHostProp
-            // roomName: roomNameProp,
-            // roomOpenType: roomOpenTypeProp,
         }
     };
 }

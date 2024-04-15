@@ -1,0 +1,83 @@
+.chatMessageInputArea
+    position: relative
+    padding-top: 10px
+    padding-bottom: 10px
+    width: 100%
+    max-height: 20vh
+
+    .chatMessageInputTopWrapper
+        display: flex
+        align-items: center
+        margin-bottom: 5px
+
+        .chatMessageLength
+            text-align: left
+            font-size: 11px
+
+        .chatImageButtonWrapper
+            margin-left: 10px
+
+            .chatImageButton
+                display: flex
+                padding: 2px
+
+            .chatImageInput
+                display: none
+
+        .emojiWrapper
+            position: relative
+
+            .emojiToggleButton
+                margin-left: 5px
+                padding: 2px
+
+                &.active
+                    background: #66bbff
+
+            .emojiPicker
+                position: absolute
+                top: 85px
+                left: -70px
+
+
+    .chatMessageInputWrapper
+        display: flex
+
+        .chatMessageInput
+            transition: all 0.15s
+            border: 1px solid #989898
+            border-radius: 8px
+            flex: 1 1 auto
+            padding: 5px
+            height: 6vh
+            resize: none
+
+            &:focus
+                transition: all 0.15s
+                height: 7vh
+
+        .chatSendButton
+            min-width: 50px
+            margin-left: 5px
+            padding: 0 5px
+
+
+@media (max-width: 700px)
+    .chatMessageInputArea
+        padding: 1rem
+        width: 100%
+
+        .chatMessageInputTopWrapper
+            width: 100%
+
+            .emojiWrapper
+
+                .emojiPicker
+                    top: -320px
+                    left: -70px
+
+        .chatMessageInputWrapper
+            width: 100%
+
+            //.chatSendButton
+            //    display: none

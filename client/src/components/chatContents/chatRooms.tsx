@@ -76,7 +76,7 @@ export default function ChatRooms() {
     const list = useCallback(() => {
         if (!chat.chatRooms || 1 > chat.chatRooms.length) {
             return (
-                <li className={styles.chatRoomListNone}>{!appConfigs.isProd ? '개설된 채팅방이 없습니다.' : ''}</li>
+                <li className={styles.chatRoomListNone}>{appConfigs.isProd ? '개설된 채팅방이 없습니다.' : ''}</li>
             );
         } else {
             const list: ReactElement[] = [];

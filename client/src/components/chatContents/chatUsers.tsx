@@ -15,9 +15,10 @@ const ChatMyProfile = dynamic(() => import("@/components/chatContents/chatMyProf
 const ChatUserProfile = dynamic(() => import("@/components/chatContents/chatUserProfile"), { ssr: false });
 
 enum UserListType {
-    CONNECTED = 0,
-    FOLLOW = 1,
-    FOLLOWER = 2
+    LATEST_ACTIVE = 0,
+    CONNECTED = 1,
+    FOLLOW = 2,
+    FOLLOWER = 3
 }
 
 export default function ChatUsers() {
@@ -43,6 +44,15 @@ export default function ChatUsers() {
 
     const handleContextMenu = useCallback((event: any, state: UserListType, user: Domains.User) => {
         switch (state) {
+            case UserListType.LATEST_ACTIVE:
+                normalContextMenu.show({
+                    event,
+                    props: {
+                        target: user
+                    }
+                });
+                break;
+
             case UserListType.CONNECTED:
                 normalContextMenu.show({
                     event,
@@ -100,7 +110,7 @@ export default function ChatUsers() {
                 <li key={i} className={styles.user}
                     onClick={(e) => { handleContextMenu(e, state, userData) }}
                     onContextMenu={(e) => { handleContextMenu(e, state, userData) }}>
-                    <ChatUserProfile userData={userData} />
+                    <ChatUserProfile userId={userData.userId} />
                 </li>
             );
         }
@@ -110,6 +120,9 @@ export default function ChatUsers() {
 
     const userGroupName = useCallback((state: UserListType) => {
         switch (state) {
+            case UserListType.LATEST_ACTIVE:
+                return "최근활동";
+
             case UserListType.CONNECTED:
                 return "접속중";
 
@@ -138,7 +151,7 @@ export default function ChatUsers() {
     const users = useCallback(() => {
         let userLists: ReactElement[] = [];
 
-        if (1 > user.connectedUsers.length && 1 > user.follows.length && 1 > user.followers.length) {
+        if (1 > user.follows.length && 1 > user.followers.length) {
             userLists.push(
                 <div key={'users'} className={styles.sectionWrapper}>
                     <ul key={'listNone'} className={styles.userList}>
@@ -146,16 +159,19 @@ export default function ChatUsers() {
                     </ul>
                 </div>
             );
-        } else {
-            if (0 < user.follows.length)
-                userLists.push(userListGroup(UserListType.FOLLOW, user.follows));
-
-            if (0 < user.followers.length)
-                userLists.push(userListGroup(UserListType.FOLLOWER, user.followers));
-
-            if (0 < user.connectedUsers.length)
-                userLists.push(userListGroup(UserListType.CONNECTED, user.connectedUsers));
         }
+
+        if (0 < user.follows.length)
+            userLists.push(userListGroup(UserListType.FOLLOW, user.follows));
+
+        if (0 < user.followers.length)
+            userLists.push(userListGroup(UserListType.FOLLOWER, user.followers));
+
+        if (0 < user.connectedUsers.length)
+            userLists.push(userListGroup(UserListType.CONNECTED, user.connectedUsers));
+
+        if (0 < user.latestActiveUsers.length)
+            userLists.push(userListGroup(UserListType.LATEST_ACTIVE, user.latestActiveUsers));
 
         return userLists;
     }, [user, userListGroup]);
@@ -209,9 +225,11 @@ export default function ChatUsers() {
     return (
         <div className={`${styles.usersWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
             <ChatMyProfile />
-            {users()}
-            {followMenu()}
-            {followerMenu()}
+            <div className={styles.userSections}>
+                {users()}
+                {followMenu()}
+                {followerMenu()}
+            </div>
         </div>
     );
 }

@@ -63,7 +63,11 @@ import {
     noticeUserMessageChangedRes,
     changeUserProfileRes,
     noticeUserProfileChangedRes,
-    removeUserProfileRes, noticeUserProfileRemovedRes, getUserInfoRes
+    removeUserProfileRes,
+    noticeUserProfileRemovedRes,
+    getUserInfoRes,
+    noticeAddChatRoomUserRes,
+    noticeRemoveChatRoomUserRes, openPreparedChatRoomRes, latestActiveUsersRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -304,6 +308,10 @@ function* onMessage (socket: WebSocket) {
                             yield call(removeNotificationRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_LATEST_ACTIVE_USERS:
+                            yield call(latestActiveUsersRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_CONNECTED_USERS:
                             yield call(connectedUsersRes, packetData);
                             break;
@@ -352,6 +360,10 @@ function* onMessage (socket: WebSocket) {
                             yield call(startChatRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_OPEN_PREPARED_CHAT_ROOM:
+                            yield call(openPreparedChatRoomRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_NOTICE_USER_NAME_CHANGED:
                             yield call(noticeUserNameChangedRes, packetData);
                             break;
@@ -398,6 +410,14 @@ function* onMessage (socket: WebSocket) {
 
                         case Defines.ResType.RES_UPDATE_CHAT_ROOM:
                             yield call(updateChatRoomRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_ADD_CHAT_ROOM_USER:
+                            yield call(noticeAddChatRoomUserRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_NOTICE_REMOVE_CHAT_ROOM_USER:
+                            yield call(noticeRemoveChatRoomUserRes, packetData);
                             break;
 
                         case Defines.ResType.RES_NOTICE_ENTER_CHAT_ROOM:

@@ -24,7 +24,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
                 "FROM chat_rooms AS a " +
                 "RIGHT JOIN (SELECT * FROM user_rooms WHERE userId = :userId) AS b ON a.roomId = b.roomId " +
                 "RIGHT JOIN (SELECT * FROM user_rooms WHERE userId = :targetUserId) AS c ON a.roomId = c.roomId " +
-                "WHERE b.userId = :userId AND (SELECT COUNT(e.roomId) FROM user_rooms AS e WHERE e.roomId = a.roomId) = 2",
+                "WHERE b.userId = :userId AND a.openType = 1 AND (SELECT COUNT(e.roomId) FROM user_rooms AS e WHERE e.roomId = a.roomId) = 2 " +
+                "LIMIT 1",
         nativeQuery = true
     )
     Optional<ChatRoomInfoInterface> findOneToOneChatRoomInfo(@Param("userId") String userId, @Param("targetUserId") String targetUserId);

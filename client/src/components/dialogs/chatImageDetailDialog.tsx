@@ -1,5 +1,5 @@
 import {Dispatch, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
-import styles from "@/styles/chatImageDetailDialog.module.sass";
+import styles from "@/styles/chatDialogImageDetail.module.sass";
 import Picture from "../../../public/images/picture.svg";
 import Image from "next/image";
 import CloseIcon from "../../../public/images/close-circle.svg";

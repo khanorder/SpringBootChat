@@ -1,6 +1,6 @@
 import {ChangeEvent, createRef, useCallback, useEffect, useRef, useState} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import styles from "@/styles/chatEditProfile.module.sass";
+import styles from "@/styles/chatDialogEditProfile.module.sass";
 import Image from "next/image";
 import RemoveIcon from "public/images/close-circle.svg";
 import {setUserMessage, setUserName} from "@/stores/reducers/user";

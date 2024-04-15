@@ -1,5 +1,5 @@
 import {ChangeEvent, useCallback, useEffect, useRef, useState} from "react";
-import styles from "@/styles/slideDialog.module.sass";
+import styles from "@/styles/chatDialogSlide.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";

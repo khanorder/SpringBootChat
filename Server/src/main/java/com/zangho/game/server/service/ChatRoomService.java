@@ -185,13 +185,6 @@ public class ChatRoomService {
             return ErrorExitChatRoom.NOT_IN_ROOM;
         }
 
-        existsRoom.get().getUsers().remove(user.getId());
-
-        if (existsRoom.get().getUsers().isEmpty()) {
-            removeChatRoomMemory(existsRoom.get().getOpenType(), chatRoom.getRoomId());
-            return ErrorExitChatRoom.ROOM_REMOVED;
-        }
-
         return ErrorExitChatRoom.NONE;
     }
 
@@ -214,8 +207,13 @@ public class ChatRoomService {
 
         existsRoom.get().getUsers().remove(user.getId());
 
-        if (existsRoom.get().getUsers().isEmpty())
+        if (existsRoom.get().getUsers().isEmpty()) {
             removeChatRoomMemory(existsRoom.get().getOpenType(), roomId);
+            existsRoom.get().setOwnerId("");
+            chatRoomRepository.save(existsRoom.get());
+        } else if (existsRoom.get().getOwnerId().equals(user.getId())) {
+            existsRoom.get().setOwnerId(existsRoom.get().getUsers().keys().nextElement());
+        }
 
         return Pair.of(ErrorRemoveChatRoom.NONE, existsRoom);
     }

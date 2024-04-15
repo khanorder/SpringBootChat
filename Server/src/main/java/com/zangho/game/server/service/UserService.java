@@ -69,6 +69,10 @@ public class UserService {
         return optUser.isPresent();
     }
 
+    public List<User> getLatestActiveUsers() {
+        return userRepository.findTop20ByOrderByLatestActiveAtDesc();
+    }
+
     public Optional<ChatRoomInfo> getEnteredChatRoomInfo(User user) {
         var currentUser = connectedUsers.get(user.getId());
         if (null == currentUser)

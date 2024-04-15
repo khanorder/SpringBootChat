@@ -1,5 +1,5 @@
 import {ChangeEvent, Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
-import styles from "@/styles/chat.module.sass";
+import styles from "@/styles/chatInput.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import Image from "next/image";
 import Picture from "public/images/picture.svg";

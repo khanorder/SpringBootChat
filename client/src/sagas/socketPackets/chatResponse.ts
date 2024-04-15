@@ -10,21 +10,29 @@ import {
     setChatDatas,
     exitChatRoom,
     enterChatRoom,
-    ChatState
+    ChatState, addChatRoomUser, removeChatRoomUser, openPreparedChatRoom
 } from '@/stores/reducers/chat';
 import {
     addConnectedUser,
     addFollow,
     addFollower,
     removeConnectedUser,
-    removeFollow, removeFollower,
+    removeFollow,
+    removeFollower,
     setAuthState,
     setConnectedUsers,
     setFollowers,
     setFollows,
     setUserMessage,
     setUserId,
-    setUserName, setHaveProfile, setLatestActive, updateUsersData, setProfileImageUrl, UserState, addOthers
+    setUserName,
+    setHaveProfile,
+    setLatestActive,
+    updateUsersData,
+    setProfileImageUrl,
+    UserState,
+    addOthers,
+    setLatestActiveUsers
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -40,6 +48,7 @@ export function* checkConnectionRes(data: Uint8Array) {
         console.log(`packet - checkConnectionRes`);
 
     const response = Domains.CheckConnectionRes.decode(data);
+
     if (null == response) {
         alert('데이터 형식 오류.');
         return null;
@@ -63,6 +72,7 @@ export function* checkAuthenticationRes(data: Uint8Array) {
         console.log(`packet - checkAuthenticationRes`);
 
     const response = Domains.CheckAuthenticationRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - checkAuthenticationRes: response is null.`);
@@ -105,6 +115,7 @@ export function* notificationRes(data: Uint8Array) {
         console.log(`packet - notificationRes`);
 
     const response = Domains.NotificationRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - notificationRes: response is null.`);
@@ -113,7 +124,11 @@ export function* notificationRes(data: Uint8Array) {
 
     switch (response.type) {
         case Defines.NotificationType.FOLLOWER:
-            yield put(addNotification(new Domains.Notification(response.id, response.type, response.sendAt, response.isCheck, response.haveIcon, `'${response.message}' 님이 당신을 팔로우 했습니다.`, response.targetId)));
+            yield put(addNotification(new Domains.Notification(response.id, response.type, response.sendAt, response.isCheck, "", response.targetId)));
+            break;
+
+        case Defines.NotificationType.START_CHAT:
+            yield put(addNotification(new Domains.Notification(response.id, response.type, response.sendAt, response.isCheck, "", response.targetId, response.url)));
             break;
     }
 
@@ -125,6 +140,7 @@ export function* checkNotificationRes(data: Uint8Array) {
         console.log(`packet - checkNotificationRes`);
 
     const response = Domains.CheckNotificationRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - checkNotificationRes: response is null.`);
@@ -151,6 +167,7 @@ export function* removeNotificationRes(data: Uint8Array) {
         console.log(`packet - removeNotificationRes`);
 
     const response = Domains.RemoveNotificationRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - removeNotificationRes: response is null.`);
@@ -172,25 +189,32 @@ export function* removeNotificationRes(data: Uint8Array) {
     return response;
 }
 
+export function* latestActiveUsersRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - latestActiveUsersRes`);
+
+    const response = Domains.LatestActiveUsersRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - latestActiveUsersRes: response is null.`);
+        return null;
+    }
+
+    yield put(setLatestActiveUsers(response.users));
+    return response;
+}
+
 export function* connectedUsersRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`packet - connectedUsersRes`);
 
     const response = Domains.ConnectedUsersRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - connectedUsersRes: response is null.`);
         return null;
-    }
-
-    if (0 < response.users.length) {
-        const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
-
-        for (let i = 0; i < response.users.length; i++) {
-            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
-            response.users[i].updateProfile(profileImage);
-        }
     }
 
     yield put(setConnectedUsers(response.users));
@@ -202,6 +226,7 @@ export function* noticeConnectedUserRes(data: Uint8Array) {
         console.log(`packet - noticeConnectedUserRes`);
 
     const response = Domains.NoticeConnectedUserRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - noticeConnectedUserRes: response is null.`);
@@ -212,11 +237,6 @@ export function* noticeConnectedUserRes(data: Uint8Array) {
         return null;
     }
 
-    const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
-    const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
-    response.user.updateProfile(profileImage);
-
     yield put(addConnectedUser(response.user));
     return response;
 }
@@ -226,6 +246,7 @@ export function* noticeDisconnectedUserRes(data: Uint8Array) {
         console.log(`packet - noticeDisconnectedUserRes`);
 
     const response = Domains.NoticeDisconnectedUserRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - noticeDisconnectedUserRes: response is null.`);
@@ -245,6 +266,7 @@ export function* getUserInfoRes(data: Uint8Array) {
         console.log(`packet - getUserInfoRes`);
 
     const response = Domains.GetUserInfoRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - getUserInfoRes: response is null.`);
@@ -269,6 +291,7 @@ export function* followsRes(data: Uint8Array) {
         console.log(`packet - followsRes`);
 
     const response = Domains.FollowsRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - followsRes: response is null.`);
@@ -294,6 +317,7 @@ export function* followersRes(data: Uint8Array) {
         console.log(`packet - followersRes`);
 
     const response = Domains.FollowersRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - followersRes: response is null.`);
@@ -316,6 +340,7 @@ export function* followersRes(data: Uint8Array) {
 
 export function* chatRoomsRes(data: Uint8Array) {
     const response = Domains.ChatRoomsRes.decode(data);
+
     if (response && 0 < response.roomIds.length) {
         const list: Domains.ChatRoom[] = [];
         for (let i = 0; i < response.roomIds.length; i++)
@@ -331,6 +356,7 @@ export function* followRes(data: Uint8Array) {
         console.log(`packet - followRes`);
 
     const response = Domains.FollowRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - followRes: response is null.`);
@@ -377,6 +403,7 @@ export function* unfollowRes(data: Uint8Array) {
         console.log(`packet - unfollowRes`);
 
     const response = Domains.UnfollowRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - unfollowRes: response is null.`);
@@ -418,6 +445,7 @@ export function* followerRes(data: Uint8Array) {
         console.log(`packet - followerRes`);
 
     const response = Domains.FollowerRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - followerRes: response is null.`);
@@ -440,6 +468,7 @@ export function* unfollowerRes(data: Uint8Array) {
         console.log(`packet - unfollowerRes`);
 
     const response = Domains.UnfollowerRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - unfollowerRes: response is null.`);
@@ -457,6 +486,7 @@ export function* startChatRes(data: Uint8Array) {
         console.log(`packet - startChatRes`);
 
     const response = Domains.StartChatRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - startChatRes: response is null.`);
@@ -483,11 +513,29 @@ export function* startChatRes(data: Uint8Array) {
     return response;
 }
 
+export function* openPreparedChatRoomRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - openPreparedChatRoomRes`);
+
+    const response = Domains.OpenPreparedChatRoomRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - openPreparedChatRoomRes: response is null.`);
+        return null;
+    }
+
+    yield put(openPreparedChatRoom(response.roomId));
+
+    return response;
+}
+
 export function* noticeUserNameChangedRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`packet - noticeUserNameChangedRes`);
 
     const response = Domains.NoticeUserNameChangedRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - noticeUserNameChangedRes: response is null.`);
@@ -503,6 +551,7 @@ export function* noticeUserMessageChangedRes(data: Uint8Array) {
         console.log(`packet - noticeUserMessageChangedRes`);
 
     const response = Domains.NoticeUserMessageChangedRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - noticeUserMessageChangedRes: response is null.`);
@@ -518,6 +567,7 @@ export function* changeUserProfileRes(data: Uint8Array) {
         console.log(`packet - changeUserProfileRes`);
 
     const response = Domains.ChangeUserProfileRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - changeUserProfileRes: response is null.`);
@@ -543,6 +593,7 @@ export function* noticeUserProfileChangedRes(data: Uint8Array) {
         console.log(`packet - noticeUserProfileChangedRes`);
 
     const response = Domains.NoticeUserProfileChangedRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - noticeUserProfileChangedRes: response is null.`);
@@ -560,6 +611,7 @@ export function* removeUserProfileRes(data: Uint8Array) {
         console.log(`packet - removeUserProfileRes`);
 
     const response = Domains.RemoveUserProfileRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - removeUserProfileRes: response is null.`);
@@ -583,6 +635,7 @@ export function* noticeUserProfileRemovedRes(data: Uint8Array) {
         console.log(`packet - noticeUserProfileRemovedRes`);
 
     const response = Domains.NoticeUserProfileRemovedRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - noticeUserProfileRemovedRes: response is null.`);
@@ -598,6 +651,7 @@ export function* createChatRoomRes(data: Uint8Array) {
         console.log(`packet - createChatRoom`);
 
     const response = Domains.CreateChatRoomRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - createChatRoom: response is null.`);
@@ -628,6 +682,7 @@ export function* addChatRoomRes(data: Uint8Array) {
         console.log(`packet - addChatRoomRes`);
 
     const response = Domains.AddChatRoomRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - addChatRoomRes: response is null.`);
@@ -658,6 +713,7 @@ export function* removeChatRoomRes(data: Uint8Array) {
         console.log(`packet - removeChatRoomRes`);
 
     const response = Domains.RemoveChatRoomRes.decode(data);
+
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`packet - removeChatRoomRes: response is null.`);
@@ -691,13 +747,51 @@ export function* updateChatRoomRes(data: Uint8Array) {
     }
 
     yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: []}));
-    if (response && 0 < response.userIds.length) {
+    if (0 < response.userIds.length) {
         const list: Domains.User[] = [];
         for (let i = 0; i < response.userIds.length; i++)
             list.push(new Domains.User(response.userIds[i], "", "", false, 0));
 
         yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: list}));
     }
+    return response;
+}
+
+export function* noticeAddChatRoomUserRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeAddChatRoomUserRes`);
+
+    const response = Domains.NoticeAddChatRoomUserRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeAddChatRoomUserRes: response is null.`);
+        return null;
+    }
+
+    if (isEmpty(response.roomId) || isEmpty(response.userId))
+        return;
+
+    yield put(addChatRoomUser({ roomId: response.roomId, chatRoomUser: new Domains.User(response.userId, "", "", false, 0, false) }));
+    return response;
+}
+
+export function* noticeRemoveChatRoomUserRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - noticeRemoveChatRoomUserRes`);
+
+    const response = Domains.NoticeRemoveChatRoomUserRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - noticeRemoveChatRoomUserRes: response is null.`);
+        return null;
+    }
+
+    if (isEmpty(response.roomId) || isEmpty(response.userId))
+        return;
+
+    yield put(removeChatRoomUser({ roomId: response.roomId, chatRoomUser: new Domains.User(response.userId, "", "", false, 0, false) }));
     return response;
 }
 

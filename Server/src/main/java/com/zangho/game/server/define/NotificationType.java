@@ -8,7 +8,7 @@ import java.util.Optional;
 @Getter
 public enum NotificationType implements Types {
     FOLLOWER(0),
-    CHAT(1);
+    START_CHAT(1);
 
     private final int number;
     NotificationType(int number) {

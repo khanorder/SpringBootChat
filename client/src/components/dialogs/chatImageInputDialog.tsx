@@ -1,6 +1,6 @@
 import {Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import styles from "@/styles/chatImageInputDialog.module.sass";
+import styles from "@/styles/chatDialogImageInput.module.sass";
 import Picture from "../../../public/images/picture.svg";
 import isEmpty from "lodash/isEmpty";
 import {v4 as uuid} from "uuid";

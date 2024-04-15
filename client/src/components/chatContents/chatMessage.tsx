@@ -1,4 +1,4 @@
-import styles from "@/styles/chat.module.sass";
+import styles from "@/styles/chatMessage.module.sass";
 import {dayjs} from "@/helpers/localizedDayjs";
 import {Defines} from "@/defines";
 import {useCallback, useEffect, useRef} from "react";
@@ -9,8 +9,8 @@ import isEmpty from "lodash/isEmpty";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import {setDetailImageId} from "@/stores/reducers/chat";
 import defaultProfileImageUrl = Domains.defaultProfileImageUrl;
-import {addOthers} from "@/stores/reducers/user";
 import {getUserInfoReq} from "@/stores/reducers/webSocket";
+import useGetUserInfo from "@/components/common/useGetUserInfo";
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
 export interface ChatMessageProps {
@@ -22,6 +22,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
+    const [getUserInfo] = useGetUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -38,40 +39,30 @@ export default function ChatMessage({data}: ChatMessageProps) {
         dispatch(setDetailImageId(chatId));
         dispatch(setIsActiveChatImageDetail(true));
     }, [dispatch]);
-    
-    const getUserInfo = useCallback((): Domains.User => {
-        let userInfo = user.others.find(_ => _.userId == data.userId);
-        if (!userInfo) {
-            userInfo = new Domains.User(data.userId, "알 수 없음", "", false, (new Date()).getTime(), false);
-            userInfo.profileImageUrl = defaultProfileImageUrl;
-            dispatch(getUserInfoReq(data.userId));
-        }
-        return userInfo;
-    }, [user, data, dispatch]);
 
     const userProfile = useCallback(() => {
         const isMine = user.id == data.userId;
         if (isMine)
             return;
 
-        const userInfo = getUserInfo();
+        const userInfo = getUserInfo(data.userId);
 
         return (
             <div className={styles.chatUserProfileWrapper}>
                 <img className={styles.chatUserProfile} src={userInfo.profileImageUrl} title={userInfo.userName} alt={userInfo.userName} />
             </div>
         );
-    }, [user, data, getUserInfo]);
+    }, [getUserInfo, user, data]);
 
     const userName = useCallback(() => {
         const isMine = user.id == data.userId;
         if (isMine)
             return;
 
-        const userInfo = getUserInfo();
+        const userInfo = getUserInfo(data.userId);
 
         return <div className={styles.chatUserName}>{userInfo.userName}</div>;
-    }, [user, data, getUserInfo]);
+    }, [getUserInfo, user, data]);
 
     const chatElement = useCallback(() => {
         const isMine = user.id == data.userId;
@@ -117,7 +108,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
                     </li>
                 );
         }
-    }, [user, data, appConfigs, openChatImageDetailDialog]);
+    }, [user, data, userProfile, userName, appConfigs, openChatImageDetailDialog]);
 
     return chatElement();
 }

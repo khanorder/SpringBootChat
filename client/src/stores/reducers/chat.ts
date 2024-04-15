@@ -2,6 +2,7 @@ import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
 import isEmpty from "lodash/isEmpty";
+import {Defines} from "@/defines";
 
 interface ChatState {
     currentChatRoomId: string;
@@ -83,6 +84,54 @@ const chatSlice = createSlice({
             chatRoom.users = action.payload.chatRoomUsers;
             state.chatRooms = deepmerge([], state.chatRooms);
         },
+        addChatRoomUser: (state, action: PayloadAction<AddChatRoomUserProps>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - addChatRoomUser: ${JSON.stringify(action.payload)}`);
+
+            if (!action || !action.payload || isEmpty(action.payload.roomId) || null == action.payload.chatRoomUser || isEmpty(action.payload.chatRoomUser.userId))
+                return;
+
+            const chatRoom = state.chatRooms.find(_ => _.roomId == action.payload.roomId);
+            if (!chatRoom)
+                return;
+
+            if (null != chatRoom.users.find(_ => _.userId == action.payload.chatRoomUser.userId))
+                return;
+
+            chatRoom.users.push(action.payload.chatRoomUser);
+            state.chatRooms = deepmerge([], state.chatRooms);
+        },
+        removeChatRoomUser: (state, action: PayloadAction<RemoveChatRoomUserProps>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - removeChatRoomUser: ${JSON.stringify(action.payload)}`);
+
+            if (!action || !action.payload || isEmpty(action.payload.roomId) || null == action.payload.chatRoomUser || isEmpty(action.payload.chatRoomUser.userId))
+                return;
+
+            const chatRoom = state.chatRooms.find(_ => _.roomId == action.payload.roomId);
+            if (!chatRoom)
+                return;
+
+            chatRoom.users = chatRoom.users.filter(_ => _.userId != action.payload.chatRoomUser.userId);
+            state.chatRooms = deepmerge([], state.chatRooms);
+        },
+        openPreparedChatRoom: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - openPreparedChatRoom: ${JSON.stringify(action.payload)}`);
+
+            if (!action || !action.payload || isEmpty(action.payload))
+                return;
+
+            const chatRoom = state.chatRooms.find(_ => _.roomId == action.payload);
+            if (!chatRoom)
+                return;
+
+            if (Defines.RoomOpenType.PREPARED != chatRoom.openType)
+                return;
+
+            chatRoom.openType = Defines.RoomOpenType.PRIVATE;
+            state.chatRooms = deepmerge([], state.chatRooms);
+        },
         addChatData: (state, action: PayloadAction<AddChatDataProps>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - addChatData: ${JSON.stringify(action.payload)}`);
@@ -156,6 +205,9 @@ export const {
     removeChatRooms,
     setChatRooms,
     setChatRoomUsers,
+    addChatRoomUser,
+    removeChatRoomUser,
+    openPreparedChatRoom,
     addChatData,
     setChatDatas,
     setDetailImageId,

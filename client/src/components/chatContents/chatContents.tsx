@@ -5,7 +5,7 @@ import {
     useEffect,
     useRef
 } from "react";
-import styles from "@/styles/chat.module.sass";
+import styles from "@/styles/chatContents.module.sass";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import dynamic from "next/dynamic";

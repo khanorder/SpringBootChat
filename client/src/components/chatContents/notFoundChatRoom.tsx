@@ -1,4 +1,4 @@
-import styles from "@/styles/chat.module.sass";
+import styles from "@/styles/chatRoom.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import Link from "next/link";
 import {useAppSelector} from "@/hooks";

@@ -45,7 +45,7 @@
 
     .userInfo
         flex: 1 0 auto
-        width: calc(100% - 100px)
+        width: calc(100% - 140px)
         padding-left: 10px
 
         .userName
@@ -60,10 +60,17 @@
             font-size: 0.8em
             color: #797979
 
-    .online
+    .latestActive
+        display: flex
         flex: 0 0 auto
-        width: 40px
-        height: 40px
+        justify-content: flex-end
+        align-items: center
+        padding: 0 10px
+        width: 60px
+        height: 60px
+
+        .activeTime
+            font-size: 13px
 
     &:hover
         background: #f5f5f5

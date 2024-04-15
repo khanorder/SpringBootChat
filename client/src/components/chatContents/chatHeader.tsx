@@ -7,7 +7,6 @@ import Image from "next/image";
 import ArrowLeftIcon from "public/images/arrow-left.svg";
 import {CommonAPI} from "@/apis/commonAPI";
 import {toggleIsActiveLNB, toggleIsActiveNotification} from "@/stores/reducers/ui";
-import {Defines} from "@/defines";
 import {useRouter} from "next/router";
 
 export default function ChatHeader() {
@@ -140,7 +139,7 @@ export default function ChatHeader() {
     }, [ui, toggleLNB]);
 
     return (
-        <div className={styles.chatHeaderWrapper}>
+        <div className={`${styles.chatHeaderWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
             <div className={styles.titleWrapper}>
                 {leftButtons()}
                 {title()}
