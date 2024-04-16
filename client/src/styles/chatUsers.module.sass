@@ -1,3 +1,5 @@
+@import "defines.module"
+
 .usersWrapper
     display: flex
     flex-direction: column
@@ -44,7 +46,7 @@
                     width: 100%
 
     &.dev
-        opacity: 1
+        opacity: $devOpacity
 
 @media (max-width: 700px)
     .usersWrapper

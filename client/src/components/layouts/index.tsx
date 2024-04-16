@@ -1,4 +1,3 @@
-import type {Metadata} from 'next'
 import {createRef, ReactNode, useCallback, useEffect, useRef} from "react";
 import {useAppSelector} from "@/hooks";
 import style from "@/styles/layout.module.sass";
@@ -8,9 +7,9 @@ import isEmpty from "lodash/isEmpty";
 
 const ChatDisconnected = dynamic(() => import("@/components/chatContents/chatDisconnected"), {ssr: false});
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
-const ProfileDialog = dynamic(() => import("@/components/dialogs/profileDialog"), {ssr: false});
-const NotificationDialog = dynamic(() => import("@/components/dialogs/notificationDialog"), {ssr: false});
-const LNBDialog = dynamic(() => import("@/components/dialogs/lnbDialog"), {ssr: false});
+const DialogProfile = dynamic(() => import("@/components/dialogs/dialogProfile"), {ssr: false});
+const DialogNotification = dynamic(() => import("@/components/dialogs/dialogNotification"), {ssr: false});
+const DialogChatRoomInfo = dynamic(() => import("@/components/dialogs/dialogChatRoomInfo"), {ssr: false});
 const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), {ssr: false});
 
 export default function Layout({children}: { children: ReactNode }) {
@@ -68,9 +67,9 @@ export default function Layout({children}: { children: ReactNode }) {
 
         return (
             <>
-                <ProfileDialog/>
-                <NotificationDialog/>
-                <LNBDialog/>
+                <DialogProfile/>
+                <DialogNotification/>
+                <DialogChatRoomInfo/>
                 <ChatHeader/>
                 {contents}
                 {gnb}

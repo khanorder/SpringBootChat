@@ -12,7 +12,7 @@ import CloseIcon from "public/images/close.svg";
 
 const ChatRoom = dynamic(() => import("@/components/chatContents/chatRoom"), { ssr: false });
 const ChatCreateRoomButton = dynamic(() => import("@/components/chatContents/chatCreateRoomButton"), { ssr: false });
-const CreateChatRoomDialog = dynamic(() => import("@/components/dialogs/createChatRoomDialog"), { ssr: false });
+const DialogCreateChatRoom = dynamic(() => import("@/components/dialogs/dialogCreateChatRoom"), { ssr: false });
 
 export default function ChatRooms() {
     const appConfigs = useAppSelector(state => state.appConfigs);
@@ -107,7 +107,7 @@ export default function ChatRooms() {
 
     return (
         <>
-            <CreateChatRoomDialog />
+            <DialogCreateChatRoom />
             <div className={`${styles.chatRoomListWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
                 <ul className={styles.chatRoomList}>
                     {list()}

@@ -7,7 +7,7 @@ import {createChatRoomReq} from "@/stores/reducers/webSocket";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveCreateChatRoom} from "@/stores/reducers/ui";
 
-export default function CreateChatRoomDialog() {
+export default function DialogCreateChatRoom() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const ui = useAppSelector(state => state.ui);

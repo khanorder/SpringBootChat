@@ -1,7 +1,7 @@
 import {Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import styles from "@/styles/chatDialogImageInput.module.sass";
-import Picture from "../../../public/images/picture.svg";
+import Picture from "public/images/picture.svg";
 import isEmpty from "lodash/isEmpty";
 import {v4 as uuid} from "uuid";
 import {ChatAPI} from "@/apis/chatAPI";
@@ -9,7 +9,7 @@ import {sendMessageReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
 import {setIsActiveChatImageInput} from "@/stores/reducers/ui";
 
-export interface ChatImageInputDialogProps {
+export interface DialogChatImageInputProps {
     chatImageInputRef: RefObject<HTMLInputElement>;
     setChatSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     setChatLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
@@ -17,7 +17,7 @@ export interface ChatImageInputDialogProps {
     chatLargeImage: string|ArrayBuffer|null;
 }
 
-export default function ChatImageInputDialog({chatImageInputRef, chatSmallImage, chatLargeImage, setChatSmallImage, setChatLargeImage }: ChatImageInputDialogProps) {
+export default function DialogChatImageInput({chatImageInputRef, chatSmallImage, chatLargeImage, setChatSmallImage, setChatLargeImage }: DialogChatImageInputProps) {
     const firstRender = useRef(true);
     const webSocket = useAppSelector(state => state.webSocket);
     const chat = useAppSelector(state => state.chat);

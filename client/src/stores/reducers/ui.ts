@@ -7,7 +7,7 @@ interface UIState {
     isActiveProfile: boolean;
     isActiveProfileImageInput: boolean;
     isActiveNotification: boolean;
-    isActiveLNB: boolean;
+    isActiveChatRoomInfo: boolean;
     isActiveCreateChatRoom: boolean;
     isActiveChatImageInput: boolean;
     isActiveChatImageDetail: boolean;
@@ -18,7 +18,7 @@ const initialState: UIState = {
     isActiveProfile: false,
     isActiveProfileImageInput: false,
     isActiveNotification: false,
-    isActiveLNB: false,
+    isActiveChatRoomInfo: false,
     isActiveCreateChatRoom: false,
     isActiveChatImageInput: false,
     isActiveChatImageDetail: false
@@ -40,8 +40,8 @@ const uiSlice = createSlice({
         setIsActiveNotification: (state, action: PayloadAction<boolean>) => {
             state.isActiveNotification = action.payload;
         },
-        setIsActiveLNB: (state, action: PayloadAction<boolean>) => {
-            state.isActiveLNB = action.payload;
+        setIsActiveChatRoomInfo: (state, action: PayloadAction<boolean>) => {
+            state.isActiveChatRoomInfo = action.payload;
         },
         setIsActiveCreateChatRoom: (state, action: PayloadAction<boolean>) => {
             state.isActiveCreateChatRoom = action.payload;
@@ -61,8 +61,8 @@ const uiSlice = createSlice({
         toggleIsActiveNotification: (state) => {
             state.isActiveNotification = !state.isActiveNotification;
         },
-        toggleIsActiveLNB: (state) => {
-            state.isActiveLNB = !state.isActiveLNB;
+        toggleIsActiveChatRoomInfo: (state) => {
+            state.isActiveChatRoomInfo = !state.isActiveChatRoomInfo;
         },
         toggleIsActiveCreateChatRoom: (state) => {
             state.isActiveCreateChatRoom = !state.isActiveCreateChatRoom;
@@ -82,14 +82,14 @@ export const {
     setIsActiveProfile,
     setIsActiveProfileImageInput,
     setIsActiveNotification,
-    setIsActiveLNB,
+    setIsActiveChatRoomInfo,
     setIsActiveCreateChatRoom,
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
     toggleIsActiveNotification,
     toggleIsActiveProfile,
     toggleIsActiveProfileImageInput,
-    toggleIsActiveLNB,
+    toggleIsActiveChatRoomInfo,
     toggleIsActiveCreateChatRoom,
     toggleIsActiveChatImageInput,
     toggleIsActiveChatImageDetail

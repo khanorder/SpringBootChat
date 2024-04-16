@@ -1,3 +1,5 @@
+@import "defines.module"
+
 .chatRoomListWrapper
     position: relative
     flex: 1 1 auto
@@ -132,7 +134,7 @@
             text-align: center
 
     &.dev
-        opacity: 1
+        opacity: $devOpacity
 
 @media (max-width: 700px)
     .chatRoomListWrapper

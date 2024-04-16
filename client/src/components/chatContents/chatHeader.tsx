@@ -6,7 +6,7 @@ import styles from "@/styles/chatHeader.module.sass";
 import Image from "next/image";
 import ArrowLeftIcon from "public/images/arrow-left.svg";
 import {CommonAPI} from "@/apis/commonAPI";
-import {toggleIsActiveLNB, toggleIsActiveNotification} from "@/stores/reducers/ui";
+import {toggleIsActiveChatRoomInfo, toggleIsActiveNotification} from "@/stores/reducers/ui";
 import {useRouter} from "next/router";
 
 export default function ChatHeader() {
@@ -94,7 +94,7 @@ export default function ChatHeader() {
     }, [chat, exitChatRoom]);
 
     const toggleLNB = useCallback(() => {
-        dispatch(toggleIsActiveLNB());
+        dispatch(toggleIsActiveChatRoomInfo());
     }, [dispatch]);
 
     const toggleNotification = useCallback(() => {
@@ -124,7 +124,7 @@ export default function ChatHeader() {
 
     const lnb = useCallback(() => {
         let lnbButtonWrapperClass = styles.lnbButtonWrapper;
-        if (ui.isActiveLNB)
+        if (ui.isActiveChatRoomInfo)
             lnbButtonWrapperClass += ' ' + styles.active;
 
         return (

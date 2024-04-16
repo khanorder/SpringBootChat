@@ -1,12 +1,6 @@
-import type {Metadata} from 'next'
 import {ReactNode} from "react";
 import Head from "next/head";
 import {useAppSelector} from "@/hooks";
-
-export const metadata: Metadata = {
-    title: 'chat client',
-    description: 'chat client',
-}
 
 export default function MainLayout({children}: { children: ReactNode }) {
     const appConfigs = useAppSelector(state => state.appConfigs);

@@ -11,10 +11,10 @@ import {setIsProd} from "@/stores/reducers/appConfigs";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
 const ChatInput = dynamic(() => import("@/components/chatContents/chatInput"), { ssr: false });
-const ChatImageInputDialog = dynamic(() => import("@/components/dialogs/chatImageInputDialog"), { ssr: false });
 const NotFoundChatRoom = dynamic(() => import("@/components/chatContents/notFoundChatRoom"), { ssr: false });
-const ChatImageDetailDialog = dynamic(() => import("@/components/dialogs/chatImageDetailDialog"), { ssr: false });
 const ChatContents = dynamic(() => import("@/components/chatContents/chatContents"), { ssr: false });
+const DialogChatImageInput = dynamic(() => import("@/components/dialogs/dialogChatImageInput"), { ssr: false });
+const DialogChatDetailImage = dynamic(() => import("@/components/dialogs/dialogChatDetailImage"), { ssr: false });
 
 interface ChatRoomProps {
     isProd: boolean;
@@ -106,8 +106,8 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
 
     return (
         <>
-            <ChatImageDetailDialog />
-            <ChatImageInputDialog
+            <DialogChatDetailImage />
+            <DialogChatImageInput
                 chatImageInputRef={chatImageInputRef}
                 setChatSmallImage={setChatSmallImage}
                 setChatLargeImage={setChatLargeImage}

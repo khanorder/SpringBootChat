@@ -1,13 +1,13 @@
-import {Dispatch, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import styles from "@/styles/chatDialogImageDetail.module.sass";
-import Picture from "../../../public/images/picture.svg";
+import Picture from "public/images/picture.svg";
 import Image from "next/image";
-import CloseIcon from "../../../public/images/close-circle.svg";
+import CloseIcon from "public/images/close-circle.svg";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import {setDetailImageId} from "@/stores/reducers/chat";
 
-export default function ChatImageDetailDialog () {
+export default function DialogChatDetailImage () {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);

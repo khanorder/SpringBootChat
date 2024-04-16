@@ -9,7 +9,7 @@ import isEmpty from "lodash/isEmpty";
 import {Helpers} from "@/helpers";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
-const ProfileImageInputDialog = dynamic(() => import("@/components/dialogs/profileImageInputDialog"), { ssr: false });
+const DialogProfileImageInput = dynamic(() => import("@/components/dialogs/dialogProfileImageInput"), { ssr: false });
 
 export default function ChatEditProfile() {
     const firstRender = useRef(true);
@@ -123,7 +123,7 @@ export default function ChatEditProfile() {
 
     return (
         <div className={styles.editProfileWrapper}>
-            <ProfileImageInputDialog profileImageInputRef={profileImageInputRef} setProfileSmallImage={setProfileSmallImage} setProfileLargeImage={setProfileLargeImage} profileSmallImage={profileSmallImage} profileLargeImage={profileLargeImage}/>
+            <DialogProfileImageInput profileImageInputRef={profileImageInputRef} setProfileSmallImage={setProfileSmallImage} setProfileLargeImage={setProfileLargeImage} profileSmallImage={profileSmallImage} profileLargeImage={profileLargeImage}/>
             <div className={styles.userThumb}>
                 <button className={styles.removeProfile}><Image src={RemoveIcon} alt="프로필 삭제" fill={true} priority={true} onClick={removeUserProfile} /></button>
                 <label className={styles.profileImageInputLabel} htmlFor='profileImageInput' title='프로필 등록'>

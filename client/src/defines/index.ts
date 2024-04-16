@@ -101,4 +101,10 @@ export namespace Defines {
         START_CHAT = 1,
         CHAT = 2,
     }
+
+    export  enum SlideDialogType {
+        Profile = 0,
+        Notification = 1,
+        ChatRoomInfo = 2,
+    }
 }

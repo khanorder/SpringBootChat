@@ -1,13 +1,10 @@
 import {Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef, useState} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import styles from "@/styles/chatDialogImageInput.module.sass";
-import Picture from "../../../public/images/picture.svg";
+import Picture from "public/images/picture.svg";
 import isEmpty from "lodash/isEmpty";
-import {v4 as uuid} from "uuid";
-import {ChatAPI} from "@/apis/chatAPI";
-import {saveUserProfileReq, sendMessageReq} from "@/stores/reducers/webSocket";
-import {Defines} from "@/defines";
-import {setIsActiveChatImageInput, setIsActiveProfileImageInput} from "@/stores/reducers/ui";
+import {saveUserProfileReq} from "@/stores/reducers/webSocket";
+import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
 
 export interface ChatImageInputDialogProps {
     profileImageInputRef: RefObject<HTMLInputElement>;
@@ -17,7 +14,7 @@ export interface ChatImageInputDialogProps {
     profileLargeImage: string|ArrayBuffer|null;
 }
 
-export default function ProfileImageInputDialog({profileImageInputRef, profileSmallImage, profileLargeImage, setProfileSmallImage, setProfileLargeImage }: ChatImageInputDialogProps) {
+export default function DialogProfileImageInput({profileImageInputRef, profileSmallImage, profileLargeImage, setProfileSmallImage, setProfileLargeImage }: ChatImageInputDialogProps) {
     const firstRender = useRef(true);
     const webSocket = useAppSelector(state => state.webSocket);
     const chat = useAppSelector(state => state.chat);
