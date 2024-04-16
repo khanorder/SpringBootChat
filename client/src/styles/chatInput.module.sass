@@ -1,3 +1,5 @@
+@import "defines.module"
+
 .chatMessageInputArea
     position: relative
     padding-top: 10px
@@ -61,6 +63,8 @@
             margin-left: 5px
             padding: 0 5px
 
+    &.dev
+        opacity: $devOpacity
 
 @media (max-width: 700px)
     .chatMessageInputArea

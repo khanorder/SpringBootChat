@@ -9,6 +9,7 @@ interface UIState {
     isActiveNotification: boolean;
     isActiveChatRoomInfo: boolean;
     isActiveCreateChatRoom: boolean;
+    isActiveAddUser: boolean;
     isActiveChatImageInput: boolean;
     isActiveChatImageDetail: boolean;
 }
@@ -20,6 +21,7 @@ const initialState: UIState = {
     isActiveNotification: false,
     isActiveChatRoomInfo: false,
     isActiveCreateChatRoom: false,
+    isActiveAddUser: false,
     isActiveChatImageInput: false,
     isActiveChatImageDetail: false
 }
@@ -46,6 +48,9 @@ const uiSlice = createSlice({
         setIsActiveCreateChatRoom: (state, action: PayloadAction<boolean>) => {
             state.isActiveCreateChatRoom = action.payload;
         },
+        setIsActiveAddUser: (state, action: PayloadAction<boolean>) => {
+            state.isActiveAddUser = action.payload;
+        },
         setIsActiveChatImageInput: (state, action: PayloadAction<boolean>) => {
             state.isActiveChatImageInput = action.payload;
         },
@@ -67,6 +72,9 @@ const uiSlice = createSlice({
         toggleIsActiveCreateChatRoom: (state) => {
             state.isActiveCreateChatRoom = !state.isActiveCreateChatRoom;
         },
+        toggleIsActiveAddUser: (state) => {
+            state.isActiveAddUser = !state.isActiveAddUser;
+        },
         toggleIsActiveChatImageInput: (state) => {
             state.isActiveChatImageInput = !state.isActiveChatImageInput;
         },
@@ -84,6 +92,7 @@ export const {
     setIsActiveNotification,
     setIsActiveChatRoomInfo,
     setIsActiveCreateChatRoom,
+    setIsActiveAddUser,
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
     toggleIsActiveNotification,
@@ -91,6 +100,7 @@ export const {
     toggleIsActiveProfileImageInput,
     toggleIsActiveChatRoomInfo,
     toggleIsActiveCreateChatRoom,
+    toggleIsActiveAddUser,
     toggleIsActiveChatImageInput,
     toggleIsActiveChatImageDetail
 } = uiSlice.actions;

@@ -191,7 +191,6 @@ export function* callCreateChatRoomReq(action: PayloadAction<Domains.CreateChatR
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callCreateChatRoomReq`);
 
-    const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
@@ -202,9 +201,57 @@ export function* callCreateChatRoomReq(action: PayloadAction<Domains.CreateChatR
 
     const flag = new Uint8Array([Defines.ReqType.REQ_CREATE_CHAT_ROOM]);
     const bytesRoomOpenType = new Uint8Array([action.payload.openType]);
-    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const bytesChatRoomName = new Uint8Array(Buffer.from(action.payload.roomName.trim(), 'utf-8'));
-    const packet = Helpers.mergeBytesPacket([flag, bytesRoomOpenType, bytesUserId, bytesChatRoomName]);
+    const bytesUsersCount = Helpers.getByteArrayFromInt(action.payload.userIds.length);
+    let bytesUserIds = new Uint8Array();
+    if (0 < action.payload.userIds.length) {
+        for (let i = 0; i < action.payload.userIds.length; i++) {
+            bytesUserIds = Helpers.mergeBytesPacket([bytesUserIds, Helpers.getByteArrayFromUUID(action.payload.userIds[i])]);
+        }
+    }
+    let bytesChatRoomName = new Uint8Array();
+    if (!isEmpty(action.payload.roomName.trim()))
+        bytesChatRoomName = new Uint8Array(Buffer.from(action.payload.roomName.trim(), 'utf-8'));
+
+    const packet = Helpers.mergeBytesPacket([flag, bytesRoomOpenType, bytesUsersCount, bytesUserIds, bytesChatRoomName]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callAddUserChatRoomReq(action: PayloadAction<string[]>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callAddUserChatRoomReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+    const chatState: ChatState = yield select((state: RootState) => state.chat);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callAddUserChatRoomReq: socket is not available.`);
+        return;
+    }
+
+    if (isEmpty(chatState.currentChatRoomId)) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callAddUserChatRoomReq: the roomId to invite required.`);
+        return;
+    }
+
+    if (1 > action.payload.length) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callAddUserChatRoomReq: one more users required.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_ADD_USER_CHAT_ROOM]);
+    const bytesChatRoomId = Helpers.getByteArrayFromUUID(chatState.currentChatRoomId);
+    const bytesUsersCount = Helpers.getByteArrayFromInt(action.payload.length);
+    let bytesUserIds = new Uint8Array();
+    if (0 < action.payload.length) {
+        for (let i = 0; i < action.payload.length; i++) {
+            bytesUserIds = Helpers.mergeBytesPacket([bytesUserIds, Helpers.getByteArrayFromUUID(action.payload[i])]);
+        }
+    }
+
+    const packet = Helpers.mergeBytesPacket([flag, bytesChatRoomId, bytesUsersCount, bytesUserIds]);
     webSocketState.socket.send(packet);
 }
 

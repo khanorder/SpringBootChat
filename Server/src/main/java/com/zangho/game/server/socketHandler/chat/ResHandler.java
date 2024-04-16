@@ -188,11 +188,36 @@ public class ResHandler {
 
                 var optSession = getSessionByUserId(userRoom.getUserId());
                 if (optSession.isEmpty())
-                    return;
+                    continue;
 
                 var resPacket = getNotificationPacket(notification.get());
                 sessionHandler.sendOneSession(optSession.get(), resPacket);
             }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resNotificationAddChatRoom(User sendUser, ChatRoom chatRoom, List<String> addedUsers) {
+        try {
+            if (chatRoom.getUsers().isEmpty())
+                return;
+
+//            for (UserRoom userRoom : chatRoom.getUsers().values()) {
+//                if (userRoom.getUserId().equals(startUser.getId()))
+//                    continue;
+//
+//                var notification = notificationService.createNotificationStartChat(chatRoom, startUser.getId(), userRoom.getUserId());
+//                if (notification.isEmpty())
+//                    continue;
+//
+//                var optSession = getSessionByUserId(userRoom.getUserId());
+//                if (optSession.isEmpty())
+//                    continue;
+//
+//                var resPacket = getNotificationPacket(notification.get());
+//                sessionHandler.sendOneSession(optSession.get(), resPacket);
+//            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -632,32 +657,28 @@ public class ResHandler {
         }
     }
 
-    public void resAddChatRoom(WebSocketSession session, ChatRoom chatRoom) {
+    public void resAddUserChatRoom(WebSocketSession session, ErrorAddUserChatRoom error) {
         try {
-            var resPacket = getAddChatRoomPackets(chatRoom);
-            switch (chatRoom.getOpenType()) {
-                case PRIVATE:
-                    sessionHandler.sendOneSession(session, resPacket);
-                    break;
-
-                case PUBLIC:
-                    sessionHandler.sendAll(resPacket);
-                    break;
-            }
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_ADD_USER_CHAT_ROOM, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
     }
 
-    public void resAddChatRoom(ChatRoom chatRoom) {
+    public void resAddChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var resPacket = getAddChatRoomPackets(chatRoom);
             switch (chatRoom.getOpenType()) {
+                case PREPARED:
+                    sessionHandler.sendOneSession(session, resPacket);
+                    break;
+
                 case PRIVATE:
                     if (chatRoom.getUsers().isEmpty())
                         return;
 
-                    logger.info("resAddChatRoom: " + chatRoom.getOpenType().name() + ", users: " + chatRoom.getUsers().size());
                     sessionHandler.sendEachSessionInRoom(chatRoom, resPacket);
                     break;
 

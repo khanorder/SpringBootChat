@@ -11,8 +11,10 @@ import {setIsProd} from "@/stores/reducers/appConfigs";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
 const ChatInput = dynamic(() => import("@/components/chatContents/chatInput"), { ssr: false });
-const NotFoundChatRoom = dynamic(() => import("@/components/chatContents/notFoundChatRoom"), { ssr: false });
+const NotFound = dynamic(() => import("@/components/chatContents/notFound"), { ssr: false });
 const ChatContents = dynamic(() => import("@/components/chatContents/chatContents"), { ssr: false });
+const DialogAddUserChatRoom = dynamic(() => import("@/components/dialogs/dialogAddUserChatRoom"), {ssr: false});
+const DialogChatRoomInfo = dynamic(() => import("@/components/dialogs/dialogChatRoomInfo"), {ssr: false});
 const DialogChatImageInput = dynamic(() => import("@/components/dialogs/dialogChatImageInput"), { ssr: false });
 const DialogChatDetailImage = dynamic(() => import("@/components/dialogs/dialogChatDetailImage"), { ssr: false });
 
@@ -63,7 +65,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
         const currentChatRoom = chat.chatRooms.find(_ => _.roomId == roomId);
 
         if (!currentChatRoom)
-            return <NotFoundChatRoom />;
+            return <NotFound />;
 
         return (
             <div className={styles.chatRoomEnterWrapper}>
@@ -79,12 +81,12 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
 
     const contents = useCallback(() => {
         if (isEmpty(roomId))
-            return <NotFoundChatRoom />;
+            return <NotFound />;
 
         const currentChatRoom = chat.chatRooms.find(_ => _.roomId == roomId);
 
         if (!currentChatRoom)
-            return <NotFoundChatRoom />;
+            return <NotFound />;
 
         if (isEmpty(chat.currentChatRoomId) || roomId != chat.currentChatRoomId)
             return enterUser();
@@ -102,10 +104,12 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
                 />
             </>
         );
-    }, [chat, enterUser, serverHost, roomId, chatImageInputRef, chatMessageInputRef, message]);
+    }, [chat, enterUser, roomId, chatImageInputRef, chatMessageInputRef, message]);
 
     return (
         <>
+            <DialogAddUserChatRoom/>
+            <DialogChatRoomInfo/>
             <DialogChatDetailImage />
             <DialogChatImageInput
                 chatImageInputRef={chatImageInputRef}

@@ -859,6 +859,12 @@ export function* enterChatRoomRes(data: Uint8Array) {
 
         case Errors.EnterChatRoom.NO_EXISTS_ROOM:
             alert('채팅방이 없습니다.');
+            yield put(removeChatRooms([response.roomId]));
+            break;
+
+        case Errors.EnterChatRoom.NOT_AVAILABLE_ROOM:
+            alert('채팅방이 없습니다.');
+            yield put(removeChatRooms([response.roomId]));
             break;
 
         case Errors.EnterChatRoom.ALREADY_IN_ROOM:

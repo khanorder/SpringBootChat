@@ -14,9 +14,8 @@ import isEmpty from "lodash/isEmpty";
 import {exitChatRoomReq} from "@/stores/reducers/webSocket";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
-const ChatFollows = dynamic(() => import("@/components/chatContents/chatUsers"), { ssr: false });
-const ChatRooms = dynamic(() => import("@/components/chatContents/chatRooms"), { ssr: false });
-const ChatSearch = dynamic(() => import("@/components/chatContents/chatSearch"), { ssr: false });
+const ChatUsers = dynamic(() => import("@/components/chatContents/chatUsers"), { ssr: false });
+const DialogCreateChatRoom = dynamic(() => import("@/components/dialogs/dialogCreateChatRoom"), { ssr: false });
 
 interface MainProps {
     isProd: boolean;
@@ -43,7 +42,12 @@ function Main({isProd}: MainProps) {
     }, [firstRender, dispatch, isProd]);
     //#endregion
 
-    return <ChatFollows />;
+    return (
+        <>
+            <DialogCreateChatRoom/>
+            <ChatUsers />
+        </>
+    );
 }
 
 Main.getLayout = function getLayout(page: ReactElement) {

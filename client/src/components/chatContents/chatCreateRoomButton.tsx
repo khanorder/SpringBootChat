@@ -15,7 +15,7 @@ export default function ChatCreateRoomButton() {
     return (
         <div className={styles.toggleCreateChatRoomDialogWrapper}>
             <button className={styles.toggleCreateChatRoomDialogButton} onClick={toggleCreateChatRoomDialog}>
-                <Image className={styles.toggleCreateChatRoomDialogIcon} src={PlusIcon} alt='채팅방 생성' width={30} height={30}/>
+                <Image className={styles.toggleCreateChatRoomDialogIcon} src={PlusIcon} alt='채팅방 생성' width={25} height={25}/>
             </button>
         </div>
     );

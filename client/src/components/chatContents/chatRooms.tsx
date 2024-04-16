@@ -9,7 +9,6 @@ import {removeChatRoomReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
 import Image from "next/image";
 import CloseIcon from "public/images/close.svg";
-
 const ChatRoom = dynamic(() => import("@/components/chatContents/chatRoom"), { ssr: false });
 const ChatCreateRoomButton = dynamic(() => import("@/components/chatContents/chatCreateRoomButton"), { ssr: false });
 const DialogCreateChatRoom = dynamic(() => import("@/components/dialogs/dialogCreateChatRoom"), { ssr: false });

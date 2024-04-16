@@ -1,9 +1,6 @@
 import styles from "@/styles/chatUserProfile.module.sass";
 import {useCallback, useEffect, useRef} from "react";
-import {useAppDispatch, useAppSelector} from "@/hooks";
-import Image from "next/image";
-import UserIcon from "public/images/user-circle.svg";
-import {Domains} from "@/domains";
+import {useAppSelector} from "@/hooks";
 import useGetUserInfo from "@/components/common/useGetUserInfo";
 import {dayjs} from "@/helpers/localizedDayjs";
 

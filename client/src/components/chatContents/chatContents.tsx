@@ -59,10 +59,10 @@ export default function ChatContents() {
                 {contents}
             </ul>
         );
-    }, [appConfigs, chat, user, chatContentsRef]);
+    }, [appConfigs, chat, chatContentsRef]);
 
     return (
-        <div className={styles.chatContentsWrapper}>
+        <div className={`${styles.chatContentsWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
             {list()}
         </div>
     );

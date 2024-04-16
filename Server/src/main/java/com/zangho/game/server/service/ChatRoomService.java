@@ -41,19 +41,19 @@ public class ChatRoomService {
         this.publicChatRooms = new ConcurrentHashMap<>();
     }
 
-    public List<ChatRoom> findAllPreparedChatRoomsByUserId(String userId) throws Exception {
+    public List<ChatRoom> findAllPreparedChatRoomsByUserId(String userId) {
         return new ArrayList<>(preparedChatRooms.values().stream().filter(chatRoom -> chatRoom.getUsers().containsKey(userId)).toList());
     }
 
-    public List<ChatRoom> findAllPrivateChatRoomsByUserId(String userId) throws Exception {
+    public List<ChatRoom> findAllPrivateChatRoomsByUserId(String userId) {
         return new ArrayList<>(privateChatRooms.values().stream().filter(chatRoom -> chatRoom.getUsers().containsKey(userId)).toList());
     }
 
-    public List<ChatRoom> findAllPublicChatRoomsByUserId(String userId) throws Exception {
+    public List<ChatRoom> findAllPublicChatRoomsByUserId(String userId) {
         return new ArrayList<>(publicChatRooms.values().stream().filter(chatRoom -> chatRoom.getUsers().containsKey(userId)).toList());
     }
 
-    public List<ChatRoom> findAllChatRoomsByUserId(String userId) throws Exception {
+    public List<ChatRoom> findAllChatRoomsByUserId(String userId) {
         List<ChatRoom> chatRoomList = new ArrayList<>();
         chatRoomList.addAll(findAllPublicChatRoomsByUserId(userId));
         chatRoomList.addAll(findAllPrivateChatRoomsByUserId(userId));
@@ -88,7 +88,7 @@ public class ChatRoomService {
         return Optional.ofNullable(chatRoom.get());
     }
 
-    public Optional<ChatRoom> startOneToOneChat(User user, User targetUser) throws Exception {
+    public Optional<ChatRoom> startOneToOneChat(User user, User targetUser) {
         var chatRoomInfo = chatRoomRepository.findOneToOneChatRoomInfo(user.getId(), targetUser.getId());
         if (chatRoomInfo.isEmpty())
             return createOneToOneChatRoom(user, targetUser);
@@ -105,8 +105,8 @@ public class ChatRoomService {
         try {
             var roomId = UUID.randomUUID().toString();
             var chatRoom = new ChatRoom(roomId, name, roomOpenType, user.getId());
-
-            chatRoom.addUserToRoom(user);
+            var optUserRoom = chatRoom.addUserToRoom(user);
+            optUserRoom.ifPresent(userRoomRepository::save);
             addChatRoomMemory(chatRoom);
             chatRoomRepository.save(chatRoom);
             userService.addUserChatRoomInfo(user, chatRoom);
@@ -116,6 +116,25 @@ public class ChatRoomService {
             logger.error(ex.getMessage(), ex);
             return Optional.empty();
         }
+    }
+
+    public Optional<UserRoom> addUserToRoom(UserRoom userRoom, ChatRoom chatRoom) {
+        try {
+            var optUserRoom = chatRoom.addUserToRoom(userRoom);
+            optUserRoom.ifPresent(userRoomRepository::save);
+            return optUserRoom;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Optional.empty();
+        }
+    }
+
+    public Optional<UserRoom> addUserToRoom(User user, ChatRoom chatRoom) {
+        return addUserToRoom(new UserRoom(user.getId(), chatRoom.getRoomId()), chatRoom);
+    }
+
+    public Optional<UserRoom> addUserToRoom(String userId, ChatRoom chatRoom) {
+        return addUserToRoom(new UserRoom(userId, chatRoom.getRoomId()), chatRoom);
     }
 
     public Optional<ChatRoom> createOneToOneChatRoom(User user, User targetUser) {
@@ -134,7 +153,7 @@ public class ChatRoomService {
         }
     }
 
-    public Pair<ErrorEnterChatRoom, Optional<ChatRoom>> enterRoom(String roomId, User user) throws Exception {
+    public Pair<ErrorEnterChatRoom, Optional<ChatRoom>> enterRoom(String roomId, User user) {
         var existsRoom = findRoomById(roomId);
 
         if (existsRoom.isEmpty())
@@ -158,7 +177,7 @@ public class ChatRoomService {
         return Pair.of(ErrorEnterChatRoom.NONE, existsRoom);
     }
 
-    public Pair<ErrorHistoryChatRoom, Optional<ChatRoom>> getRoomWithHistory(String roomId, User user) throws Exception {
+    public Pair<ErrorHistoryChatRoom, Optional<ChatRoom>> getRoomWithHistory(String roomId, User user) {
         var existsRoom = findRoomById(roomId);
 
         if (existsRoom.isEmpty())
@@ -170,7 +189,7 @@ public class ChatRoomService {
         return Pair.of(ErrorHistoryChatRoom.NONE, existsRoom);
     }
 
-    public ErrorExitChatRoom exitRoom(ChatRoom chatRoom, User user) throws Exception {
+    public ErrorExitChatRoom exitRoom(ChatRoom chatRoom, User user) {
         var existsRoom = findRoomById(chatRoom.getRoomId());
 
         if (existsRoom.isEmpty())

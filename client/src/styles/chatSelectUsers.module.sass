@@ -5,9 +5,11 @@
     flex-direction: column
     flex: 1 1 auto
     width: 100%
+    height: 100%
     overflow: hidden
 
     .userSections
+        height: 100%
         overflow-y: auto
 
         &::-webkit-scrollbar
@@ -42,17 +44,38 @@
                     text-align: center
 
                 .user
-                    padding: 0 10px
+                    display: flex
+                    justify-content: center
+                    align-items: center
+                    padding: 0 5px
                     border-top: 1px solid #e5e5e5
                     width: 100%
+
+                    .selectRadioWrapper
+                        display: flex
+                        justify-content: center
+                        align-items: center
+                        flex: 0 0 auto
+                        width: 30px
+
+                        .selectRadio
+                            border: 1px solid #3399dd
+                            border-radius: 6px
+                            width: 12px
+                            height: 12px
+                            background: #ffffff
+
+                    .selectUserProfileWrapper
+                        width: calc(100% - 30px)
+
+                    &.selected
+                        .selectRadioWrapper
+                            .selectRadio
+                                background: #66bbff
 
                     &:hover
                         background: #f5f5f5
                         cursor: pointer
 
     &.dev
-        opacity: $devOpacity
-
-@media (max-width: 700px)
-    .usersWrapper
-        max-height: calc(100% - 156px)
+        opacity: 1

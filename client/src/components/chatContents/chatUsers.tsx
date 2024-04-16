@@ -25,7 +25,6 @@ export default function ChatUsers() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
-    const ui = useAppSelector(state => state.ui);
     const dispatch = useAppDispatch();
 
     //#region OnRender

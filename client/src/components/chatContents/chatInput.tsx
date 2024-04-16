@@ -116,7 +116,7 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
     
     const inputContents = useCallback(() => {
         return (
-            <div className={styles.chatMessageInputArea}>
+            <div className={`${styles.chatMessageInputArea}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
                 <div className={styles.chatMessageInputTopWrapper}>
                     <div className={styles.chatMessageLength}>{message.length}/300</div>
                     <div className={styles.chatImageButtonWrapper}>

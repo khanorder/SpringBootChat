@@ -9,7 +9,6 @@ const ChatDisconnected = dynamic(() => import("@/components/chatContents/chatDis
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
 const DialogProfile = dynamic(() => import("@/components/dialogs/dialogProfile"), {ssr: false});
 const DialogNotification = dynamic(() => import("@/components/dialogs/dialogNotification"), {ssr: false});
-const DialogChatRoomInfo = dynamic(() => import("@/components/dialogs/dialogChatRoomInfo"), {ssr: false});
 const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), {ssr: false});
 
 export default function Layout({children}: { children: ReactNode }) {
@@ -69,7 +68,7 @@ export default function Layout({children}: { children: ReactNode }) {
             <>
                 <DialogProfile/>
                 <DialogNotification/>
-                <DialogChatRoomInfo/>
+
                 <ChatHeader/>
                 {contents}
                 {gnb}

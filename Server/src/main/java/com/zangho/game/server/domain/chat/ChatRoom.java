@@ -23,7 +23,7 @@ public class ChatRoom {
     private String roomId;
 
     @Nonnull
-    @Column(length = 10, nullable = false)
+    @Column(length = 20, nullable = false)
     private String roomName;
 
     @Nonnull
@@ -65,19 +65,30 @@ public class ChatRoom {
     }
 
     @Transient
-    public void addUserToRoom(User user) {
-        if (checkUserInRoom(user.getId()))
-            return;
+    public Optional<UserRoom> addUserToRoom(UserRoom userRoom) {
+        if (checkUserInRoom(userRoom.getUserId()))
+            return Optional.empty();
 
-        this.getUsers().put(user.getId(), user.getUserRoom(this.roomId));
+        this.getUsers().put(userRoom.getUserId(), userRoom);
+        return Optional.of(userRoom);
     }
 
     @Transient
-    public void addUserToRoom(UserRoom userRoom) {
-        if (checkUserInRoom(userRoom.getUserId()))
-            return;
+    public Optional<UserRoom> addUserToRoom(User user) {
+        if (checkUserInRoom(user.getId()))
+            return Optional.empty();
 
-        this.getUsers().put(userRoom.getUserId(), userRoom);
+        var userRoom = user.getUserRoom(this.roomId);
+        return addUserToRoom(userRoom);
+    }
+
+    @Transient
+    public Optional<UserRoom> addUserToRoom(String userId) {
+        if (checkUserInRoom(userId))
+            return Optional.empty();
+
+        var userRoom = new UserRoom(userId, this.getRoomId());
+        return addUserToRoom(userRoom);
     }
 
     @Transient

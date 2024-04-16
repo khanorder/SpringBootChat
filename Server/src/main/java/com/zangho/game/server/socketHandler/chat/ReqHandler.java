@@ -1,5 +1,6 @@
 package com.zangho.game.server.socketHandler.chat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.*;
 import com.zangho.game.server.domain.chat.Chat;
 import com.zangho.game.server.domain.chat.ChatRoom;
@@ -518,21 +519,36 @@ public class ReqHandler {
             }
 
             var roomOpenType = RoomOpenType.getType(packet[1]);
-            if (roomOpenType.isEmpty()) {
+            if (roomOpenType.isEmpty() || (!roomOpenType.get().equals(RoomOpenType.PRIVATE) && !roomOpenType.get().equals(RoomOpenType.PUBLIC))) {
                 resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.NOT_ALLOWED_OPEN_TYPE);
                 return;
             }
-            var bytesUserId = Arrays.copyOfRange(packet, 2, 18);
-            var bytesRoomName = Arrays.copyOfRange(packet, 18, packet.length);
-            var userId = Helpers.getUUIDFromByteArray(bytesUserId);
-            var roomName = new String(bytesRoomName);
 
-            if (!connectedUser.get().getId().equals(userId)) {
-                resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.NOT_MATCHED_USER);
-                return;
+            var offsetRoomOpenType = 2;
+            var offsetUserCount = offsetRoomOpenType + 4;
+            var bytesUserCount = Arrays.copyOfRange(packet, offsetRoomOpenType, offsetUserCount);
+            var userCount = Helpers.getIntFromByteArray(bytesUserCount);
+            var offsetUserId = offsetUserCount + (16 * userCount);
+            List<String> userIds = new ArrayList<>();
+            for (int i = 0; i < userCount; i++) {
+                var bytesUserId = Arrays.copyOfRange(packet, offsetUserCount + (i * 16), offsetUserCount + ((i + 1) * 16));
+                userIds.add(Helpers.getUUIDFromByteArray(bytesUserId));
             }
 
-            var chatRoom = chatRoomService.createRoom(roomName, connectedUser.get(), roomOpenType.get());
+            var roomName = "";
+            if (packet.length > offsetUserId) {
+                var bytesRoomName = Arrays.copyOfRange(packet, offsetUserId, packet.length);
+                roomName = new String(bytesRoomName);
+            } else {
+                roomName = connectedUser.get().getName();
+                if (0 < userCount) {
+                    roomName += " 외 " + userCount + "명";
+                } else {
+                    roomName += " 개설 채팅방";
+                }
+            }
+
+            var chatRoom = chatRoomService.createRoom(roomName, connectedUser.get(), RoomOpenType.PRIVATE == roomOpenType.get() ? RoomOpenType.PREPARED : roomOpenType.get());
             if (chatRoom.isEmpty()) {
                 resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.FAILED_TO_CREATE);
                 return;
@@ -544,6 +560,13 @@ public class ReqHandler {
                 return;
             }
 
+            if (!userIds.isEmpty()) {
+                for (int i = 0; i < userIds.size(); i++) {
+                    var userId = userIds.get(i);
+                    chatRoomService.addUserToRoom(userId, chatRoom.get());
+                }
+            }
+
             if (isDevelopment)
                 logger.info(chatRoom.get().getOpenType().getNumber() + ", " + chatRoom.get().getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName());
 
@@ -551,6 +574,50 @@ public class ReqHandler {
             resHandler.resCreateChatRoom(session, chatRoom.get());
             resHandler.resUpdateChatRoom(session, chatRoom.get());
             lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void onAddUserChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        try {
+            if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
+                resHandler.resCreateChatRoom(session, ErrorCreateChatRoom.AUTH_REQUIRED);
+                return;
+            }
+
+            var offsetRoomId = 17;
+            var bytesRoomId = Arrays.copyOfRange(packet, 1, offsetRoomId);
+            var roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
+            var offsetUserCount = offsetRoomId + 4;
+            var bytesUserCount = Arrays.copyOfRange(packet, offsetRoomId, offsetUserCount);
+            var userCount = Helpers.getIntFromByteArray(bytesUserCount);
+            List<String> userIds = new ArrayList<>();
+            for (int i = 0; i < userCount; i++) {
+                var bytesUserId = Arrays.copyOfRange(packet, offsetUserCount + (i * 16), offsetUserCount + ((i + 1) * 16));
+                userIds.add(Helpers.getUUIDFromByteArray(bytesUserId));
+            }
+
+            if (1 > userCount || userIds.isEmpty()) {
+                resHandler.resAddUserChatRoom(session, ErrorAddUserChatRoom.ONE_MORE_USERS_REQUIRED);
+                return;
+            }
+
+            var optChatRoom = chatRoomService.findRoomById(roomId);
+
+            if (optChatRoom.isEmpty()) {
+                resHandler.resAddUserChatRoom(session, ErrorAddUserChatRoom.NOT_FOUND_ROOM);
+                return;
+            }
+
+            for (int i = 0; i < userIds.size(); i++) {
+                var userId = userIds.get(i);
+                chatRoomService.addUserToRoom(userId, optChatRoom.get());
+            }
+
+            resHandler.resAddChatRoom(session, optChatRoom.get());
+            resHandler.resUpdateChatRoom(session, optChatRoom.get());
+            resHandler.resNotificationAddChatRoom(connectedUser.get(), optChatRoom.get(), userIds);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -611,7 +678,7 @@ public class ReqHandler {
 
             var existsRoom = result.getRight();
 
-            resHandler.resAddChatRoom(existsRoom.get());
+            resHandler.resAddChatRoom(session, existsRoom.get());
             resHandler.resUpdateChatRoom(session, existsRoom.get());
             resHandler.resEnterChatRoom(session, existsRoom.get());
             resHandler.resHistoryChatRoom(session, existsRoom.get());
@@ -711,7 +778,7 @@ public class ReqHandler {
             // 참여 인원에게 채팅방 정보 전송
             if (existsRoom.get().getChats().isEmpty() && existsRoom.get().getOpenType().equals(RoomOpenType.PREPARED)) {
                 chatRoomService.startPreparedChatRoom(existsRoom.get());
-                resHandler.resAddChatRoom(existsRoom.get());
+                resHandler.resAddChatRoom(session, existsRoom.get());
                 resHandler.resOpenPreparedChatRoom(session, existsRoom.get());
                 resHandler.resNotificationStartChat(connectedUser.get(), existsRoom.get());
             }

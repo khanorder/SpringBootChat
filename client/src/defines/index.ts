@@ -16,11 +16,12 @@ export namespace Defines {
         REQ_CHANGE_USER_PROFILE = 12,
         REQ_REMOVE_USER_PROFILE = 13,
         REQ_CREATE_CHAT_ROOM = 14,
-        REQ_REMOVE_CHAT_ROOM = 15,
-        REQ_ENTER_CHAT_ROOM = 16,
-        REQ_EXIT_CHAT_ROOM = 17,
-        REQ_TALK_CHAT_ROOM = 18,
-        REQ_HISTORY_CHAT_ROOM = 19,
+        REQ_ADD_USER_CHAT_ROOM = 15,
+        REQ_REMOVE_CHAT_ROOM = 16,
+        REQ_ENTER_CHAT_ROOM = 17,
+        REQ_EXIT_CHAT_ROOM = 18,
+        REQ_TALK_CHAT_ROOM = 19,
+        REQ_HISTORY_CHAT_ROOM = 20,
         REQ_TEST = 255,
     }
 
@@ -102,9 +103,22 @@ export namespace Defines {
         CHAT = 2,
     }
 
-    export  enum SlideDialogType {
+    export enum SlideDialogType {
         Profile = 0,
         Notification = 1,
         ChatRoomInfo = 2,
+    }
+
+    export enum CenterDialogType {
+        CreateChatRoom = 0,
+        ProfileImageInput = 1,
+        ChatImageInput = 2,
+        AddUserChatRoom = 3,
+    }
+
+    export enum CenterDialogSize {
+        Small = 0,
+        Medium = 1,
+        Large = 2,
     }
 }

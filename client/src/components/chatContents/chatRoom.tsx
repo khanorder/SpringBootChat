@@ -1,7 +1,6 @@
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {MouseEventHandler, useCallback, useEffect, useRef} from "react";
 import styles from "@/styles/chatRooms.module.sass";
-import {Helpers} from "@/helpers";
 import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq, historyChatRoomReq} from "@/stores/reducers/webSocket";

@@ -949,10 +949,12 @@ export namespace Domains {
     export class CreateChatRoomReq {
         openType: Defines.RoomOpenType;
         roomName: string;
+        userIds: string[];
 
-        constructor(openType: Defines.RoomOpenType, roomName: string) {
+        constructor(openType: Defines.RoomOpenType, roomName: string, userIds: string[]) {
             this.openType = openType;
             this.roomName = roomName;
+            this.userIds = userIds;
         }
     }
 
