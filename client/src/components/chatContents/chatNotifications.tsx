@@ -34,6 +34,10 @@ export default function ChatNotifications() {
             case Defines.NotificationType.START_CHAT:
                 dispatch(enterChatRoomReq(notification.url));
                 break;
+
+            case Defines.NotificationType.ADD_USER_CHAT_ROOM:
+                dispatch(enterChatRoomReq(notification.url));
+                break;
         }
         dispatch(checkNotificationReq(notification));
     }, [dispatch]);
@@ -62,15 +66,17 @@ export default function ChatNotifications() {
                     case Defines.NotificationType.START_CHAT:
                         message = `'${userInfo.userName}'님이 보낸 메세지가 있습니다.`;
                         break;
+
+                    case Defines.NotificationType.ADD_USER_CHAT_ROOM:
+                        message = `'${userInfo.userName}'님이 당신을 채팅방에 초대했습니다.`;
+                        break;
                 }
 
                 list.push(
                     <li key={i} className={notificationClass}>
                         <div className={styles.iconWrapper} onClick={(e) => checkNotification(notification)}>
                             <div className={styles.iconThumb}>
-                                <img className={styles.iconImage}
-                                     src={userInfo.profileImageUrl}
-                                     alt='사용자 프로필'/>
+                                <img className={styles.iconImage} src={userInfo.profileImageUrl} alt='사용자 프로필'/>
                             </div>
                         </div>
                         <div className={styles.infoWrapper} onClick={(e) => checkNotification(notification)}>

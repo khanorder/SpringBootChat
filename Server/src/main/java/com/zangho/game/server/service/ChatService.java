@@ -43,4 +43,8 @@ public class ChatService {
         return saveChat(new Chat(chatId, roomId, userId, chatType, message, sendAt));
     }
 
+    public Optional<Chat> findById(String chatId) throws Exception {
+        return chatRepostory.findById(chatId);
+    }
+
 }

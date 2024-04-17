@@ -137,17 +137,15 @@ public class ResHandler {
     public byte[] getNotificationPacket(Notification notification) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATION);
-            var bytesNotificationType = new byte[]{notification.getType().getByte()};
+            var bytesNotificationType = new byte[]{notification.getNotificationType().getByte()};
             var bytesId = Helpers.getByteArrayFromUUID(notification.getId());
             var bytesSendAt = Helpers.getByteArrayFromLong(notification.getSendAt().getTime());
             var bytesIsCheck = new byte[]{(byte)(notification.isCheck() ? 1 : 0)};
             var bytesTargetId = Helpers.getByteArrayFromUUID(notification.getTargetId());
             var resPacket = Helpers.mergeBytePacket(packetFlag, bytesNotificationType, bytesId, bytesSendAt, bytesIsCheck, bytesTargetId);
-            switch (notification.getType()) {
-                case START_CHAT:
-                    var bytesChatRoomId = Helpers.getByteArrayFromUUID(notification.getUrl());
-                    resPacket = Helpers.mergeBytePacket(resPacket, bytesChatRoomId);
-                    break;
+            if (NotificationType.START_CHAT.equals(notification.getNotificationType()) || NotificationType.ADD_USER_CHAT_ROOM.equals(notification.getNotificationType())) {
+                var bytesChatRoomId = Helpers.getByteArrayFromUUID(notification.getUrl());
+                resPacket = Helpers.mergeBytePacket(resPacket, bytesChatRoomId);
             }
             return resPacket;
         } catch (Exception ex) {
@@ -198,26 +196,34 @@ public class ResHandler {
         }
     }
 
-    public void resNotificationAddChatRoom(User sendUser, ChatRoom chatRoom, List<String> addedUsers) {
+    public void resNotificationAddUserChatRoom(User sendUser, ChatRoom chatRoom, List<String> addedUserIds) {
         try {
-            if (chatRoom.getUsers().isEmpty())
+            if (addedUserIds.isEmpty()) {
+                logger.info("addedUserIds is empty.");
                 return;
+            }
 
-//            for (UserRoom userRoom : chatRoom.getUsers().values()) {
-//                if (userRoom.getUserId().equals(startUser.getId()))
-//                    continue;
-//
-//                var notification = notificationService.createNotificationStartChat(chatRoom, startUser.getId(), userRoom.getUserId());
-//                if (notification.isEmpty())
-//                    continue;
-//
-//                var optSession = getSessionByUserId(userRoom.getUserId());
-//                if (optSession.isEmpty())
-//                    continue;
-//
-//                var resPacket = getNotificationPacket(notification.get());
-//                sessionHandler.sendOneSession(optSession.get(), resPacket);
-//            }
+            for (String userId : addedUserIds) {
+                if (userId.equals(sendUser.getId())) {
+                    logger.info("this is sender id.");
+                    continue;
+                }
+
+                var notification = notificationService.createNotificationAddUserChatRoom(chatRoom, sendUser.getId(), userId);
+                if (notification.isEmpty()) {
+                    logger.info("notification is empty.");
+                    continue;
+                }
+
+                var optSession = getSessionByUserId(userId);
+                if (optSession.isEmpty()) {
+                    logger.info("target user session is empty.");
+                    continue;
+                }
+
+                var resPacket = getNotificationPacket(notification.get());
+                sessionHandler.sendOneSession(optSession.get(), resPacket);
+            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -225,7 +231,7 @@ public class ResHandler {
 
     public void resNotifications(WebSocketSession session, List<Notification> notifications) {
         try {
-            var startChatNotifications = notifications.stream().filter(notification -> notification.getType().equals(NotificationType.START_CHAT)).toList();
+            var startChatNotifications = notifications.stream().filter(notification -> notification.getNotificationType().equals(NotificationType.START_CHAT)).toList();
             if (!startChatNotifications.isEmpty()) {
                 var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATIONS_START_CHAT);
                 var bytesNotificationCount = new byte[] {(byte)startChatNotifications.size()};
@@ -251,7 +257,7 @@ public class ResHandler {
         }
 
         try {
-            var followerNotifications = notifications.stream().filter(notification -> notification.getType().equals(NotificationType.FOLLOWER)).toList();
+            var followerNotifications = notifications.stream().filter(notification -> notification.getNotificationType().equals(NotificationType.FOLLOWER)).toList();
             if (!followerNotifications.isEmpty()) {
                 var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTIFICATIONS_FOLLOWER);
                 var bytesNotificationCount = new byte[] {(byte)followerNotifications.size()};

@@ -1,6 +1,5 @@
 package com.zangho.game.server.socketHandler.chat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.*;
 import com.zangho.game.server.domain.chat.Chat;
 import com.zangho.game.server.domain.chat.ChatRoom;
@@ -16,8 +15,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class ReqHandler {
 
@@ -64,13 +65,6 @@ public class ReqHandler {
         try {
             var user = userService.getConnectedUser(closeSession);
             if (user.isPresent()) {
-                // 입장중인 채팅방에서 접속 종료된 유저 퇴장 알림
-                var enteredChatRoom = user.get().getCurrentChatRoom();
-                if (enteredChatRoom.isPresent()) {
-                    var optChatRoom = chatRoomService.findRoomById(enteredChatRoom.get().getRoomId());
-                    optChatRoom.ifPresent(chatRoom -> resHandler.noticeRoomUserExited(chatRoom, user.get()));
-                }
-
                 // 연결된 유저 정보 제거
                 userService.removeConnectedUser(user.get());
                 // 연결종료 전체알림
@@ -88,8 +82,8 @@ public class ReqHandler {
 
     public void onCheckConnection(ReqType reqType, WebSocketSession session, byte[] packet) {
         try {
-            if (isDevelopment)
-                logger.info(reqType.name() + ": " + Helpers.getSessionIP(session));
+//            if (isDevelopment)
+//                logger.info(reqType.name() + ": " + Helpers.getSessionIP(session));
 
             if (4 > packet.length) {
                 resHandler.resCheckConnection(session, ErrorCheckConnection.UPDATE_REQUIRED);
@@ -451,30 +445,56 @@ public class ReqHandler {
                 return;
             }
 
-            var offsetBytesSmallImageLength = 5;
-            var offsetBytesLargeImageLength = offsetBytesSmallImageLength + 4;
-            var bytesSmallImageLength = Arrays.copyOfRange(packet, 1, offsetBytesSmallImageLength);
-            var bytesLargeImageLength = Arrays.copyOfRange(packet, offsetBytesSmallImageLength, offsetBytesLargeImageLength);
-            var smallImageLength = Helpers.getIntFromByteArray(bytesSmallImageLength);
-            var largeImageLength = Helpers.getIntFromByteArray(bytesLargeImageLength);
-            var offsetBytesSmallImage = offsetBytesLargeImageLength + smallImageLength;
-            var bytesSmallImage = Arrays.copyOfRange(packet, offsetBytesLargeImageLength, offsetBytesSmallImage);
-            var bytesLargeImage = Arrays.copyOfRange(packet, offsetBytesSmallImage, offsetBytesSmallImage + largeImageLength);
-
-            var smallData = new String(bytesSmallImage);
-            var largeData = new String(bytesLargeImage);
-
-            var pattern = Pattern.compile("(?<=^data:)[^;]+");
-            var matcher = pattern.matcher(smallData);
-            if (!matcher.find()) {
-                resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.NOT_SUITABLE_DATA);
+            var offsetMime = 2;
+            var offsetBytesLargeImageLength = offsetMime + 4;
+            var offsetBytesSmallImageLength = offsetBytesLargeImageLength + 4;
+            var mimeNumber = packet[1];
+            var optMime = AllowedImageType.getType(mimeNumber);
+            if (optMime.isEmpty() || AllowedImageType.NONE.equals(optMime.get())) {
+                resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.NOT_ALLOWED_FIlE_TYPE);
                 return;
             }
 
-            var mime = matcher.group();
-            connectedUser.get().setProfileMime(mime);
-            connectedUser.get().setProfileThumb(smallData.replaceAll("^(data:)[^,]+(base64,)", ""));
-            connectedUser.get().setProfileImage(largeData.replaceAll("^(data:)[^,]+(base64,)", ""));
+            var extension = Helpers.getImageExtension(optMime.get());
+            var bytesLargeImageLength = Arrays.copyOfRange(packet, offsetMime, offsetBytesLargeImageLength);
+            var bytesSmallImageLength = Arrays.copyOfRange(packet, offsetBytesLargeImageLength, offsetBytesSmallImageLength);
+            var largeImageLength = Helpers.getIntFromByteArray(bytesLargeImageLength);
+            var smallImageLength = Helpers.getIntFromByteArray(bytesSmallImageLength);
+            var offsetBytesLargeImage = offsetBytesSmallImageLength + largeImageLength;
+            var bytesLargeImage = Arrays.copyOfRange(packet, offsetBytesSmallImageLength, offsetBytesLargeImage);
+            var bytesSmallImage = new byte[0];
+            if (0 < smallImageLength)
+                bytesSmallImage = Arrays.copyOfRange(packet, offsetBytesLargeImage, offsetBytesLargeImage + smallImageLength);
+
+            var currentPath = System.getProperty("user.dir");
+            var profilesSmallDirectoryPath = Paths.get(currentPath, "images", "profiles", "small");
+            var profilesLargeDirectoryPath = Paths.get(currentPath, "images", "profiles", "large");
+            if (!Files.isDirectory(profilesSmallDirectoryPath))
+                Files.createDirectories(profilesSmallDirectoryPath);
+
+            if (!Files.isDirectory(profilesLargeDirectoryPath))
+                Files.createDirectories(profilesLargeDirectoryPath);
+
+            var fileName = Helpers.getBase62FromUUID(UUID.randomUUID().toString());
+            var largeImagePath = Paths.get(profilesLargeDirectoryPath.toString(), fileName + "." + extension);
+            var fosLarge = new FileOutputStream(largeImagePath.toString());
+            fosLarge.write(bytesLargeImage);
+            fosLarge.flush();
+            fosLarge.close();
+
+            if (0 < smallImageLength) {
+                var smallImagePath = Paths.get(profilesSmallDirectoryPath.toString(), fileName + "." + extension);
+                var fosSmall = new FileOutputStream(smallImagePath.toString());
+                fosSmall.write(bytesSmallImage);
+                fosSmall.flush();
+                fosSmall.close();
+            }
+
+            var existsMime = connectedUser.get().getProfileMime();
+            var existsProfile = connectedUser.get().getProfileImage();
+
+            connectedUser.get().setProfileMime(optMime.get());
+            connectedUser.get().setProfileImage(fileName);
             var result = userService.updateUser(connectedUser.get());
             if (!result) {
                 resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.FAILED_TO_CHANGE);
@@ -483,20 +503,46 @@ public class ReqHandler {
 
             resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.NONE);
             resHandler.noticeUserProfileChanged(session, connectedUser.get());
+
+            if (0 < existsMime.getNumber() && !existsProfile.isEmpty()) {
+                var existsFileName = existsProfile + "." + Helpers.getImageExtension(existsMime);
+                var existsLargeImagePath = Paths.get(profilesLargeDirectoryPath.toString(), existsFileName);
+                Files.deleteIfExists(existsLargeImagePath);
+                var existsSmallImagePath = Paths.get(profilesSmallDirectoryPath.toString(), existsFileName);
+                Files.deleteIfExists(existsSmallImagePath);
+            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
     }
 
     public void onRemoveUserProfile(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
-        try {
-            if (connectedUser.isEmpty()) {
-                resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.AUTH_REQUIRED);
-                return;
-            }
+        if (connectedUser.isEmpty()) {
+            resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.AUTH_REQUIRED);
+            return;
+        }
 
-            connectedUser.get().setProfileMime("");
-            connectedUser.get().setProfileThumb("");
+        try {
+            var existsMime = connectedUser.get().getProfileMime();
+            var existsProfile = connectedUser.get().getProfileImage();
+
+            if (0 < existsMime.getNumber() && !existsProfile.isEmpty()) {
+                var currentPath = System.getProperty("user.dir");
+                var profilesSmallDirectoryPath = Paths.get(currentPath, "images", "profiles", "small");
+                var profilesLargeDirectoryPath = Paths.get(currentPath, "images", "profiles", "large");
+
+                var existsFileName = existsProfile + "." + Helpers.getImageExtension(existsMime);
+                var existsLargeImagePath = Paths.get(profilesLargeDirectoryPath.toString(), existsFileName);
+                Files.deleteIfExists(existsLargeImagePath);
+                var existsSmallImagePath = Paths.get(profilesSmallDirectoryPath.toString(), existsFileName);
+                Files.deleteIfExists(existsSmallImagePath);
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+
+        try {
+            connectedUser.get().setProfileMime(AllowedImageType.NONE);
             connectedUser.get().setProfileImage("");
             var result = userService.updateUser(connectedUser.get());
             if (!result) {
@@ -610,14 +656,13 @@ public class ReqHandler {
                 return;
             }
 
-            for (int i = 0; i < userIds.size(); i++) {
-                var userId = userIds.get(i);
+            for (String userId : userIds) {
                 chatRoomService.addUserToRoom(userId, optChatRoom.get());
             }
 
             resHandler.resAddChatRoom(session, optChatRoom.get());
             resHandler.resUpdateChatRoom(session, optChatRoom.get());
-            resHandler.resNotificationAddChatRoom(connectedUser.get(), optChatRoom.get(), userIds);
+            resHandler.resNotificationAddUserChatRoom(connectedUser.get(), optChatRoom.get(), userIds);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -650,6 +695,8 @@ public class ReqHandler {
                     resHandler.resRemoveChatRoom(session, ErrorRemoveChatRoom.NOT_FOUND_CHAT_ROOM);
                 } else {
                     resHandler.resRemoveChatRoom(session, result.getRight().get());
+                    resHandler.noticeRemoveChatRoomUser(result.getRight().get(), connectedUser.get());
+                    resHandler.noticeRoomUserExited(result.getRight().get(), connectedUser.get());
                 }
             } else {
                 resHandler.resRemoveChatRoom(session, result.getLeft());
@@ -716,7 +763,6 @@ public class ReqHandler {
 
             connectedUser.ifPresent(old -> old.setCurrentChatRoom(Optional.empty()));
             resHandler.resExitChatRoom(session, ErrorExitChatRoom.NONE);
-            resHandler.noticeRoomUserExited(existsRoom.get(), connectedUser.get());
 
             messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 퇴장", "'" + connectedUser.get().getName() + "'님이 대화방에 퇴장했습니다.");
             lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");

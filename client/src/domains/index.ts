@@ -237,7 +237,7 @@ export namespace Domains {
     }
 
     export class NotificationRes {
-        type: Defines.NotificationType;
+        notificationType: Defines.NotificationType;
         id: string;
         sendAt: number;
         isCheck: boolean;
@@ -246,7 +246,7 @@ export namespace Domains {
         url: string;
 
         constructor(type: Defines.NotificationType, id: string, sendAt: number, isCheck: boolean, message: string, targetId: string, url: string) {
-            this.type = type;
+            this.notificationType = type;
             this.id = id;
             this.sendAt = sendAt;
             this.isCheck = isCheck;
@@ -257,7 +257,7 @@ export namespace Domains {
 
         static decode(bytes: Uint8Array) {
             try {
-                const type: Defines.NotificationType = bytes[0];
+                const notificationType: Defines.NotificationType = bytes[0];
                 const offsetType = 1;
                 const offsetId = offsetType + 16;
                 const offsetSendAt = offsetId + 8;
@@ -272,30 +272,35 @@ export namespace Domains {
                 const bytesTargetId = bytes.slice(offsetIsCheck, offsetTargetId);
                 const targetId = Helpers.getUUIDFromByteArray(bytesTargetId);
 
-                switch (type) {
+                switch (notificationType) {
                     case Defines.NotificationType.FOLLOWER:
-                        return new NotificationRes(type, id, sendAt, isCheck, "", targetId, "");
+                        return new NotificationRes(notificationType, id, sendAt, isCheck, "", targetId, "");
 
                     case Defines.NotificationType.START_CHAT:
-                        const bytesChatRoomId = bytes.slice(offsetTargetId, offsetTargetId + 16);
-                        const chatRoomId = Helpers.getUUIDFromByteArray(bytesChatRoomId);
-                        return new NotificationRes(type, id, sendAt, isCheck, "", targetId, chatRoomId);
+                        const bytesStartChatRoomId = bytes.slice(offsetTargetId, offsetTargetId + 16);
+                        const startChatRoomId = Helpers.getUUIDFromByteArray(bytesStartChatRoomId);
+                        return new NotificationRes(notificationType, id, sendAt, isCheck, "", targetId, startChatRoomId);
 
-                    case Defines.NotificationType.CHAT:
-                        const offsetUrlLength = offsetTargetId + 4;
-                        const offsetMessageLength = offsetUrlLength + 4;
-                        const bytesUrlLength = bytes.slice(offsetTargetId, offsetUrlLength);
-                        const urlLength = Helpers.getIntFromByteArray(bytesUrlLength);
-                        const bytesMessageLength = bytes.slice(offsetUrlLength, offsetMessageLength);
-                        const messageLength = Helpers.getIntFromByteArray(bytesMessageLength);
-                        const bytesUrl = bytes.slice(offsetMessageLength, offsetMessageLength + urlLength);
-                        const url = new TextDecoder().decode(bytesUrl);
-                        const bytesMessage = bytes.slice(offsetMessageLength + urlLength, offsetMessageLength + urlLength + messageLength);
-                        const message = new TextDecoder().decode(bytesMessage);
-                        return new NotificationRes(type, id, sendAt, isCheck, message, targetId, url);
+                    case Defines.NotificationType.ADD_USER_CHAT_ROOM:
+                        const bytesAddChatRoomId = bytes.slice(offsetTargetId, offsetTargetId + 16);
+                        const addChatRoomId = Helpers.getUUIDFromByteArray(bytesAddChatRoomId);
+                        return new NotificationRes(notificationType, id, sendAt, isCheck, "", targetId, addChatRoomId);
+
+                    // case Defines.NotificationType.ADD_USER_CHAT_ROOM:
+                    //     const offsetUrlLength = offsetTargetId + 4;
+                    //     const offsetMessageLength = offsetUrlLength + 4;
+                    //     const bytesUrlLength = bytes.slice(offsetTargetId, offsetUrlLength);
+                    //     const urlLength = Helpers.getIntFromByteArray(bytesUrlLength);
+                    //     const bytesMessageLength = bytes.slice(offsetUrlLength, offsetMessageLength);
+                    //     const messageLength = Helpers.getIntFromByteArray(bytesMessageLength);
+                    //     const bytesUrl = bytes.slice(offsetMessageLength, offsetMessageLength + urlLength);
+                    //     const url = new TextDecoder().decode(bytesUrl);
+                    //     const bytesMessage = bytes.slice(offsetMessageLength + urlLength, offsetMessageLength + urlLength + messageLength);
+                    //     const message = new TextDecoder().decode(bytesMessage);
+                    //     return new NotificationRes(notificationType, id, sendAt, isCheck, message, targetId, url);
 
                     default:
-                        console.error("Not suitable notification type.");
+                        console.error("Not suitable notification notificationType.");
                         return null;
                 }
             } catch (error) {
@@ -1368,12 +1373,14 @@ export namespace Domains {
     }
 
     export class SaveUserProfileReq {
-        largeData: string;
-        smallData: string;
+        mime: Defines.AllowedImageType;
+        bytesLarge: Uint8Array;
+        bytesSmall: Uint8Array;
 
-        constructor(largeData: string, smallData: string) {
-            this.largeData = largeData;
-            this.smallData = smallData;
+        constructor(mime: Defines.AllowedImageType, largeData: Uint8Array, smallData: Uint8Array) {
+            this.mime = mime;
+            this.bytesLarge = largeData;
+            this.bytesSmall = smallData;
         }
     }
 
@@ -1392,16 +1399,16 @@ export namespace Domains {
     export class UploadChatImageRequest {
         chatId: string;
         roomId: string;
-        userId: string;
-        largeData: string;
-        smallData: string;
+        mime: Defines.AllowedImageType;
+        base64Large: string;
+        base64Small: string;
 
-        constructor(chatId: string, roomId: string, userId: string, largeData: string, smallData: string) {
+        constructor(chatId: string, roomId: string, mime: Defines.AllowedImageType, base64Large: string, base64Small: string) {
             this.chatId = chatId;
             this.roomId = roomId;
-            this.userId = userId;
-            this.largeData = largeData;
-            this.smallData = smallData;
+            this.mime = mime;
+            this.base64Large = base64Large;
+            this.base64Small = base64Small;
         }
     }
 }

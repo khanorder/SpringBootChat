@@ -25,7 +25,7 @@ public class Notification {
     @Nonnull
     @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
-    NotificationType type;
+    NotificationType notificationType;
 
     @Nonnull
     @Column(length = 36, nullable = false)

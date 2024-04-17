@@ -276,6 +276,51 @@ export namespace Helpers {
         })
     }
 
+    export async function readFile(file: File): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            let reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    let { result } = reader;
+                    const fileBytes = new Uint8Array('object' == typeof result ? result as ArrayBuffer : []);
+                    const fileBuffer = Buffer.from(fileBytes.buffer, fileBytes.byteOffset, fileBytes.byteLength);
+                    const base64 = fileBuffer.toString('base64');
+                    resolve(base64);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+            reader.onerror = (e) => {
+                reject('failed to read file');
+            }
+
+            reader.readAsArrayBuffer(file)
+        });
+
+    }
+
+    export async function getDataURItoBase64(dataURI: string) {
+        return dataURI.split(',')[1];
+    }
+
+    export function getDataURItoBlob(dataURI: string) {
+        return getDataURItoBlobWithMime(dataURI).blob;
+    }
+
+    export function getDataURItoBlobWithMime(dataURI: string) {
+        const byteString = atob(dataURI.split(',')[1]);
+        const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+
+        return { blob: new Blob([ab], {type: mimeString}), mime: mimeString};
+    }
+
     export function getChatRoomOpenTypeName(openType: Defines.RoomOpenType) {
         switch (openType) {
             case Defines.RoomOpenType.PRIVATE:

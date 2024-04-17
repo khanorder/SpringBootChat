@@ -1,5 +1,6 @@
 package com.zangho.game.server.domain.chat;
 
+import com.zangho.game.server.define.AllowedImageType;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,28 +25,7 @@ public class ChatImage {
     String chatId;
 
     @NonNull
-    @Column(nullable = false, length = 36)
-    String roomId;
-
-    @NonNull
-    @Column(nullable = false, length = 36)
-    String userId;
-
-    @NonNull
+    @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
-    String mime;
-
-    @NonNull
-    @Column(nullable = false, length = 1048576)
-    String data;
-
-    @NonNull
-    @Column(nullable = false, length = 65536)
-    String smallData;
-
-    @Nullable
-    @ColumnDefault(value = "current_timestamp(6)")
-    @Column(nullable = false, length = 6)
-    @CreationTimestamp
-    Date createAt;
+    AllowedImageType mime;
 }

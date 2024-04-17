@@ -39,11 +39,12 @@ export namespace Errors {
         AUTH_REQUIRED = 1,
         DATA_TOO_LONG = 2,
         NOT_SUITABLE_DATA = 3,
-        SMALL_IMAGE_REQUIRED = 4,
-        LARGE_IMAGE_REQUIRED = 5,
-        SMALL_IMAGE_BYTES_TOO_LONG = 6,
-        LARGE_IMAGE_BYTES_TOO_LONG = 7,
-        FAILED_TO_CHANGE = 8,
+        NOT_ALLOWED_FIlE_TYPE = 4,
+        SMALL_IMAGE_REQUIRED = 5,
+        LARGE_IMAGE_REQUIRED = 6,
+        SMALL_IMAGE_BYTES_TOO_LONG = 7,
+        LARGE_IMAGE_BYTES_TOO_LONG = 8,
+        FAILED_TO_CHANGE = 9,
     }
 
     export enum RemoveUserProfile {

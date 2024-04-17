@@ -457,7 +457,7 @@ export function* callSaveUserProfileReq(action: PayloadAction<Domains.SaveUserPr
         return;
     }
 
-    if (isEmpty(action.payload.smallData) || isEmpty(action.payload.largeData)) {
+    if (1 > action.payload.mime || (Defines.AllowedImageType.SVG != action.payload.mime && (isEmpty(action.payload.bytesSmall) || isEmpty(action.payload.bytesLarge)))) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callSaveUserMessageReq: upload image is null.`);
 
@@ -466,11 +466,10 @@ export function* callSaveUserProfileReq(action: PayloadAction<Domains.SaveUserPr
     }
 
     const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_PROFILE]);
-    const bytesSmallImage = new Uint8Array(Buffer.from(action.payload.smallData.trim(), 'utf8'));
-    const bytesLargeImage = new Uint8Array(Buffer.from(action.payload.largeData.trim(), 'utf8'));
-    const bytesSmallLength = Helpers.getByteArrayFromInt(bytesSmallImage.byteLength);
-    const bytesLargeLength = Helpers.getByteArrayFromInt(bytesLargeImage.byteLength);
-    const packet = Helpers.mergeBytesPacket([flag, bytesSmallLength, bytesLargeLength, bytesSmallImage, bytesLargeImage]);
+    const bytesMime = new Uint8Array([action.payload.mime]);
+    const bytesLargeLength = Helpers.getByteArrayFromInt(action.payload.bytesLarge.byteLength);
+    const bytesSmallLength = Helpers.getByteArrayFromInt(action.payload.bytesSmall.byteLength);
+    const packet = Helpers.mergeBytesPacket([flag, bytesMime, bytesLargeLength, bytesSmallLength, action.payload.bytesLarge, action.payload.bytesSmall]);
     webSocketState.socket.send(packet);
 }
 

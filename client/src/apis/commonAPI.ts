@@ -26,7 +26,7 @@ export namespace CommonAPI {
                     if ('serviceWorker' in navigator) {
                         let publicKey: string = '';
                         const serverHost = Helpers.getCookie("SERVER_HOST") ?? 'localhost:8080';
-                        const getPublicKeyUrl = (serverHost.startsWith("localhost") ? 'http://' : 'https://') + serverHost + "/api/getPublicKey";
+                        const getPublicKeyUrl = (serverHost.startsWith("localhost") || serverHost.startsWith("192.168") ? 'http://' : 'https://') + serverHost + "/api/getPublicKey";
                         const responseGetPublicKey = await fetch(getPublicKeyUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' }
@@ -83,7 +83,7 @@ export namespace CommonAPI {
 
     export async function SaveVisitAsync(visit: Domains.Visit): Promise<boolean> {
         const serverHost = Helpers.getCookie("SERVER_HOST") ?? 'localhost:8080';
-        const url = (serverHost.startsWith("localhost") ? 'http://' : 'https://') + serverHost + "/api/visit";
+        const url = (serverHost.startsWith("localhost") || serverHost.startsWith("192.168") ? 'http://' : 'https://') + serverHost + "/api/visit";
         let result = false;
 
         try {

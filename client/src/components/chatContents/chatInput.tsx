@@ -19,11 +19,12 @@ export interface ChatInputProps {
     chatMessageInputRef: RefObject<HTMLTextAreaElement>;
     message: string;
     setMessage: Dispatch<SetStateAction<string>>;
+    setChatImageMime: Dispatch<SetStateAction<Defines.AllowedImageType>>;
     setChatSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     setChatLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
 }
 
-export default function ChatInput ({message, setMessage, chatImageInputRef, chatMessageInputRef, setChatSmallImage, setChatLargeImage}: ChatInputProps) {
+export default function ChatInput ({message, setMessage, chatImageInputRef, chatMessageInputRef, setChatImageMime, setChatSmallImage, setChatLargeImage}: ChatInputProps) {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
@@ -97,22 +98,44 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
         if (chatImageInputRef.current?.files && 0 < chatImageInputRef.current?.files.length) {
             const file = chatImageInputRef.current?.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    if (!e?.target?.result)
-                        return;
-
-                    const origDataURL = 'string' == typeof reader.result ? reader.result : '';
-                    const smallDataURL = await Helpers.getDataURLResizeImage(origDataURL, 256, 256, file.type);
-                    const largeDataURL = await Helpers.getDataURLResizeImage(origDataURL, 1024, 1024, file.type);
-                    setChatSmallImage(smallDataURL);
-                    setChatLargeImage(largeDataURL);
+                let mime: Defines.AllowedImageType;
+                if ("image/png" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.PNG;
+                } else if ("image/jpeg" === file.type.toLowerCase() || "image/jpg" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.JPG;
+                } else if ("image/gif" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.GIF;
+                } else if ("image/bmp" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.BMP;
+                } else if (file.type.toLowerCase().startsWith("image/svg")) {
+                    mime = Defines.AllowedImageType.SVG;
+                } else {
+                    mime = Defines.AllowedImageType.NONE;
                 }
-                reader.readAsDataURL(file);
+
+                if (0 < mime) {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        if (!e?.target?.result)
+                            return;
+
+                        const origDataURL = 'string' == typeof reader.result ? reader.result : '';
+                        const smallDataURL = await Helpers.getDataURLResizeImage(origDataURL, 256, 256, file.type);
+                        const largeDataURL = await Helpers.getDataURLResizeImage(origDataURL, 1024, 1024, file.type);
+                        setChatSmallImage(smallDataURL);
+                        setChatLargeImage(largeDataURL);
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    setChatSmallImage("");
+                    setChatLargeImage("");
+                }
+
+                setChatImageMime(mime);
             }
             dispatch(setIsActiveChatImageInput(true));
         }
-    }, [chatImageInputRef, setChatSmallImage, setChatLargeImage, dispatch]);
+    }, [chatImageInputRef, setChatImageMime, setChatSmallImage, setChatLargeImage, dispatch]);
     
     const inputContents = useCallback(() => {
         return (

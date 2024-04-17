@@ -16,7 +16,7 @@ export default function DialogNotification() {
     //#endregion
 
     return (
-        <LayoutSlideDialog type={Defines.SlideDialogType.Notification}>
+        <LayoutSlideDialog type={Defines.SlideDialogType.NOTIFICATION}>
             <ChatNotifications />
         </LayoutSlideDialog>
     );

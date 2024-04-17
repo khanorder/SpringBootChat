@@ -38,4 +38,5 @@ out/
 
 ### custom properties ###
 properties/*
+images/*
 src/main/resources/properties/*

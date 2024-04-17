@@ -1,7 +1,10 @@
 package com.zangho.game.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zangho.game.server.define.AllowedImageType;
 import com.zangho.game.server.domain.UploadChatImageRequest;
 import com.zangho.game.server.domain.chat.ChatImage;
+import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.repository.chat.ChatImageRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,45 +15,39 @@ import java.util.regex.Pattern;
 public class ChatImageService {
 
     private final Logger logger = LoggerFactory.getLogger(ChatImageService.class);
-    private final ChatImageRepository chatImageRepostory;
+    private final ChatImageRepository chatImageRepository;
 
     public ChatImageService(ChatImageRepository chatImageRepository) {
-        this.chatImageRepostory = chatImageRepository;
+        this.chatImageRepository = chatImageRepository;
     }
 
-    public Optional<ChatImage> saveUploadChatImage(UploadChatImageRequest chatImage) throws Exception {
-        return saveUploadChatImage(chatImage.getChatId(), chatImage.getRoomId(), chatImage.getUserId(), chatImage.getLargeData(), chatImage.getSmallData());
+    public Optional<ChatImage> saveUploadChatImage(UploadChatImageRequest chatImage) {
+        return saveUploadChatImage(chatImage.getChatId(), chatImage.getRoomId(), chatImage.getMime(), chatImage.getBase64Large(), chatImage.getBase64Small());
     }
 
-    public Optional<ChatImage> saveUploadChatImage(String chatId, String roomId, String userId, String largeData, String smallData) throws Exception {
+    public Optional<ChatImage> saveUploadChatImage(String chatId, String roomId, AllowedImageType mime, String base64Large, String base64Small) {
         if (chatId.isEmpty())
             return Optional.empty();
 
         if (roomId.isEmpty())
             return Optional.empty();
 
-        if (userId.isEmpty())
+        if (1 > mime.getNumber())
             return Optional.empty();
 
-        if (largeData.isEmpty())
+        if (base64Large.isEmpty())
             return Optional.empty();
 
-        if (smallData.isEmpty())
+        if (!mime.equals(AllowedImageType.SVG) && base64Small.isEmpty())
             return Optional.empty();
 
-        var pattern = Pattern.compile("(?<=^data:)[^;]+");
-        var matcher = pattern.matcher(smallData);
-        if (!matcher.find())
-            return Optional.empty();
-
-        var mime = matcher.group();
-        var uploadedChatImage = new ChatImage(chatId, roomId, userId, mime, largeData.replaceAll("^(data:)[^,]+(base64,)", ""), smallData.replaceAll("^(data:)[^,]+(base64,)", ""));
-        var result = chatImageRepostory.save(uploadedChatImage);
+        var uploadedChatImage = new ChatImage(chatId, mime);
+        var result = chatImageRepository.save(uploadedChatImage);
         return Optional.ofNullable(result);
     }
 
-    public Optional<ChatImage> findChatImageByChatId(String chatId) throws Exception {
-        return chatImageRepostory.findByChatId(chatId);
+    public Optional<ChatImage> findChatImageByChatId(String chatId) {
+        return chatImageRepository.findByChatId(chatId);
     }
 
 }

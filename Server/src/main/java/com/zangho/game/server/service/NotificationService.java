@@ -52,6 +52,18 @@ public class NotificationService {
         }
     }
 
+    public Optional<Notification> createNotificationAddUserChatRoom(ChatRoom chatRoom, String sendUserId, String targetUserId) {
+        try {
+            var notification = new Notification(NotificationType.ADD_USER_CHAT_ROOM, targetUserId, new Date());
+            notification.setTargetId(sendUserId);
+            notification.setUrl(chatRoom.getRoomId());
+            return Optional.ofNullable(notificationRepository.save(notification));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Optional.empty();
+        }
+    }
+
     public Optional<Notification> check(Notification notification) {
         notification.setCheck(true);
         return Optional.ofNullable(notificationRepository.save(notification));

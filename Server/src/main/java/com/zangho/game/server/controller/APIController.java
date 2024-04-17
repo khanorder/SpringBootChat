@@ -1,6 +1,8 @@
 package com.zangho.game.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zangho.game.server.define.AllowedImageType;
+import com.zangho.game.server.define.SavedImageSize;
 import com.zangho.game.server.domain.SubscriptionRequest;
 import com.zangho.game.server.domain.UploadChatImageRequest;
 import com.zangho.game.server.domain.Visit;
@@ -9,11 +11,19 @@ import com.zangho.game.server.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Optional;
+import java.util.UUID;
 
 @Controller
 public class APIController {
@@ -22,6 +32,7 @@ public class APIController {
     private final ChatRoomService chatRoomService;
     private final VisitService visitService;
     private final UserService userService;
+    private final ChatService chatService;
     private final ChatImageService chatImageService;
     private final MessageService messageService;
 
@@ -29,12 +40,14 @@ public class APIController {
             ChatRoomService chatRoomService,
             VisitService visitService,
             UserService userService,
+            ChatService chatService,
             ChatImageService chatImageService,
             MessageService messageService
     ) {
         this.chatRoomService = chatRoomService;
         this.visitService = visitService;
         this.userService = userService;
+        this.chatService = chatService;
         this.chatImageService = chatImageService;
         this.messageService = messageService;
     }
@@ -94,118 +107,211 @@ public class APIController {
         var response = new HashMap<String, Object>();
         response.put("result", false);
 
-        if (uploadChatImageRequest.getChatId().isEmpty())
-            return (new ObjectMapper()).writeValueAsString(response);
+        try {
+            var result = chatImageService.saveUploadChatImage(uploadChatImageRequest);
+            if (result.isEmpty())
+                return (new ObjectMapper()).writeValueAsString(response);
 
-        if (uploadChatImageRequest.getSmallData().isEmpty())
-            return (new ObjectMapper()).writeValueAsString(response);
+            var roomIdBase62 = Helpers.getBase62FromUUID(uploadChatImageRequest.getRoomId());
 
-        if (uploadChatImageRequest.getLargeData().isEmpty())
-            return (new ObjectMapper()).writeValueAsString(response);
+            var currentPath = System.getProperty("user.dir");
+            var smallDirectoryPath = Paths.get(currentPath, "images", "chat", "small", roomIdBase62);
+            var largeDirectoryPath = Paths.get(currentPath, "images", "chat", "large", roomIdBase62);
+            if (!Files.isDirectory(smallDirectoryPath))
+                Files.createDirectories(smallDirectoryPath);
 
-        var result = chatImageService.saveUploadChatImage(uploadChatImageRequest);
-        response.put("result", result);
+            if (!Files.isDirectory(largeDirectoryPath))
+                Files.createDirectories(largeDirectoryPath);
+
+            var extension = Helpers.getImageExtension(result.get().getMime());
+            var fileName = Helpers.getBase62FromUUID(result.get().getId());
+            var bytesLargeImage = Base64.getDecoder().decode(uploadChatImageRequest.getBase64Large());
+            var largeImagePath = Paths.get(largeDirectoryPath.toString(), fileName + "." + extension);
+            var fosLarge = new FileOutputStream(largeImagePath.toString());
+            fosLarge.write(bytesLargeImage);
+            fosLarge.flush();
+            fosLarge.close();
+
+            if (!uploadChatImageRequest.getBase64Small().isEmpty()) {
+                var bytesSmallImage = Base64.getDecoder().decode(uploadChatImageRequest.getBase64Small());
+                var smallImagePath = Paths.get(smallDirectoryPath.toString(), fileName + "." + extension);
+                var fosSmall = new FileOutputStream(smallImagePath.toString());
+                fosSmall.write(bytesSmallImage);
+                fosSmall.flush();
+                fosSmall.close();
+            }
+
+            response.put("result", result);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
 
         return (new ObjectMapper()).writeValueAsString(response);
     }
 
-    @GetMapping(value = "/api/chatImage/{id}", produces = "image/*")
+    @GetMapping(value = "/api/chatImage/{id}")
     @ResponseBody
-    public byte[] chatImage(@PathVariable String id) throws Exception {
-        if (id.isEmpty())
-            return new byte[0];
+    public ResponseEntity<byte[]> chatImage(@PathVariable String id) {
+        return chatImageResponse(id,SavedImageSize.LARGE);
+    }
 
-        var optChatImage = chatImageService.findChatImageByChatId(id);
-        if (optChatImage.isEmpty())
-            return new byte[0];
+    @GetMapping(value = "/api/chatSmallImage/{id}")
+    @ResponseBody
+    public ResponseEntity<byte[]> chatSmallImage(@PathVariable String id) {
+        return chatImageResponse(id,SavedImageSize.SMALL);
+    }
 
-        var chatImage = optChatImage.get();
-
-        if (chatImage.getData().isEmpty())
-            return new byte[0];
-
-        var base64Image = chatImage.getData().replaceAll("^data:[^,]+,", "");
-
+    private ResponseEntity<byte[]> chatImageResponse(String id, SavedImageSize size) {
         try {
-            return Base64.getDecoder().decode(base64Image);
+            if (id.isEmpty())
+                return ResponseEntity.notFound().build();
+
+            var optChatImage = chatImageService.findChatImageByChatId(id);
+            if (optChatImage.isEmpty())
+                return ResponseEntity.notFound().build();
+
+            var chatImage = optChatImage.get();
+            if (chatImage.getChatId().isEmpty())
+                return ResponseEntity.notFound().build();
+
+            if (chatImage.getId().isEmpty())
+                return ResponseEntity.notFound().build();
+
+            var optChat = chatService.findById(chatImage.getChatId());
+            if (optChat.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            var roomIdBase62 = Helpers.getBase62FromUUID(optChat.get().getRoomId());
+
+            if (AllowedImageType.NONE.equals(chatImage.getMime()))
+                return ResponseEntity.notFound().build();
+
+            var extension = Helpers.getImageExtension(chatImage.getMime());
+            if (extension.isEmpty())
+                return ResponseEntity.notFound().build();
+
+            var currentPath = System.getProperty("user.dir");
+
+            var smallDirectoryPath = Paths.get(currentPath, "images", "chat", "small", roomIdBase62);
+            var largeDirectoryPath = Paths.get(currentPath, "images", "chat", "large", roomIdBase62);
+
+            Optional<Path> chatImagePath = switch (size) {
+                case LARGE -> Optional.of(largeDirectoryPath);
+                default -> Optional.of(smallDirectoryPath);
+            };
+
+            var contentType = "";
+
+            switch (chatImage.getMime()) {
+                case PNG:
+                    contentType = "image/png";
+                    break;
+
+                case JPG:
+                    contentType = "image/jpeg";
+                    break;
+
+                case GIF:
+                    contentType = "image/gif";
+                    break;
+
+                case BMP:
+                    contentType = "image/bmp";
+                    break;
+
+                case SVG:
+                    contentType = "image/svg+xml";
+                    chatImagePath = Optional.of(largeDirectoryPath);
+                    break;
+            }
+
+            var imagePath = Paths.get(chatImagePath.get().toString(), Helpers.getBase62FromUUID(chatImage.getId()) + "." + extension);
+            if (!Files.exists(imagePath))
+                return ResponseEntity.notFound().build();
+
+            return ResponseEntity.ok().header("Content-Type", contentType).body(Files.readAllBytes(imagePath));
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            return new byte[0];
+            return ResponseEntity.notFound().build();
         }
     }
 
-    @GetMapping(value = "/api/chatSmallImage/{id}", produces = "image/*")
+    @GetMapping(value = "/api/profileImage/{id}")
     @ResponseBody
-    public byte[] chatSmallImage(@PathVariable String id) throws Exception {
-        if (id.isEmpty())
-            return new byte[0];
-
-        var optChatImage = chatImageService.findChatImageByChatId(id);
-        if (optChatImage.isEmpty())
-            return new byte[0];
-
-        var chatImage = optChatImage.get();
-
-        if (chatImage.getSmallData().isEmpty())
-            return new byte[0];
-
-        var base64Image = chatImage.getSmallData().replaceAll("^data:[^,]+,", "");
-
-        try {
-            return Base64.getDecoder().decode(base64Image);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            return new byte[0];
-        }
+    public ResponseEntity<byte[]> profileImage(@PathVariable String id) {
+        return  profileImageResponse(id, SavedImageSize.LARGE);
     }
 
-    @GetMapping(value = "/api/profileImage/{id}", produces = "image/*")
+    @GetMapping(value = "/api/profileThumb/{id}")
     @ResponseBody
-    public byte[] profileImage(@PathVariable String id) throws Exception {
-        if (id.isEmpty())
-            return new byte[0];
-
-        var optUser = userService.findUser(id);
-        if (optUser.isEmpty())
-            return new byte[0];
-
-        var user = optUser.get();
-
-        if (user.getProfileImage().isEmpty())
-            return new byte[0];
-
-        var base64Image = user.getProfileImage();
-
-        try {
-            return Base64.getDecoder().decode(base64Image);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            return new byte[0];
-        }
+    public ResponseEntity<byte[]> profileThumbImage(@PathVariable String id) {
+        return  profileImageResponse(id, SavedImageSize.SMALL);
     }
 
-    @GetMapping(value = "/api/profileThumb/{id}", produces = "image/*")
-    @ResponseBody
-    public byte[] profileThumbImage(@PathVariable String id) throws Exception {
-        if (id.isEmpty())
-            return new byte[0];
-
-        var optUser = userService.findUser(id);
-        if (optUser.isEmpty())
-            return new byte[0];
-
-        var user = optUser.get();
-
-        if (user.getProfileThumb().isEmpty())
-            return new byte[0];
-
-        var base64Image = user.getProfileThumb();
-
+    private ResponseEntity<byte[]> profileImageResponse(String id, SavedImageSize size) {
         try {
-            return Base64.getDecoder().decode(base64Image);
+            if (id.isEmpty())
+                return ResponseEntity.notFound().build();
+
+            var optUser = userService.findUser(id);
+            if (optUser.isEmpty())
+                return ResponseEntity.notFound().build();
+
+            var user = optUser.get();
+
+            if (user.getProfileImage().isEmpty())
+                return ResponseEntity.notFound().build();
+
+            if (AllowedImageType.NONE.equals(user.getProfileMime()))
+                return ResponseEntity.notFound().build();
+
+            var extension = Helpers.getImageExtension(user.getProfileMime());
+            if (extension.isEmpty())
+                return ResponseEntity.notFound().build();
+
+            var currentPath = System.getProperty("user.dir");
+
+            var largePath = Paths.get(currentPath, "images", "profiles", "large");
+            var smallPath = Paths.get(currentPath, "images", "profiles", "small");
+
+            Optional<Path> profileImagePath = switch (size) {
+                case LARGE -> Optional.of(largePath);
+                default -> Optional.of(smallPath);
+            };
+            var contentType = "";
+
+            switch (user.getProfileMime()) {
+                case PNG:
+                    contentType = "image/png";
+                    break;
+
+                case JPG:
+                    contentType = "image/jpeg";
+                    break;
+
+                case GIF:
+                    contentType = "image/gif";
+                    break;
+
+                case BMP:
+                    contentType = "image/bmp";
+                    break;
+
+                case SVG:
+                    contentType = "image/svg+xml";
+                    profileImagePath = Optional.of(largePath);
+                    break;
+            }
+
+            var imagePath = Paths.get(profileImagePath.get().toString(), user.getProfileImage() + "." + extension);
+            if (!Files.exists(imagePath))
+                return ResponseEntity.notFound().build();
+
+            return ResponseEntity.ok().header("Content-Type", contentType).body(Files.readAllBytes(imagePath));
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            return new byte[0];
+            return ResponseEntity.notFound().build();
         }
     }
 }

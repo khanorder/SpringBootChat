@@ -35,19 +35,19 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
 
     const hideDialog = useCallback(() => {
         switch (type) {
-            case Defines.CenterDialogType.CreateChatRoom:
+            case Defines.CenterDialogType.CREATE_CHAT_ROOM:
                 dispatch(setIsActiveCreateChatRoom(false));
                 break;
 
-            case Defines.CenterDialogType.ProfileImageInput:
+            case Defines.CenterDialogType.PROFILE_IMAGE_INPUT:
                 dispatch(setIsActiveProfileImageInput(false));
                 break;
 
-            case Defines.CenterDialogType.ChatImageInput:
+            case Defines.CenterDialogType.CHAT_IMAGE_INPUT:
                 dispatch(setIsActiveChatImageInput(false));
                 break;
 
-            case Defines.CenterDialogType.AddUserChatRoom:
+            case Defines.CenterDialogType.ADD_USER_CHAT_ROOM:
                 dispatch(setIsActiveAddUser(false));
                 break;
         }
@@ -58,25 +58,25 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
         let title = "";
         let dialogWrapperClass = `${styles.dialogWrapper}`;
         switch (type) {
-            case Defines.CenterDialogType.CreateChatRoom:
+            case Defines.CenterDialogType.CREATE_CHAT_ROOM:
                 title = "채팅방 생성";
                 if (ui.isActiveCreateChatRoom)
                     dialogWrapperClass += ` ${styles.active}`;
                 break;
 
-            case Defines.CenterDialogType.ProfileImageInput:
+            case Defines.CenterDialogType.PROFILE_IMAGE_INPUT:
                 title = "프로필 이미지 변경";
                 if (ui.isActiveProfileImageInput)
                     dialogWrapperClass += ` ${styles.active}`;
                 break;
 
-            case Defines.CenterDialogType.ChatImageInput:
+            case Defines.CenterDialogType.CHAT_IMAGE_INPUT:
                 title = "이미지 전송";
                 if (ui.isActiveChatImageInput)
                     dialogWrapperClass += ` ${styles.active}`;
                 break;
 
-            case Defines.CenterDialogType.AddUserChatRoom:
+            case Defines.CenterDialogType.ADD_USER_CHAT_ROOM:
                 title = "사용자 초대";
                 if (ui.isActiveAddUser)
                     dialogWrapperClass += ` ${styles.active}`;
@@ -85,15 +85,15 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
 
         if ("undefined" !== typeof size) {
             switch (size) {
-                case Defines.CenterDialogSize.Small:
+                case Defines.CenterDialogSize.SMALL:
                     dialogWrapperClass += ` ${styles.small}`;
                     break;
 
-                case Defines.CenterDialogSize.Medium:
+                case Defines.CenterDialogSize.MEDIUM:
                     dialogWrapperClass += ` ${styles.medium}`;
                     break;
 
-                case Defines.CenterDialogSize.Large:
+                case Defines.CenterDialogSize.LARGE:
                     dialogWrapperClass += ` ${styles.large}`;
                     break;
             }

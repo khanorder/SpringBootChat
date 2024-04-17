@@ -5,7 +5,7 @@ export namespace ChatAPI {
 
     export async function UploadChatImageAsync(uploadChatImageReq: Domains.UploadChatImageRequest): Promise<boolean> {
         const serverHost = Helpers.getCookie("SERVER_HOST") ?? 'localhost:8080';
-        const url = (serverHost.startsWith("localhost") ? 'http://' : 'https://') + serverHost + "/api/uploadChatImage";
+        const url = (serverHost.startsWith("localhost") || serverHost.startsWith("192.168") ? 'http://' : 'https://') + serverHost + "/api/uploadChatImage";
         let result = false;
 
         try {

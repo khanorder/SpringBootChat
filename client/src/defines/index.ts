@@ -57,20 +57,30 @@ export namespace Defines {
         RES_REMOVE_USER_PROFILE = 28,
         RES_NOTICE_USER_PROFILE_REMOVED = 29,
         RES_CREATE_CHAT_ROOM = 30,
-        RES_ADD_CHAT_ROOM = 31,
-        RES_REMOTE_CHAT_ROOM = 32,
-        RES_ENTER_CHAT_ROOM = 33,
-        RES_EXIT_CHAT_ROOM = 34,
-        RES_UPDATE_CHAT_ROOM = 35,
-        RES_NOTICE_ADD_CHAT_ROOM_USER = 36,
-        RES_NOTICE_REMOVE_CHAT_ROOM_USER = 37,
-        RES_NOTICE_ENTER_CHAT_ROOM = 38,
-        RES_NOTICE_EXIT_CHAT_ROOM = 39,
-        RES_NOTICE_CHANGE_NAME_CHAT_ROOM = 40,
-        RES_NOTICE_CHAT_ROOM = 41,
-        RES_TALK_CHAT_ROOM = 42,
-        RES_HISTORY_CHAT_ROOM = 43,
+        RES_ADD_USER_CHAT_ROOM = 31,
+        RES_ADD_CHAT_ROOM = 32,
+        RES_REMOTE_CHAT_ROOM = 33,
+        RES_ENTER_CHAT_ROOM = 34,
+        RES_EXIT_CHAT_ROOM = 35,
+        RES_UPDATE_CHAT_ROOM = 36,
+        RES_NOTICE_ADD_CHAT_ROOM_USER = 37,
+        RES_NOTICE_REMOVE_CHAT_ROOM_USER = 38,
+        RES_NOTICE_ENTER_CHAT_ROOM = 39,
+        RES_NOTICE_EXIT_CHAT_ROOM = 40,
+        RES_NOTICE_CHANGE_NAME_CHAT_ROOM = 41,
+        RES_NOTICE_CHAT_ROOM = 42,
+        RES_TALK_CHAT_ROOM = 43,
+        RES_HISTORY_CHAT_ROOM = 44,
         RES_TEST = 255,
+    }
+
+    export enum AllowedImageType {
+        NONE = 0,
+        PNG = 1,
+        JPG = 2,
+        GIF = 3,
+        BMP = 4,
+        SVG = 5,
     }
 
     export enum AuthStateType {
@@ -100,25 +110,25 @@ export namespace Defines {
     export enum NotificationType {
         FOLLOWER = 0,
         START_CHAT = 1,
-        CHAT = 2,
+        ADD_USER_CHAT_ROOM = 2,
     }
 
     export enum SlideDialogType {
-        Profile = 0,
-        Notification = 1,
-        ChatRoomInfo = 2,
+        PROFILE = 0,
+        NOTIFICATION = 1,
+        CHAT_ROOM_INFO = 2,
     }
 
     export enum CenterDialogType {
-        CreateChatRoom = 0,
-        ProfileImageInput = 1,
-        ChatImageInput = 2,
-        AddUserChatRoom = 3,
+        CREATE_CHAT_ROOM = 0,
+        PROFILE_IMAGE_INPUT = 1,
+        CHAT_IMAGE_INPUT = 2,
+        ADD_USER_CHAT_ROOM = 3,
     }
 
     export enum CenterDialogSize {
-        Small = 0,
-        Medium = 1,
-        Large = 2,
+        SMALL = 0,
+        MEDIUM = 1,
+        LARGE = 2,
     }
 }

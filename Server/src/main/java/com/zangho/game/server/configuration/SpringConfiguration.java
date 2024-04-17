@@ -1,5 +1,6 @@
 package com.zangho.game.server.configuration;
 
+import com.zangho.game.server.repository.chat.ChatImageRepository;
 import com.zangho.game.server.repository.chat.ChatRepository;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
@@ -16,14 +17,16 @@ public class SpringConfiguration {
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRepository chatRepository;
+    private final ChatImageRepository chatImageRepository;
     private final UserRoomRepository userRoomRepository;
     private final RelationRepository relationRepository;
     private final NotificationRepository notificationRepository;
 
-    public SpringConfiguration(UserRepository userRepository, ChatRoomRepository chatRoomRepository, ChatRepository chatRepository, UserRoomRepository userRoomRepository, RelationRepository relationRepository, NotificationRepository notificationRepository) {
+    public SpringConfiguration(UserRepository userRepository, ChatRoomRepository chatRoomRepository, ChatRepository chatRepository, ChatImageRepository chatImageRepository, UserRoomRepository userRoomRepository, RelationRepository relationRepository, NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
         this.chatRepository = chatRepository;
+        this.chatImageRepository = chatImageRepository;
         this.userRoomRepository = userRoomRepository;
         this.relationRepository = relationRepository;
         this.notificationRepository = notificationRepository;
@@ -42,6 +45,11 @@ public class SpringConfiguration {
     @Bean
     public ChatService chatService() {
         return new ChatService(chatRepository);
+    }
+
+    @Bean
+    public ChatImageService chatImageService () {
+        return new ChatImageService(chatImageRepository);
     }
 
     @Bean

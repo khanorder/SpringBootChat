@@ -16,11 +16,6 @@ import javax.sql.DataSource;
 public class DatabaseConfiguration {
 
     @Bean
-    public ChatImageService chatImageService (ChatImageRepository chatImageRepository) {
-        return new ChatImageService(chatImageRepository);
-    }
-
-    @Bean
     public VisitRepository visitRepository (DataSource visitDataSource) {
         return new VisitRepository(visitDataSource);
     }

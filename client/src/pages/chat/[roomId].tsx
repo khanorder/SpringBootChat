@@ -8,6 +8,7 @@ import {enterChatRoomReq} from "@/stores/reducers/webSocket";
 import {Helpers} from "@/helpers";
 import dynamic from "next/dynamic";
 import {setIsProd} from "@/stores/reducers/appConfigs";
+import {Defines} from "@/defines";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
 const ChatInput = dynamic(() => import("@/components/chatContents/chatInput"), { ssr: false });
@@ -34,6 +35,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
     const chatMessageInputRef = createRef<HTMLTextAreaElement>();
     const [message, setMessage] = useState<string>('');
     const chatImageInputRef = createRef<HTMLInputElement>();
+    const [chatImageMime, setChatImageMime] = useState<Defines.AllowedImageType>(Defines.AllowedImageType.NONE);
     const [chatLargeImage, setChatLargeImage] = useState<string|ArrayBuffer|null>(null);
     const [chatSmallImage, setChatSmallImage] = useState<string|ArrayBuffer|null>(null);
 
@@ -99,6 +101,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
                     chatMessageInputRef={chatMessageInputRef}
                     message={message}
                     setMessage={setMessage}
+                    setChatImageMime={setChatImageMime}
                     setChatSmallImage={setChatSmallImage}
                     setChatLargeImage={setChatLargeImage}
                 />
@@ -113,8 +116,10 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
             <DialogChatDetailImage />
             <DialogChatImageInput
                 chatImageInputRef={chatImageInputRef}
+                setChatImageMime={setChatImageMime}
                 setChatSmallImage={setChatSmallImage}
                 setChatLargeImage={setChatLargeImage}
+                chatImageMime={chatImageMime}
                 chatSmallImage={chatSmallImage}
                 chatLargeImage={chatLargeImage} />
             {contents()}

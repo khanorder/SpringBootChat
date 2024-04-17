@@ -152,12 +152,12 @@ export default function DialogCreateChatRoom() {
 
         return (
             <LayoutCenterDialog
-                type={Defines.CenterDialogType.CreateChatRoom}
-                size={Defines.CenterDialogSize.Large}
+                type={Defines.CenterDialogType.CREATE_CHAT_ROOM}
+                size={Defines.CenterDialogSize.LARGE}
                 buttons={
                     <>
-                        <button className={`${styles.button} ${stylesCommon.button} ${stylesCommon.primaryButton}`} onClick={createChatRoom}>생성</button>
-                        <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog}>취소</button>
+                        <button className={`${styles.button} ${stylesCommon.button} ${stylesCommon.primaryButton}`} onClick={createChatRoom} title="생성">생성</button>
+                        <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog} title="취소">취소</button>
                     </>
                 }>
                 <div className={styles.chatRoomInputWrapper}>

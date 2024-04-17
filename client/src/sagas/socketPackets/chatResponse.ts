@@ -128,13 +128,17 @@ export function* notificationRes(data: Uint8Array) {
         return null;
     }
 
-    switch (response.type) {
+    switch (response.notificationType) {
         case Defines.NotificationType.FOLLOWER:
-            yield put(addNotification(new Domains.Notification(response.id, response.type, response.sendAt, response.isCheck, "", response.targetId)));
+            yield put(addNotification(new Domains.Notification(response.id, response.notificationType, response.sendAt, response.isCheck, "", response.targetId)));
             break;
 
         case Defines.NotificationType.START_CHAT:
-            yield put(addNotification(new Domains.Notification(response.id, response.type, response.sendAt, response.isCheck, "", response.targetId, response.url)));
+            yield put(addNotification(new Domains.Notification(response.id, response.notificationType, response.sendAt, response.isCheck, "", response.targetId, response.url)));
+            break;
+
+        case Defines.NotificationType.ADD_USER_CHAT_ROOM:
+            yield put(addNotification(new Domains.Notification(response.id, response.notificationType, response.sendAt, response.isCheck, "", response.targetId, response.url)));
             break;
     }
 

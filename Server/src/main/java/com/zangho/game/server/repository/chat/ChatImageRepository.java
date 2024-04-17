@@ -12,8 +12,6 @@ public interface ChatImageRepository extends JpaRepository<ChatImage, String> {
 
     Optional<ChatImage> findByChatId(String chatId);
 
-    Optional<ChatImage> findByRoomId(String roomId);
-
     @Override
     long count();
 }

@@ -5,16 +5,20 @@ import Picture from "public/images/picture.svg";
 import isEmpty from "lodash/isEmpty";
 import {saveUserProfileReq} from "@/stores/reducers/webSocket";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
+import {Helpers} from "@/helpers";
+import {Defines} from "@/defines";
 
 export interface ChatImageInputDialogProps {
     profileImageInputRef: RefObject<HTMLInputElement>;
+    setProfileImageMime: Dispatch<SetStateAction<Defines.AllowedImageType>>;
     setProfileSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     setProfileLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
+    profileImageMime: Defines.AllowedImageType;
     profileSmallImage: string|ArrayBuffer|null;
     profileLargeImage: string|ArrayBuffer|null;
 }
 
-export default function DialogProfileImageInput({profileImageInputRef, profileSmallImage, profileLargeImage, setProfileSmallImage, setProfileLargeImage }: ChatImageInputDialogProps) {
+export default function DialogProfileImageInput({profileImageInputRef, profileImageMime, profileSmallImage, profileLargeImage, setProfileImageMime, setProfileSmallImage, setProfileLargeImage }: ChatImageInputDialogProps) {
     const firstRender = useRef(true);
     const webSocket = useAppSelector(state => state.webSocket);
     const chat = useAppSelector(state => state.chat);
@@ -44,11 +48,12 @@ export default function DialogProfileImageInput({profileImageInputRef, profileSm
 
     const hideDialog = useCallback(() => {
         dispatch(setIsActiveProfileImageInput(false));
+        setProfileImageMime(Defines.AllowedImageType.NONE);
         setProfileSmallImage('');
         setProfileLargeImage('');
         if (profileImageInputRef.current)
             profileImageInputRef.current.value = '';
-    }, [dispatch, setProfileSmallImage, setProfileLargeImage, profileImageInputRef]);
+    }, [dispatch, setProfileImageMime, setProfileSmallImage, setProfileLargeImage, profileImageInputRef]);
 
     const onSendImage = useCallback(async () => {
         if (!webSocket.socket) {
@@ -57,7 +62,7 @@ export default function DialogProfileImageInput({profileImageInputRef, profileSm
         } else if (isEmpty(user.id)) {
             alert('로그인 후 이용해 주세요.');
             return;
-        } else if (isEmpty(profileSmallImage) || isEmpty(profileLargeImage)) {
+        } else if (1 > profileImageMime || (Defines.AllowedImageType.SVG != profileImageMime && (isEmpty(profileSmallImage) || isEmpty(profileLargeImage)))) {
             alert('이미지를 선택해 주세요.');
             hideDialog();
             return;
@@ -69,9 +74,23 @@ export default function DialogProfileImageInput({profileImageInputRef, profileSm
             return;
         }
 
-        dispatch(saveUserProfileReq({ smallData: (profileSmallImage ? (profileSmallImage as string) : ""), largeData: (profileLargeImage ? (profileLargeImage as string) : "") }));
+        let bytesLarge = new Uint8Array();
+        let bytesSmall = new Uint8Array();
+        switch (profileImageMime) {
+            case Defines.AllowedImageType.SVG:
+                bytesLarge = new Uint8Array(await profileImageInputRef.current.files[0].arrayBuffer());
+                break;
+
+            default:
+                const blobLarge = Helpers.getDataURItoBlob((profileLargeImage ? (profileLargeImage as string) : ""));
+                const blobSmall = Helpers.getDataURItoBlob((profileSmallImage ? (profileSmallImage as string) : ""));
+                bytesLarge = new Uint8Array(await blobLarge.arrayBuffer());
+                bytesSmall = new Uint8Array(await blobSmall.arrayBuffer());
+        }
+
+        dispatch(saveUserProfileReq({ mime: profileImageMime, bytesLarge: bytesLarge, bytesSmall: bytesSmall }));
         hideDialog();
-    }, [webSocket, user, profileSmallImage, profileLargeImage, profileImageInputRef, hideDialog, dispatch]);
+    }, [webSocket, user, profileImageMime, profileSmallImage, profileLargeImage, profileImageInputRef, hideDialog, dispatch]);
 
     const dialog = useCallback(() =>  {
         return (

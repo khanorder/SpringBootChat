@@ -16,7 +16,7 @@ export default function DialogChatRoomInfo() {
     //#endregion
 
     return (
-        <LayoutSlideDialog type={Defines.SlideDialogType.ChatRoomInfo}>
+        <LayoutSlideDialog type={Defines.SlideDialogType.CHAT_ROOM_INFO}>
             <ChatRoomUsers />
         </LayoutSlideDialog>
     );

@@ -8,16 +8,20 @@ import {ChatAPI} from "@/apis/chatAPI";
 import {sendMessageReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
 import {setIsActiveChatImageInput} from "@/stores/reducers/ui";
+import {Helpers} from "@/helpers";
+import roomId from "@/pages/chat/[roomId]";
 
 export interface DialogChatImageInputProps {
     chatImageInputRef: RefObject<HTMLInputElement>;
+    setChatImageMime: Dispatch<SetStateAction<Defines.AllowedImageType>>;
     setChatSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     setChatLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
+    chatImageMime: Defines.AllowedImageType;
     chatSmallImage: string|ArrayBuffer|null;
     chatLargeImage: string|ArrayBuffer|null;
 }
 
-export default function DialogChatImageInput({chatImageInputRef, chatSmallImage, chatLargeImage, setChatSmallImage, setChatLargeImage }: DialogChatImageInputProps) {
+export default function DialogChatImageInput({chatImageInputRef, chatImageMime, chatSmallImage, chatLargeImage, setChatImageMime, setChatSmallImage, setChatLargeImage }: DialogChatImageInputProps) {
     const firstRender = useRef(true);
     const webSocket = useAppSelector(state => state.webSocket);
     const chat = useAppSelector(state => state.chat);
@@ -47,11 +51,12 @@ export default function DialogChatImageInput({chatImageInputRef, chatSmallImage,
 
     const hideDialog = useCallback(() => {
         dispatch(setIsActiveChatImageInput(false));
+        setChatImageMime(Defines.AllowedImageType.NONE);
         setChatSmallImage('');
         setChatLargeImage('');
         if (chatImageInputRef.current)
             chatImageInputRef.current.value = '';
-    }, [dispatch, setChatSmallImage, setChatLargeImage, chatImageInputRef]);
+    }, [dispatch, setChatImageMime, setChatSmallImage, setChatLargeImage, chatImageInputRef]);
 
     const onSendImage = useCallback(async () => {
         if (!webSocket.socket) {
@@ -78,11 +83,23 @@ export default function DialogChatImageInput({chatImageInputRef, chatSmallImage,
             return;
         }
 
+        let base64Large = "";
+        let base64Small = "";
+        switch (chatImageMime) {
+            case Defines.AllowedImageType.SVG:
+                base64Large = Helpers.encodeBase64(new Uint8Array(await chatImageInputRef.current.files[0].arrayBuffer()));
+                break;
+
+            default:
+                base64Large = await Helpers.getDataURItoBase64((chatLargeImage ? (chatLargeImage as string) : ""));
+                base64Small = await Helpers.getDataURItoBase64((chatSmallImage ? (chatSmallImage as string) : ""));
+        }
+
         const chatId = uuid();
-        await ChatAPI.UploadChatImageAsync({ chatId: chatId, roomId: chat.currentChatRoomId, userId: user.id, largeData: 'string' == typeof chatLargeImage ? chatLargeImage : '', smallData: 'string' == typeof chatSmallImage ? chatSmallImage : '' });
+        await ChatAPI.UploadChatImageAsync({ chatId: chatId, roomId: chat.currentChatRoomId, mime: chatImageMime, base64Large: base64Large, base64Small: base64Small });
         dispatch(sendMessageReq({ id: chatId, type: Defines.ChatType.IMAGE, roomId: chat.currentChatRoomId, message: '' }));
         hideDialog();
-    }, [chat, webSocket, user, chatSmallImage, chatLargeImage, chatImageInputRef, hideDialog, dispatch]);
+    }, [chat, webSocket, user, chatImageMime, chatSmallImage, chatLargeImage, chatImageInputRef, hideDialog, dispatch]);
 
     const dialog = useCallback(() =>  {
         return (
@@ -98,8 +115,8 @@ export default function DialogChatImageInput({chatImageInputRef, chatSmallImage,
                         }
                     </div>
                     <div className={styles.dialogButtons}>
-                        <button className={styles.dialogButton} onClick={onSendImage}>전송</button>
-                        <button className={styles.dialogButton} onClick={hideDialog}>취소</button>
+                        <button className={styles.dialogButton} onClick={onSendImage} title="전송">전송</button>
+                        <button className={styles.dialogButton} onClick={hideDialog} title="취소">취소</button>
                     </div>
                 </div>
                 <div className={styles.dialogPane} onClick={hideDialog}></div>

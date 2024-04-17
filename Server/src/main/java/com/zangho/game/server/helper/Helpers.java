@@ -1,5 +1,6 @@
 package com.zangho.game.server.helper;
 
+import com.zangho.game.server.define.AllowedImageType;
 import com.zangho.game.server.define.Types;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.socket.WebSocketSession;
@@ -168,6 +169,17 @@ public class Helpers {
         } else {
             return header;
         }
+    }
+
+    public static String getImageExtension(AllowedImageType mime) {
+        return switch (mime) {
+            case PNG -> "png";
+            case JPG -> "jpg";
+            case GIF -> "gif";
+            case BMP -> "bmp";
+            case SVG -> "svg";
+            default -> "";
+        };
     }
 
 }

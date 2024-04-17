@@ -4,7 +4,7 @@ import stylesCommon from "@/styles/common.module.sass";
 import stylesTabPanel from "@/styles/tabPanel.module.sass";
 import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
-import {createChatRoomReq} from "@/stores/reducers/webSocket";
+import {addUserChatRoomReq, createChatRoomReq} from "@/stores/reducers/webSocket";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveAddUser, setIsActiveCreateChatRoom} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
@@ -47,7 +47,7 @@ export default function DialogAddUserChatRoom() {
             return;
         }
 
-        //dispatch(createChatRoomReq({openType: chatRoomOpenType, roomName: chatRoomName, userIds: selectedUsers}));
+        dispatch(addUserChatRoomReq(selectedUsers));
         dispatch(setIsActiveAddUser(false));
     }, [webSocket, dispatch, selectedUsers]);
 
@@ -98,12 +98,12 @@ export default function DialogAddUserChatRoom() {
 
         return (
             <LayoutCenterDialog
-                type={Defines.CenterDialogType.AddUserChatRoom}
-                size={Defines.CenterDialogSize.Large}
+                type={Defines.CenterDialogType.ADD_USER_CHAT_ROOM}
+                size={Defines.CenterDialogSize.LARGE}
                 buttons={
                     <>
-                        <button className={`${styles.button} ${stylesCommon.button} ${stylesCommon.primaryButton}`} onClick={addUserChatRoom}>생성</button>
-                        <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog}>취소</button>
+                        <button className={`${styles.button} ${stylesCommon.button} ${stylesCommon.primaryButton}`} onClick={addUserChatRoom} title="초대">초대</button>
+                        <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog} title="취소">취소</button>
                     </>
                 }>
                 <div className={styles.chatRoomInputWrapper}>
@@ -114,7 +114,7 @@ export default function DialogAddUserChatRoom() {
                 </div>
             </LayoutCenterDialog>
         );
-    }, [appConfigs, selectedUsers, setSelectedUsers]);
+    }, [addUserChatRoom, hideDialog, onSelectUser, selectedUserChips, selectedUsers]);
 
     return dialog();
 }

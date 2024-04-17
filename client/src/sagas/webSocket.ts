@@ -507,7 +507,6 @@ function* callStartReconnecting() {
 
             default:
                 try {
-                    //yield put(setConnectionState(WebSocket.CONNECTING));
                     yield call(setSocketInfo, webSocketState.socket.url);
                 } catch (error) {
                     console.error(error);

@@ -16,7 +16,7 @@ export default function DialogProfile() {
     //#endregion
 
     return (
-        <LayoutSlideDialog type={Defines.SlideDialogType.Profile}>
+        <LayoutSlideDialog type={Defines.SlideDialogType.PROFILE}>
             <ChatEditProfile/>
         </LayoutSlideDialog>
     );

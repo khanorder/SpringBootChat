@@ -9,6 +9,7 @@ import isEmpty from "lodash/isEmpty";
 import {Helpers} from "@/helpers";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
+import {Defines} from "@/defines";
 const DialogProfileImageInput = dynamic(() => import("@/components/dialogs/dialogProfileImageInput"), { ssr: false });
 
 export default function ChatEditProfile() {
@@ -20,6 +21,7 @@ export default function ChatEditProfile() {
     const nameInputRef = createRef<HTMLInputElement>();
     const messageInputRef = createRef<HTMLInputElement>();
     const profileImageInputRef = createRef<HTMLInputElement>();
+    const [profileImageMime, setProfileImageMime] = useState<Defines.AllowedImageType>(Defines.AllowedImageType.NONE);
     const [profileLargeImage, setProfileLargeImage] = useState<string|ArrayBuffer|null>(null);
     const [profileSmallImage, setProfileSmallImage] = useState<string|ArrayBuffer|null>(null);
     const dispatch = useAppDispatch();
@@ -86,22 +88,46 @@ export default function ChatEditProfile() {
         if (profileImageInputRef.current?.files && 0 < profileImageInputRef.current?.files.length) {
             const file = profileImageInputRef.current?.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    if (!e?.target?.result)
-                        return;
-
-                    const origDataURL = 'string' == typeof reader.result ? reader.result : '';
-                    const smallDataURL = await Helpers.getDataURLResizeImage(origDataURL, 256, 256, file.type);
-                    const largeDataURL = await Helpers.getDataURLResizeImage(origDataURL, 1024, 1024, file.type);
-                    setProfileSmallImage(smallDataURL);
-                    setProfileLargeImage(largeDataURL);
+                let mime: Defines.AllowedImageType;
+                if ("image/png" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.PNG;
+                } else if ("image/jpeg" === file.type.toLowerCase() || "image/jpg" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.JPG;
+                } else if ("image/gif" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.GIF;
+                } else if ("image/bmp" === file.type.toLowerCase()) {
+                    mime = Defines.AllowedImageType.BMP;
+                } else if (file.type.toLowerCase().startsWith("image/svg")) {
+                    mime = Defines.AllowedImageType.SVG;
+                } else {
+                    mime = Defines.AllowedImageType.NONE;
                 }
-                reader.readAsDataURL(file);
+
+                if (0 < mime) {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        if (!e?.target?.result)
+                            return;
+
+                        const origDataURL = 'string' == typeof reader.result ? reader.result : '';
+                        const smallDataURL = await Helpers.getDataURLResizeImage(origDataURL, 256, 256, file.type);
+                        const largeDataURL = await Helpers.getDataURLResizeImage(origDataURL, 1024, 1024, file.type);
+                        setProfileSmallImage(smallDataURL);
+                        setProfileLargeImage(largeDataURL);
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    setProfileSmallImage("");
+                    setProfileLargeImage("");
+                }
+                setProfileImageMime(mime);
             }
             dispatch(setIsActiveProfileImageInput(true));
+        } else {
+            setProfileSmallImage("");
+            setProfileLargeImage("");
         }
-    }, [profileImageInputRef, setProfileSmallImage, setProfileLargeImage, dispatch]);
+    }, [profileImageInputRef, setProfileImageMime, setProfileSmallImage, setProfileLargeImage, dispatch]);
 
     const userProfileImage = useCallback(() => {
         return (
@@ -123,7 +149,7 @@ export default function ChatEditProfile() {
 
     return (
         <div className={styles.editProfileWrapper}>
-            <DialogProfileImageInput profileImageInputRef={profileImageInputRef} setProfileSmallImage={setProfileSmallImage} setProfileLargeImage={setProfileLargeImage} profileSmallImage={profileSmallImage} profileLargeImage={profileLargeImage}/>
+            <DialogProfileImageInput profileImageInputRef={profileImageInputRef} setProfileImageMime={setProfileImageMime} setProfileSmallImage={setProfileSmallImage} setProfileLargeImage={setProfileLargeImage} profileImageMime={profileImageMime} profileSmallImage={profileSmallImage} profileLargeImage={profileLargeImage}/>
             <div className={styles.userThumb}>
                 <button className={styles.removeProfile}><Image src={RemoveIcon} alt="프로필 삭제" fill={true} priority={true} onClick={removeUserProfile} /></button>
                 <label className={styles.profileImageInputLabel} htmlFor='profileImageInput' title='프로필 등록'>

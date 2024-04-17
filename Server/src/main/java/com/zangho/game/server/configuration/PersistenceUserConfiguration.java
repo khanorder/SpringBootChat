@@ -21,8 +21,14 @@ import java.util.HashMap;
 @EnableJpaRepositories(basePackages = "com.zangho.game.server.repository.user", entityManagerFactoryRef = "userEntityManager", transactionManagerRef = "userTransactionManager")
 public class PersistenceUserConfiguration {
 
-    @Value("${rds.jpa.hibernate.ddl-auto}")
+    @Value("${rds.jpa.hibernate.hbm2ddl.auto}")
     private String ddlAuto;
+
+//    @Value("${rds.jpa.hibernate.show_sql}")
+//    private String showSQL;
+//
+//    @Value("${rds.jpa.hibernate.format_sql}")
+//    private String formatSQL;
 
 //    @Value("${rds.jpa.properties.hibernate.dialect}")
 //    private String dialect;
@@ -44,6 +50,12 @@ public class PersistenceUserConfiguration {
 
         if (!ddlAuto.isEmpty())
             properties.put("hibernate.hbm2ddl.auto", ddlAuto);
+
+//        if (!showSQL.isEmpty())
+//            properties.put("hibernate.show_sql", showSQL);
+//
+//        if (!formatSQL.isEmpty())
+//            properties.put("hibernate.format_sql", formatSQL);
 
 //        if (!dialect.isEmpty())
 //            properties.put("hibernate.dialect", dialect);

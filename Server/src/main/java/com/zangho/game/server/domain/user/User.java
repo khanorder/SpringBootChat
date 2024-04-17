@@ -1,5 +1,6 @@
 package com.zangho.game.server.domain.user;
 
+import com.zangho.game.server.define.AllowedImageType;
 import com.zangho.game.server.domain.chat.ChatRoomInfo;
 import com.zangho.game.server.domain.chat.UserRoom;
 import jakarta.persistence.*;
@@ -7,7 +8,6 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.util.Date;
 import java.util.Optional;
@@ -33,17 +33,13 @@ public class User implements UserInterface {
     @Column(nullable = false, length = 128)
     private String message = "";
 
-    @ColumnDefault(value = "''")
+    @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
-    String profileMime = "";
+    AllowedImageType profileMime;
 
     @ColumnDefault(value = "''")
-    @Column(nullable = false, length = 1048576)
+    @Column(nullable = false, length = 36)
     String profileImage = "";
-
-    @ColumnDefault(value = "''")
-    @Column(nullable = false, length = 65536)
-    String profileThumb = "";
 
     @ColumnDefault(value = "current_timestamp(6)")
     @UpdateTimestamp
