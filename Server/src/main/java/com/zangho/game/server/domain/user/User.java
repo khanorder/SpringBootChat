@@ -35,7 +35,7 @@ public class User implements UserInterface {
 
     @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
-    AllowedImageType profileMime;
+    AllowedImageType profileMime = AllowedImageType.NONE;
 
     @ColumnDefault(value = "''")
     @Column(nullable = false, length = 36)
