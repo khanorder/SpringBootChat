@@ -1,5 +1,6 @@
 package com.zangho.game.server.domain.user;
 
+import com.zangho.game.server.define.AccountType;
 import com.zangho.game.server.define.AllowedImageType;
 import com.zangho.game.server.domain.chat.ChatRoomInfo;
 import com.zangho.game.server.domain.chat.UserRoom;
@@ -23,6 +24,11 @@ public class User implements UserInterface {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = 36)
     private String id;
+
+    @NonNull
+    @Enumerated(EnumType.ORDINAL)
+    @Column(nullable = false)
+    AccountType accountType;
 
     @NonNull
     @ColumnDefault("''")

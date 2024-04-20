@@ -2,7 +2,7 @@ import {ReactNode} from "react";
 import Head from "next/head";
 import {useAppSelector} from "@/hooks";
 
-export default function MainLayout({children}: { children: ReactNode }) {
+export default function DefaultLayout({children}: { children: ReactNode }) {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const title: string = appConfigs.name;
     const subject: string = appConfigs.name;

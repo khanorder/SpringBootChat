@@ -53,6 +53,14 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - connectedUsersReq`);
         },
+        startGuestReq: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - startGuestReq`);
+        },
+        signOutReq: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - signOutReq`);
+        },
         getUserInfoReq: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - getUserInfoReq`);
@@ -133,6 +141,8 @@ export const {
     resetCountTryConnect,
     startReconnecting,
     connectedUsersReq,
+    startGuestReq,
+    signOutReq,
     getUserInfoReq,
     followReq,
     unfollowReq,

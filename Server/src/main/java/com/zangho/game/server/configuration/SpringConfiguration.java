@@ -33,6 +33,11 @@ public class SpringConfiguration {
     }
 
     @Bean
+    public JwtService jwtService() {
+        return new JwtService();
+    }
+
+    @Bean
     public UserService userService() {
         return new UserService(userRepository, chatRoomRepository, userRoomRepository, relationRepository);
     }

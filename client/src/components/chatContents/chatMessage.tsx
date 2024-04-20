@@ -8,9 +8,8 @@ import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import {setDetailImageId} from "@/stores/reducers/chat";
-import defaultProfileImageUrl = Domains.defaultProfileImageUrl;
-import {getUserInfoReq} from "@/stores/reducers/webSocket";
 import useGetUserInfo from "@/components/common/useGetUserInfo";
+import chatImageSmallUrlPrefix = Domains.chatImageSmallUrlPrefix;
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
 export interface ChatMessageProps {
@@ -99,7 +98,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
                             {userName()}
                             <div className={chatMessageClass}>
                                 <img className={styles.chatImage}
-                                     src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/chatSmallImage/${data.id}`}
+                                     src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${chatImageSmallUrlPrefix}${data.id}`}
                                      alt={data.id + ' 이미지'}
                                      onClick={e => openChatImageDetailDialog(data.id)}/>
                             </div>

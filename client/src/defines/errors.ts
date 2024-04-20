@@ -1,8 +1,21 @@
 export namespace Errors {
-    export enum CheckAuthentication {
+    export enum CheckAuth {
         NONE = 0,
-        ALREADY_SIGN_IN_USER = 1,
-        FAILED_TO_CREATE_USER = 2,
+        NOT_VALID_TOKEN = 1,
+        AUTH_EXPIRED = 2,
+        ALREADY_SIGN_IN_USER = 3,
+        FAILED_TO_CREATE_USER = 4,
+        FAILED_TO_ISSUE_TOKEN = 5,
+    }
+
+    export enum SignOut {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        NOT_VALID_TOKEN = 2,
+        AUTH_EXPIRED = 3,
+        ID_REQUIRED = 4,
+        NOT_FOUND_USER = 5,
+        FAILED_TO_SIGN_OUT = 6,
     }
 
     export enum CheckNotification {

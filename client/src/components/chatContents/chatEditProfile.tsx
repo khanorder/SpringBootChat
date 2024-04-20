@@ -1,10 +1,11 @@
 import {ChangeEvent, createRef, useCallback, useEffect, useRef, useState} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import styles from "@/styles/chatDialogEditProfile.module.sass";
+import stylesCommon from "@/styles/common.module.sass";
 import Image from "next/image";
 import RemoveIcon from "public/images/close-circle.svg";
 import {setUserMessage, setUserName} from "@/stores/reducers/user";
-import {removeUserProfileReq, saveUserMessageReq, saveUserNameReq} from "@/stores/reducers/webSocket";
+import {removeUserProfileReq, saveUserMessageReq, saveUserNameReq, signOutReq} from "@/stores/reducers/webSocket";
 import isEmpty from "lodash/isEmpty";
 import {Helpers} from "@/helpers";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
@@ -147,6 +148,10 @@ export default function ChatEditProfile() {
         dispatch(removeUserProfileReq());
     }, [user, dispatch]);
 
+    const signOut = useCallback(() => {
+        dispatch(signOutReq());
+    }, [dispatch]);
+
     return (
         <div className={styles.editProfileWrapper}>
             <DialogProfileImageInput profileImageInputRef={profileImageInputRef} setProfileImageMime={setProfileImageMime} setProfileSmallImage={setProfileSmallImage} setProfileLargeImage={setProfileLargeImage} profileImageMime={profileImageMime} profileSmallImage={profileSmallImage} profileLargeImage={profileLargeImage}/>
@@ -187,6 +192,9 @@ export default function ChatEditProfile() {
                                placeholder={appConfigs.isProd ? '상태 메세지' : ''}/>
                     </div>
                 </div>
+            </div>
+            <div className={styles.buttons}>
+                <button className={`${stylesCommon.button} ${styles.signOutButton}`} onClick={signOut}>로그아웃</button>
             </div>
         </div>
     );

@@ -6,6 +6,8 @@ import CloseIcon from "public/images/close-circle.svg";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import {setDetailImageId} from "@/stores/reducers/chat";
+import {Domains} from "@/domains";
+import chatImageUrlPrefix = Domains.chatImageUrlPrefix;
 
 export default function DialogChatDetailImage () {
     const firstRender = useRef(true);
@@ -50,7 +52,7 @@ export default function DialogChatDetailImage () {
                             chat.chatDetailImageId
                                 ?
                                 <img className={styles.chatImageDetail}
-                                     src={(chat.chatDetailImageId ? `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/chatImage/${chat.chatDetailImageId}` : Picture)}
+                                     src={(chat.chatDetailImageId ? `${appConfigs.serverProtocol}://${appConfigs.serverHost}${chatImageUrlPrefix}${chat.chatDetailImageId}` : Picture)}
                                      alt='상세 이미지'/>
                                 :
                                 <></>

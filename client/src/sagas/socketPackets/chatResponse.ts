@@ -45,9 +45,11 @@ import {
     addNotification,
     addNotifications,
     checkNotification,
-    removeNotification,
-    setNotifications
+    removeNotification
 } from "@/stores/reducers/notification";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
+import {jwtDecode} from "jwt-decode";
+import AuthedJwtPayload = Domains.AuthedJwtPayload;
 
 export function* checkConnectionRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
@@ -87,29 +89,108 @@ export function* checkAuthenticationRes(data: Uint8Array) {
 
 
     switch (response.result) {
-        case Errors.CheckAuthentication.NONE:
-            const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+        case Errors.CheckAuth.NONE:
+            if (isEmpty(response.token)) {
+                if ('production' !== process.env.NODE_ENV)
+                    console.log(`packet - checkAuthenticationRes: token is empty.`);
 
-            yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
-            yield put(setUserId(response.userId));
-            yield put(setUserName(response.userName));
-            yield put(setUserMessage(response.userMessage));
-            yield put(setHaveProfile(response.haveProfile));
-            if (response.haveProfile)
-                yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${response.userId}?${(new Date()).getTime()}`));
+                alert("인증 실패.");
+                return;
+            }
 
-            yield put(setLatestActive(response.latestActive));
-            Helpers.setCookie("userId", response.userId, 3650);
+            try {
+                const decodedJwt: AuthedJwtPayload = jwtDecode(response.token);
+                if ('production' !== process.env.NODE_ENV)
+                    console.log(`packet - checkAuthenticationRes: ${response.token}`);
 
+                const id = "undefined" === typeof decodedJwt.id ? "" : decodedJwt.id;
+                if (isEmpty(id)) {
+                    if ('production' !== process.env.NODE_ENV)
+                        console.log(`packet - checkAuthenticationRes: id is empty.`);
+
+                    alert("인증 실패.");
+                    return;
+                }
+
+                const name = "undefined" === typeof decodedJwt.name ? "" : decodedJwt.name;
+                if (isEmpty(name)) {
+                    if ('production' !== process.env.NODE_ENV)
+                        console.log(`packet - checkAuthenticationRes: name is empty.`);
+
+                    alert("인증 실패.");
+                    return;
+                }
+
+                const message = "undefined" === typeof decodedJwt.message ? "" : decodedJwt.message;
+                const haveProfile = "undefined" === typeof decodedJwt.haveProfile ? false : decodedJwt.haveProfile;
+
+                yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
+                yield put(setUserId(id));
+                yield put(setUserName(name));
+                yield put(setUserMessage(message));
+                yield put(setHaveProfile(haveProfile));
+
+                const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+                if (haveProfile)
+                    yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${id}?${(new Date()).getTime()}`));
+
+                yield put(setLatestActive("undefined" === typeof decodedJwt.latestActiveAt || 1 > decodedJwt.latestActiveAt ? 0 : decodedJwt.latestActiveAt));
+                Helpers.setCookie("token", response.token, 3650);
+            } catch (error) {
+                if ('production' !== process.env.NODE_ENV)
+                    console.log(`packet - checkAuthenticationRes: failed to decode token.`);
+
+                alert("인증 실패.");
+                return;
+            }
             break;
 
-        case Errors.CheckAuthentication.ALREADY_SIGN_IN_USER:
+        case Errors.CheckAuth.NOT_VALID_TOKEN:
+            alert('인증 실패.');
+            Helpers.setCookie("token", "");
+            break;
+
+        case Errors.CheckAuth.AUTH_EXPIRED:
+            alert('인증이 만료되었습니다.');
+            Helpers.setCookie("token", "");
+            break;
+
+        case Errors.CheckAuth.ALREADY_SIGN_IN_USER:
             yield put(setAuthState(Defines.AuthStateType.ALREADY_SIGN_IN));
             alert('다른 창으로 로그인 중입니다.');
             break;
 
-        case Errors.CheckAuthentication.FAILED_TO_CREATE_USER:
-            alert('유저 생성 실패.');
+        case Errors.CheckAuth.FAILED_TO_CREATE_USER:
+            alert('임시유저 계정생성 실패.');
+            break;
+
+        case Errors.CheckAuth.FAILED_TO_ISSUE_TOKEN:
+            alert('인증정보 생성 실패.');
+            break;
+    }
+
+    return response;
+}
+
+export function* signOutRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - signOutRes`);
+
+    const response = Domains.SignOutRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - signOutRes: response is null.`);
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.SignOut.AUTH_REQUIRED:
+            alert("로그인 상태가 안닙니다.");
+            break;
+
+        case Errors.SignOut.AUTH_REQUIRED:
+            alert("로그인 상태가 안닙니다.");
             break;
     }
 
@@ -323,7 +404,7 @@ export function* getUserInfoRes(data: Uint8Array) {
 
     const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
     const userState: UserState = yield select((state: RootState) => state.user);
-    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
     const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
     response.user.updateProfile(profileImage);
     yield put(addOthers(response.user));
@@ -344,7 +425,7 @@ export function* followsRes(data: Uint8Array) {
 
     if (0 < response.users.length) {
         const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
 
         for (let i = 0; i < response.users.length; i++) {
             const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
@@ -370,7 +451,7 @@ export function* followersRes(data: Uint8Array) {
 
     if (0 < response.users.length) {
         const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
 
         for (let i = 0; i < response.users.length; i++) {
             const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
@@ -411,7 +492,7 @@ export function* followRes(data: Uint8Array) {
         case Errors.Follow.NONE:
             if (null != response.user) {
                 const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-                const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+                const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
                 const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
                 response.user.updateProfile(profileImage);
                 yield put(addFollow(response.user));
@@ -498,7 +579,7 @@ export function* followerRes(data: Uint8Array) {
 
     if (null != response.user) {
         const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/`;
+        const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
         const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
         response.user.updateProfile(profileImage);
         yield put(addFollower(response.user));
@@ -622,7 +703,7 @@ export function* changeUserProfileRes(data: Uint8Array) {
         case Errors.ChangeUserProfile.NONE:
             const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
             const userState: UserState = yield select((state: RootState) => state.user);
-            yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${userState.id}?${(new Date()).getTime()}`));
+            yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userState.id}?${(new Date()).getTime()}`));
             break;
 
         default:
@@ -645,7 +726,7 @@ export function* noticeUserProfileChangedRes(data: Uint8Array) {
     }
 
     const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}/api/profileThumb/${response.userId}?${(new Date()).getTime()}`;
+    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${response.userId}?${(new Date()).getTime()}`;
     yield put(updateUsersData({ dataType: "profile", userId: response.userId, userData: imagePath }));
     return response;
 }

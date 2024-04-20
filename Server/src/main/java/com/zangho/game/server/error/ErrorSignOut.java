@@ -2,16 +2,17 @@ package com.zangho.game.server.error;
 
 import com.zangho.game.server.define.Types;
 
-public enum ErrorCheckAuth implements Types {
+public enum ErrorSignOut implements Types {
     NONE(0),
-    NOT_VALID_TOKEN(1),
-    AUTH_EXPIRED(2),
-    ALREADY_SIGN_IN_USER(3),
-    FAILED_TO_CREATE_USER(4),
-    FAILED_TO_ISSUE_TOKEN(5);
+    AUTH_REQUIRED(1),
+    NOT_VALID_TOKEN(2),
+    AUTH_EXPIRED(3),
+    ID_REQUIRED(4),
+    NOT_FOUND_USER(5),
+    FAILED_TO_SIGN_OUT(6);
 
     private final int number;
-    private ErrorCheckAuth(int number) {
+    private ErrorSignOut(int number) {
         this.number = number;
     }
 

@@ -30,7 +30,6 @@ public class APIController {
 
     private final Logger logger = LoggerFactory.getLogger(APIController.class);
     private final ChatRoomService chatRoomService;
-    private final VisitService visitService;
     private final UserService userService;
     private final ChatService chatService;
     private final ChatImageService chatImageService;
@@ -38,41 +37,16 @@ public class APIController {
 
     public APIController(
             ChatRoomService chatRoomService,
-            VisitService visitService,
             UserService userService,
             ChatService chatService,
             ChatImageService chatImageService,
             MessageService messageService
     ) {
         this.chatRoomService = chatRoomService;
-        this.visitService = visitService;
         this.userService = userService;
         this.chatService = chatService;
         this.chatImageService = chatImageService;
         this.messageService = messageService;
-    }
-
-    @PostMapping(value = "/api/visit")
-    @ResponseBody
-    public String visit(@RequestBody Visit visit, HttpServletRequest request) throws Exception {
-        var response = new HashMap<String, Object>();
-        var result = false;
-
-        try {
-            visit.ip = Helpers.getRemoteIP(request);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            return (new ObjectMapper()).writeValueAsString(response);
-        }
-
-        try {
-            result = visitService.saveVisit(visit);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-        }
-
-        response.put("result", result);
-        return (new ObjectMapper()).writeValueAsString(response);
     }
 
     @PostMapping(value = "/api/getPublicKey")
@@ -147,171 +121,5 @@ public class APIController {
         }
 
         return (new ObjectMapper()).writeValueAsString(response);
-    }
-
-    @GetMapping(value = "/api/chatImage/{id}")
-    @ResponseBody
-    public ResponseEntity<byte[]> chatImage(@PathVariable String id) {
-        return chatImageResponse(id,SavedImageSize.LARGE);
-    }
-
-    @GetMapping(value = "/api/chatSmallImage/{id}")
-    @ResponseBody
-    public ResponseEntity<byte[]> chatSmallImage(@PathVariable String id) {
-        return chatImageResponse(id,SavedImageSize.SMALL);
-    }
-
-    private ResponseEntity<byte[]> chatImageResponse(String id, SavedImageSize size) {
-        try {
-            if (id.isEmpty())
-                return ResponseEntity.notFound().build();
-
-            var optChatImage = chatImageService.findChatImageByChatId(id);
-            if (optChatImage.isEmpty())
-                return ResponseEntity.notFound().build();
-
-            var chatImage = optChatImage.get();
-            if (chatImage.getChatId().isEmpty())
-                return ResponseEntity.notFound().build();
-
-            if (chatImage.getId().isEmpty())
-                return ResponseEntity.notFound().build();
-
-            var optChat = chatService.findById(chatImage.getChatId());
-            if (optChat.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            var roomIdBase62 = Helpers.getBase62FromUUID(optChat.get().getRoomId());
-
-            if (AllowedImageType.NONE.equals(chatImage.getMime()))
-                return ResponseEntity.notFound().build();
-
-            var extension = Helpers.getImageExtension(chatImage.getMime());
-            if (extension.isEmpty())
-                return ResponseEntity.notFound().build();
-
-            var currentPath = System.getProperty("user.dir");
-
-            var smallDirectoryPath = Paths.get(currentPath, "images", "chat", "small", roomIdBase62);
-            var largeDirectoryPath = Paths.get(currentPath, "images", "chat", "large", roomIdBase62);
-
-            Optional<Path> chatImagePath = switch (size) {
-                case LARGE -> Optional.of(largeDirectoryPath);
-                default -> Optional.of(smallDirectoryPath);
-            };
-
-            var contentType = "";
-
-            switch (chatImage.getMime()) {
-                case PNG:
-                    contentType = "image/png";
-                    break;
-
-                case JPG:
-                    contentType = "image/jpeg";
-                    break;
-
-                case GIF:
-                    contentType = "image/gif";
-                    break;
-
-                case BMP:
-                    contentType = "image/bmp";
-                    break;
-
-                case SVG:
-                    contentType = "image/svg+xml";
-                    chatImagePath = Optional.of(largeDirectoryPath);
-                    break;
-            }
-
-            var imagePath = Paths.get(chatImagePath.get().toString(), Helpers.getBase62FromUUID(chatImage.getId()) + "." + extension);
-            if (!Files.exists(imagePath))
-                return ResponseEntity.notFound().build();
-
-            return ResponseEntity.ok().header("Content-Type", contentType).body(Files.readAllBytes(imagePath));
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping(value = "/api/profileImage/{id}")
-    @ResponseBody
-    public ResponseEntity<byte[]> profileImage(@PathVariable String id) {
-        return  profileImageResponse(id, SavedImageSize.LARGE);
-    }
-
-    @GetMapping(value = "/api/profileThumb/{id}")
-    @ResponseBody
-    public ResponseEntity<byte[]> profileThumbImage(@PathVariable String id) {
-        return  profileImageResponse(id, SavedImageSize.SMALL);
-    }
-
-    private ResponseEntity<byte[]> profileImageResponse(String id, SavedImageSize size) {
-        try {
-            if (id.isEmpty())
-                return ResponseEntity.notFound().build();
-
-            var optUser = userService.findUser(id);
-            if (optUser.isEmpty())
-                return ResponseEntity.notFound().build();
-
-            var user = optUser.get();
-
-            if (user.getProfileImage().isEmpty())
-                return ResponseEntity.notFound().build();
-
-            if (AllowedImageType.NONE.equals(user.getProfileMime()))
-                return ResponseEntity.notFound().build();
-
-            var extension = Helpers.getImageExtension(user.getProfileMime());
-            if (extension.isEmpty())
-                return ResponseEntity.notFound().build();
-
-            var currentPath = System.getProperty("user.dir");
-
-            var largePath = Paths.get(currentPath, "images", "profiles", "large");
-            var smallPath = Paths.get(currentPath, "images", "profiles", "small");
-
-            Optional<Path> profileImagePath = switch (size) {
-                case LARGE -> Optional.of(largePath);
-                default -> Optional.of(smallPath);
-            };
-            var contentType = "";
-
-            switch (user.getProfileMime()) {
-                case PNG:
-                    contentType = "image/png";
-                    break;
-
-                case JPG:
-                    contentType = "image/jpeg";
-                    break;
-
-                case GIF:
-                    contentType = "image/gif";
-                    break;
-
-                case BMP:
-                    contentType = "image/bmp";
-                    break;
-
-                case SVG:
-                    contentType = "image/svg+xml";
-                    profileImagePath = Optional.of(largePath);
-                    break;
-            }
-
-            var imagePath = Paths.get(profileImagePath.get().toString(), user.getProfileImage() + "." + extension);
-            if (!Files.exists(imagePath))
-                return ResponseEntity.notFound().build();
-
-            return ResponseEntity.ok().header("Content-Type", contentType).body(Files.readAllBytes(imagePath));
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            return ResponseEntity.notFound().build();
-        }
     }
 }

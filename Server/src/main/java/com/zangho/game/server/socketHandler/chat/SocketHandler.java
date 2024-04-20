@@ -82,6 +82,10 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onCheckAuthentication(session, connectedUser, packet);
                     break;
 
+                case REQ_SIGN_OUT:
+                    reqHandler.onSignOut(session, connectedUser, packet);
+                    break;
+
                 case REQ_CHECK_NOTIFICATION:
                     reqHandler.onCheckNotification(session, connectedUser, packet);
                     break;

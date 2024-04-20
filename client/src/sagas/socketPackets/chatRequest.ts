@@ -9,35 +9,7 @@ import {Domains} from "@/domains";
 import isEmpty from "lodash/isEmpty";
 import {AppConfigsState} from "@/stores/reducers/appConfigs";
 import {ChatState} from "@/stores/reducers/chat";
-
-export function* callCheckAuthenticationReq(socket: WebSocket) {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callCheckAuthenticationReq`);
-
-    if (!socket || WebSocket.OPEN != socket.readyState) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callCheckAuthenticationReq: socket is not available.`);
-        return;
-    }
-
-    try {
-        const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
-        const userId = Helpers.getCookie("userId");
-        console.log(`saga - callCheckAuthenticationReq: ${userId}`);
-        const bytesUserId = new Uint8Array(isEmpty(userId) || 36 !== userId.length ? 0 : 16);
-        if (!isEmpty(userId) && 36 === userId.length)
-            bytesUserId.set(Helpers.getByteArrayFromUUID(userId));
-
-        const packet = new Uint8Array(flag.byteLength + bytesUserId.byteLength);
-        packet.set(flag);
-        if (0 < bytesUserId.byteLength)
-            packet.set(bytesUserId, flag.byteLength);
-
-        socket.send(packet);
-    } catch (error) {
-        console.error(error);
-    }
-}
+import AuthStateType = Defines.AuthStateType;
 
 export function* callCheckConnectionReq(socket: WebSocket) {
     if ('production' !== process.env.NODE_ENV)
@@ -64,6 +36,141 @@ export function* callCheckConnectionReq(socket: WebSocket) {
     } catch (error) {
         console.error(error);
     }
+}
+
+export function* callCheckAuthenticationReq(socket: WebSocket) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callCheckAuthenticationReq`);
+
+    if (!socket || WebSocket.OPEN != socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckAuthenticationReq: socket is not available.`);
+        return;
+    }
+
+    try {
+        const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
+        const token = Helpers.getCookie("token");
+        console.log(`saga - callCheckAuthenticationReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+        if (isEmpty(token)) {
+            alert("인증정보가 없습니다.");
+            return;
+        }
+        const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
+        const reqPacket = Helpers.mergeBytesPacket([flag, bytesToken]);
+        socket.send(reqPacket);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+export function* callStartGuestReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callStartGuestReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callStartGuestReq: socket is not available.`);
+        return;
+    }
+
+    try {
+        const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
+        webSocketState.socket.send(flag);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+export function* callSignOutReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSignOutReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSignOutReq: socket is not available.`);
+        return;
+    }
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+
+    if (AuthStateType.SIGN_IN != userState.authState || isEmpty(userState.id)) {
+        alert("로그인 상태가 아닙니다.");
+        return;
+    }
+
+    try {
+        const flag = new Uint8Array([Defines.ReqType.REQ_SIGN_OUT]);
+        const token = Helpers.getCookie("token");
+        console.log(`saga - callSignOutReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+        if (isEmpty(token)) {
+            alert("인증정보가 없습니다.");
+            return;
+        }
+        const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
+        const reqPacket = Helpers.mergeBytesPacket([flag, bytesToken]);
+        webSocketState.socket.send(reqPacket);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+export function* callCheckNotificationReq(action: PayloadAction<Domains.Notification>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callCheckNotificationReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckNotificationReq: socket is not available.`);
+        return;
+    }
+
+    if (!action.payload || isEmpty(action.payload.id)) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckNotificationReq: not notification id.`);
+        return;
+    }
+
+    if (action.payload.isCheck) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckNotificationReq: already checked.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_NOTIFICATION]);
+    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesId]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callRemoveNotificationReq(action: PayloadAction<Domains.Notification>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callRemoveNotificationReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveNotificationReq: socket is not available.`);
+        return;
+    }
+
+    if (!action.payload || isEmpty(action.payload.id)) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveNotificationReq: not notification id.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_NOTIFICATION]);
+    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
+    const packet = Helpers.mergeBytesPacket([flag, bytesId]);
+    webSocketState.socket.send(packet);
 }
 
 export function* callConnectedUsersReq() {
@@ -184,6 +291,141 @@ export function* callStartChatReq(action: PayloadAction<Domains.User>) {
     const flag = new Uint8Array([Defines.ReqType.REQ_START_CHAT]);
     const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.userId);
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callSaveUserNameReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSaveUserNameReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserNameReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserNameReq: not found user id.`);
+        return;
+    }
+
+    if (2 > userState.name.length || 10 < userState.name.length) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserNameReq: not suitable user name length.`);
+
+        alert('대화명은 2 글자 이상, 10글자 이하로 입력해주세요.');
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_NAME]);
+    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
+    const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserName]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callSaveUserMessageReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSaveUserMessageReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: not found user id.`);
+        return;
+    }
+
+    if (128 < userState.message.length) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: too long user message.`);
+
+        alert('상태 메세지는 128글자 이하로 입력해주세요.');
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_MESSAGE]);
+    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
+    const bytesUserMessage = new Uint8Array(Buffer.from(userState.message.trim(), 'utf8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserMessage]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callSaveUserProfileReq(action: PayloadAction<Domains.SaveUserProfileReq>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSaveUserProfileReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserProfileReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: not found user id.`);
+        return;
+    }
+
+    if (!action || !action.payload) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: parameters are null.`);
+
+        alert('프로필 이미지를 선택해주세요.');
+        return;
+    }
+
+    if (1 > action.payload.mime || (Defines.AllowedImageType.SVG != action.payload.mime && (isEmpty(action.payload.bytesSmall) || isEmpty(action.payload.bytesLarge)))) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSaveUserMessageReq: upload image is null.`);
+
+        alert('프로필 이미지를 선택해주세요.');
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_PROFILE]);
+    const bytesMime = new Uint8Array([action.payload.mime]);
+    const bytesLargeLength = Helpers.getByteArrayFromInt(action.payload.bytesLarge.byteLength);
+    const bytesSmallLength = Helpers.getByteArrayFromInt(action.payload.bytesSmall.byteLength);
+    const packet = Helpers.mergeBytesPacket([flag, bytesMime, bytesLargeLength, bytesSmallLength, action.payload.bytesLarge, action.payload.bytesSmall]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callRemoveUserProfileReq() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callRemoveUserProfileReq`);
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveUserProfileReq: socket is not available.`);
+        return;
+    }
+
+    if (!userState.id) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callRemoveUserProfileReq: not found user id.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_USER_PROFILE]);
+    const packet = Helpers.mergeBytesPacket([flag]);
     webSocketState.socket.send(packet);
 }
 
@@ -359,195 +601,6 @@ export function* callSendMessageReq(action: PayloadAction<Domains.SendMessage>) 
     const bytesMessage = new Uint8Array(Buffer.from(action.payload.message.trim(), 'utf8'));
     const bytesMessageLength = Helpers.getByteArrayFromInt(bytesMessage.byteLength);
     const packet = Helpers.mergeBytesPacket([flag, bytesChatType, bytesChatId, bytesChatRoomId, bytesMessageLength, bytesMessage]);
-    webSocketState.socket.send(packet);
-}
-
-export function* callSaveUserNameReq() {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callSaveUserNameReq`);
-
-    const userState: UserState = yield select((state: RootState) => state.user);
-    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
-
-    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserNameReq: socket is not available.`);
-        return;
-    }
-
-    if (!userState.id) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserNameReq: not found user id.`);
-        return;
-    }
-
-    if (2 > userState.name.length || 10 < userState.name.length) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserNameReq: not suitable user name length.`);
-
-        alert('대화명은 2 글자 이상, 10글자 이하로 입력해주세요.');
-        return;
-    }
-
-    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_NAME]);
-    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
-    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserName]);
-    webSocketState.socket.send(packet);
-}
-
-export function* callSaveUserMessageReq() {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callSaveUserMessageReq`);
-
-    const userState: UserState = yield select((state: RootState) => state.user);
-    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
-
-    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserMessageReq: socket is not available.`);
-        return;
-    }
-
-    if (!userState.id) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserMessageReq: not found user id.`);
-        return;
-    }
-
-    if (128 < userState.message.length) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserMessageReq: too long user message.`);
-
-        alert('상태 메세지는 128글자 이하로 입력해주세요.');
-        return;
-    }
-
-    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_MESSAGE]);
-    const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const bytesUserMessage = new Uint8Array(Buffer.from(userState.message.trim(), 'utf8'));
-    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserMessage]);
-    webSocketState.socket.send(packet);
-}
-
-export function* callSaveUserProfileReq(action: PayloadAction<Domains.SaveUserProfileReq>) {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callSaveUserProfileReq`);
-
-    const userState: UserState = yield select((state: RootState) => state.user);
-    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
-
-    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserProfileReq: socket is not available.`);
-        return;
-    }
-
-    if (!userState.id) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserMessageReq: not found user id.`);
-        return;
-    }
-
-    if (!action || !action.payload) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserMessageReq: parameters are null.`);
-
-        alert('프로필 이미지를 선택해주세요.');
-        return;
-    }
-
-    if (1 > action.payload.mime || (Defines.AllowedImageType.SVG != action.payload.mime && (isEmpty(action.payload.bytesSmall) || isEmpty(action.payload.bytesLarge)))) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserMessageReq: upload image is null.`);
-
-        alert('프로필 이미지를 선택해주세요.');
-        return;
-    }
-
-    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_PROFILE]);
-    const bytesMime = new Uint8Array([action.payload.mime]);
-    const bytesLargeLength = Helpers.getByteArrayFromInt(action.payload.bytesLarge.byteLength);
-    const bytesSmallLength = Helpers.getByteArrayFromInt(action.payload.bytesSmall.byteLength);
-    const packet = Helpers.mergeBytesPacket([flag, bytesMime, bytesLargeLength, bytesSmallLength, action.payload.bytesLarge, action.payload.bytesSmall]);
-    webSocketState.socket.send(packet);
-}
-
-export function* callRemoveUserProfileReq() {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callRemoveUserProfileReq`);
-
-    const userState: UserState = yield select((state: RootState) => state.user);
-    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
-
-    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callRemoveUserProfileReq: socket is not available.`);
-        return;
-    }
-
-    if (!userState.id) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callRemoveUserProfileReq: not found user id.`);
-        return;
-    }
-
-    const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_USER_PROFILE]);
-    const packet = Helpers.mergeBytesPacket([flag]);
-    webSocketState.socket.send(packet);
-}
-
-export function* callCheckNotificationReq(action: PayloadAction<Domains.Notification>) {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callCheckNotificationReq`);
-
-    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
-
-    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callCheckNotificationReq: socket is not available.`);
-        return;
-    }
-
-    if (!action.payload || isEmpty(action.payload.id)) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callCheckNotificationReq: not notification id.`);
-        return;
-    }
-
-    if (action.payload.isCheck) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callCheckNotificationReq: already checked.`);
-        return;
-    }
-
-    const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_NOTIFICATION]);
-    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
-    const packet = Helpers.mergeBytesPacket([flag, bytesId]);
-    webSocketState.socket.send(packet);
-}
-
-export function* callRemoveNotificationReq(action: PayloadAction<Domains.Notification>) {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callRemoveNotificationReq`);
-
-    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
-
-    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callRemoveNotificationReq: socket is not available.`);
-        return;
-    }
-
-    if (!action.payload || isEmpty(action.payload.id)) {
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callRemoveNotificationReq: not notification id.`);
-        return;
-    }
-
-    const flag = new Uint8Array([Defines.ReqType.REQ_REMOVE_NOTIFICATION]);
-    const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
-    const packet = Helpers.mergeBytesPacket([flag, bytesId]);
     webSocketState.socket.send(packet);
 }
 

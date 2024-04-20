@@ -37,6 +37,6 @@ out/
 .vscode/
 
 ### custom properties ###
-properties/*
+configs/*
 images/*
 src/main/resources/properties/*

@@ -1,5 +1,6 @@
 package com.zangho.game.server.socketHandler.chat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.*;
 import com.zangho.game.server.domain.chat.Chat;
 import com.zangho.game.server.domain.chat.ChatRoom;
@@ -8,6 +9,7 @@ import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.error.*;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.*;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ public class ReqHandler {
     private final LineNotifyService lineNotifyService;
     private final MessageService messageService;
     private final NotificationService notificationService;
+    private final JwtService jwtService;
 
     @Value("${client.version.main}")
     private int clientVersionMain;
@@ -39,7 +42,7 @@ public class ReqHandler {
     @Value("${client.version.maintenance}")
     private int clientVersionMaintenance;
 
-    public ReqHandler(SessionHandler sessionHandler, ResHandler resHandler, UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService) {
+    public ReqHandler(SessionHandler sessionHandler, ResHandler resHandler, UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService, JwtService jwtService) {
         var config = System.getProperty("Config");
         isDevelopment = null == config || !config.equals("production");
         this.sessionHandler = sessionHandler;
@@ -49,6 +52,7 @@ public class ReqHandler {
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
         this.notificationService = notificationService;
+        this.jwtService = jwtService;
     }
 
     public void onAfterConnectionEstablished(@NonNull WebSocketSession session) {
@@ -136,15 +140,35 @@ public class ReqHandler {
 
             Optional<User> optUser = Optional.empty();
             List<ChatRoomInfoInterface> chatRooms = new ArrayList<>();
-            if (17 == packet.length) {
-                var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
-                var userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                if (userService.isConnectedUser(userId)) {
-                    resHandler.resCheckAuthentication(session, ErrorCheckAuth.ALREADY_SIGN_IN_USER);
-                    return;
+            if (1 < packet.length) {
+                var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
+                var tokenString = new String(bytesTokenString);
+                var resultDeserialize = jwtService.deserializeToken(tokenString);
+
+                switch (resultDeserialize.getLeft()) {
+                    case NONE:
+                        if (resultDeserialize.getRight().isEmpty()) {
+                            resHandler.resCheckAuthentication(session, ErrorCheckAuth.NOT_VALID_TOKEN);
+                            return;
+                        }
+                        break;
+
+                    case TOKEN_EXPIRED:
+                        resHandler.resCheckAuthentication(session, ErrorCheckAuth.AUTH_EXPIRED);
+                        return;
+
+                    default:
+                        resHandler.resCheckAuthentication(session, ErrorCheckAuth.NOT_VALID_TOKEN);
+                        return;
                 }
 
-                var authenticatedUserInfo = userService.authenticateUser(userId, session);
+                var token = resultDeserialize.getRight().get();
+                var id = token.getClaim("id");
+                var name = token.getClaim("name");
+                logger.info("id: " + id.asString() + ", name: " + name.asString());
+                logger.info("token: " + (new ObjectMapper()).registerModule(new JavaTimeModule()).writeValueAsString(token));
+
+                var authenticatedUserInfo = userService.authenticateUser(id.asString(), session);
                 optUser = authenticatedUserInfo.getLeft();
                 chatRooms = authenticatedUserInfo.getRight();
             }
@@ -157,8 +181,16 @@ public class ReqHandler {
                 }
             }
 
+            var resultIssueToken = jwtService.issueToken(optUser.get());
+            if (resultIssueToken.getLeft().equals(ErrorIssueJWT.FAILED_TO_ISSUE)) {
+                resHandler.resCheckAuthentication(session, ErrorCheckAuth.FAILED_TO_ISSUE_TOKEN);
+                return;
+            }
+            logger.info("token string: " + resultIssueToken.getRight());
+
             // 팔로우, 팔로워, 사용 가능한 채팅방 정보 전달
-            resHandler.resCheckAuthentication(session, optUser.get());
+            //resHandler.resCheckAuthentication(session, optUser.get());
+            resHandler.resCheckAuthentication(session, resultIssueToken.getRight());
             resHandler.resLatestActiveUsers(session);
             resHandler.resConnectedUsers(session);
             resHandler.resFollows(session, optUser.get().getFollowList());
@@ -175,6 +207,30 @@ public class ReqHandler {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
+    }
+
+    public void onSignOut(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        if (connectedUser.isEmpty()) {
+            resHandler.resSignOut(session, ErrorSignOut.AUTH_REQUIRED);
+            return;
+        }
+
+        var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
+        var tokenString = new String(bytesTokenString);
+        var resultDeserialize = jwtService.deserializeToken(tokenString);
+
+        switch (resultDeserialize.getLeft()) {
+            case NONE:
+                if (resultDeserialize.getRight().isPresent()) {
+                    var token = resultDeserialize.getRight().get();
+                }
+                break;
+
+            case TOKEN_EXPIRED:
+                break;
+        }
+
+        userService.removeConnectedUser(connectedUser.get());
     }
 
     public void onCheckNotification(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {

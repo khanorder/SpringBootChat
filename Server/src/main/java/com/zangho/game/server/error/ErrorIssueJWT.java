@@ -2,16 +2,13 @@ package com.zangho.game.server.error;
 
 import com.zangho.game.server.define.Types;
 
-public enum ErrorCheckAuth implements Types {
+public enum ErrorIssueJWT implements Types {
     NONE(0),
-    NOT_VALID_TOKEN(1),
-    AUTH_EXPIRED(2),
-    ALREADY_SIGN_IN_USER(3),
-    FAILED_TO_CREATE_USER(4),
-    FAILED_TO_ISSUE_TOKEN(5);
+    FAILED_TO_ISSUE(1);
+
 
     private final int number;
-    private ErrorCheckAuth(int number) {
+    private ErrorIssueJWT(int number) {
         this.number = number;
     }
 

@@ -3,7 +3,7 @@ import stylesCommon from "@/styles/common.module.sass";
 import Link from "next/link";
 import {useAppSelector} from "@/hooks";
 
-export default function NotFound() {
+export default function ChatNotFound() {
     const appConfigs = useAppSelector(state => state.appConfigs);
 
     return (

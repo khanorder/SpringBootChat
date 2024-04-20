@@ -12,7 +12,7 @@ import {Defines} from "@/defines";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
 const ChatInput = dynamic(() => import("@/components/chatContents/chatInput"), { ssr: false });
-const NotFound = dynamic(() => import("@/components/chatContents/notFound"), { ssr: false });
+const ChatNotFound = dynamic(() => import("@/components/chatContents/chatNotFound"), { ssr: false });
 const ChatContents = dynamic(() => import("@/components/chatContents/chatContents"), { ssr: false });
 const DialogAddUserChatRoom = dynamic(() => import("@/components/dialogs/dialogAddUserChatRoom"), {ssr: false});
 const DialogChatRoomInfo = dynamic(() => import("@/components/dialogs/dialogChatRoomInfo"), {ssr: false});
@@ -67,7 +67,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
         const currentChatRoom = chat.chatRooms.find(_ => _.roomId == roomId);
 
         if (!currentChatRoom)
-            return <NotFound />;
+            return <ChatNotFound />;
 
         return (
             <div className={styles.chatRoomEnterWrapper}>
@@ -83,12 +83,12 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
 
     const contents = useCallback(() => {
         if (isEmpty(roomId))
-            return <NotFound />;
+            return <ChatNotFound />;
 
         const currentChatRoom = chat.chatRooms.find(_ => _.roomId == roomId);
 
         if (!currentChatRoom)
-            return <NotFound />;
+            return <ChatNotFound />;
 
         if (isEmpty(chat.currentChatRoomId) || roomId != chat.currentChatRoomId)
             return enterUser();

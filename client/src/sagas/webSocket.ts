@@ -23,7 +23,7 @@ import {
     removeUserProfileReq,
     historyChatRoomReq,
     removeChatRoomReq,
-    getUserInfoReq, addUserChatRoomReq
+    getUserInfoReq, addUserChatRoomReq, startGuestReq, signOutReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -72,7 +72,7 @@ import {
     openPreparedChatRoomRes,
     latestActiveUsersRes,
     notificationsStartChatRes,
-    notificationsFollowerRes
+    notificationsFollowerRes, signOutRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -90,7 +90,12 @@ import {
     callRemoveNotificationReq,
     callSaveUserMessageReq,
     callSaveUserProfileReq,
-    callRemoveUserProfileReq, callHistoryChatRoomReq, callRemoveChatRoomReq, callGetUserInfoReq, callAddUserChatRoomReq
+    callRemoveUserProfileReq,
+    callHistoryChatRoomReq,
+    callRemoveChatRoomReq,
+    callGetUserInfoReq,
+    callAddUserChatRoomReq,
+    callStartGuestReq, callSignOutReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -211,7 +216,9 @@ function* onOpen (socket: WebSocket) {
                 try {
                     const event: Event = yield take(channel);
                     yield call(setConnectionState, WebSocket.OPEN);
-                    yield call(callCheckAuthenticationReq, socket);
+                    const token = Helpers.getCookie("token");
+                    if (!isEmpty(token))
+                        yield call(callCheckAuthenticationReq, socket);
 
                     if ('production' !== process.env.NODE_ENV)
                         console.log("connection opened.");
@@ -303,6 +310,10 @@ function* onMessage (socket: WebSocket) {
 
                         case Defines.ResType.RES_NOTIFICATION:
                             yield call(notificationRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_SIGN_OUT:
+                            yield call(signOutRes, packetData);
                             break;
 
                         case Defines.ResType.RES_NOTIFICATIONS_START_CHAT:
@@ -519,6 +530,8 @@ export function* watchWebSocket() {
     yield takeLatest(initSocket, callInitSocket);
     yield takeLatest(startReconnecting, callStartReconnecting);
     yield takeLatest(connectedUsersReq, callConnectedUsersReq);
+    yield takeLatest(startGuestReq, callStartGuestReq);
+    yield takeLatest(signOutReq, callSignOutReq);
     yield takeLatest(getUserInfoReq, callGetUserInfoReq);
     yield takeLatest(followReq, callFollowReq);
     yield takeLatest(unfollowReq, callUnfollowReq);

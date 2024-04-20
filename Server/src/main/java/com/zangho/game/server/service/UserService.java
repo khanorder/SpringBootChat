@@ -1,5 +1,6 @@
 package com.zangho.game.server.service;
 
+import com.zangho.game.server.define.AccountType;
 import com.zangho.game.server.define.RelationState;
 import com.zangho.game.server.define.RoomOpenType;
 import com.zangho.game.server.domain.chat.*;
@@ -99,7 +100,7 @@ public class UserService {
 
     public Optional<User> createTempUser(WebSocketSession session) throws Exception {
         var count = userRepository.count();
-        var tempUser = new User("user-" + (count + 1));
+        var tempUser = new User(AccountType.TEMP, "user-" + (count + 1));
         var result = userRepository.save(tempUser);
         result.setSessionId(session.getId());
         connectedUsers.computeIfAbsent(result.getId(), key -> result);

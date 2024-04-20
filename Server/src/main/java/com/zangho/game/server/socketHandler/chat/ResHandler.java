@@ -12,6 +12,7 @@ import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.domain.user.UserInterface;
 import com.zangho.game.server.error.*;
 import com.zangho.game.server.helper.Helpers;
+import com.zangho.game.server.service.JwtService;
 import com.zangho.game.server.service.NotificationService;
 import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
@@ -87,6 +88,27 @@ public class ResHandler {
             var bytesMessage = user.getMessage().getBytes();
             var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesUserId, bytesUserLatestActive, bytesUserNameLength, bytesMessageLength, bytesUserName, bytesMessage);
             sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resCheckAuthentication(WebSocketSession session, String tokenString) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_AUTHENTICATION, ErrorCheckAuth.NONE);
+            var bytesToken = tokenString.getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesToken);
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resSignOut(WebSocketSession session, ErrorSignOut error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_SIGN_OUT, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

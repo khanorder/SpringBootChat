@@ -83,7 +83,7 @@ export namespace CommonAPI {
 
     export async function SaveVisitAsync(visit: Domains.Visit): Promise<boolean> {
         const serverHost = Helpers.getCookie("SERVER_HOST") ?? 'localhost:8080';
-        const url = (serverHost.startsWith("localhost") || serverHost.startsWith("192.168") ? 'http://' : 'https://') + serverHost + "/api/visit";
+        const url = (serverHost.startsWith("localhost") || serverHost.startsWith("192.168") ? 'http://' : 'https://') + serverHost + "/tracking/visit";
         let result = false;
 
         try {

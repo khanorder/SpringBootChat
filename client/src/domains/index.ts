@@ -2,8 +2,30 @@ import {Helpers} from "@/helpers";
 import {Errors} from "@/defines/errors";
 import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
+import {JwtPayload} from "jwt-decode";
 
 export namespace Domains {
+
+    export const defaultProfileImageUrl: string = '/images/user-circle.svg';
+    export const profileImageUrlPrefix: string = '/images/profile/';
+    export const profileImageSmallUrlPrefix: string = '/images/profile/small/';
+    export const chatImageUrlPrefix: string = '/images/chat/';
+    export const chatImageSmallUrlPrefix: string = '/images/chat/small/';
+
+    export interface AuthedJwtPayload extends JwtPayload {
+        iss?: string;
+        sub?: string;
+        aud?: string[] | string;
+        exp?: number;
+        nbf?: number;
+        iat?: number;
+        jti?: string;
+        id?: string;
+        haveProfile?: boolean;
+        latestActiveAt?: number;
+        name?: string;
+        message?: string;
+    }
 
     export class ChatRoom {
         roomId: string;
@@ -42,8 +64,6 @@ export namespace Domains {
             this.chatDatas.push(chatData);
         }
     }
-
-    export const defaultProfileImageUrl: string = '/images/user-circle.svg';
 
     export class User {
         userId: string;
@@ -197,38 +217,37 @@ export namespace Domains {
     }
 
     export class CheckAuthenticationRes {
-        result: Errors.CheckAuthentication;
-        haveProfile: boolean;
-        latestActive: number;
-        userId: string;
-        userName: string;
-        userMessage: string;
+        result: Errors.CheckAuth;
+        token: string;
 
-        constructor(result: Errors.CheckAuthentication, haveProfile: boolean, latestActive: number, userId: string, userName: string, userMessage: string) {
+        constructor(result: Errors.CheckAuth, token: string) {
             this.result = result;
-            this.haveProfile = haveProfile;
-            this.latestActive = latestActive;
-            this.userId = userId;
-            this.userName = userName;
-            this.userMessage = userMessage;
+            this.token = token;
         }
 
         static decode(bytes: Uint8Array) {
             try {
-                const haveProfile: boolean = bytes[1] > 0;
-                const bytesUserId = bytes.slice(2, 18);
-                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                const bytesLatestActive = bytes.slice(18, 26);
-                const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
-                const userNameLength = bytes[26];
-                const userMessageLength = bytes[27];
-                const bytesUserName = bytes.slice(28, 28 + userNameLength);
-                const userName = new TextDecoder().decode(bytesUserName);
-                const offsetUserName = 28 + userNameLength;
-                const bytesUserMessage = bytes.slice(offsetUserName, offsetUserName + userMessageLength);
-                const userMessage = new TextDecoder().decode(bytesUserMessage);
+                const bytesToken = bytes.slice(1, bytes.byteLength);
+                const token = new TextDecoder().decode(bytesToken);
 
-                return new CheckAuthenticationRes(bytes[0], haveProfile, latestActive, userId, userName, userMessage);
+                return new CheckAuthenticationRes(bytes[0], token);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class SignOutRes {
+        result: Errors.SignOut;
+
+        constructor(result: Errors.SignOut) {
+            this.result = result;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                return new SignOutRes(bytes[0]);
             } catch (error) {
                 console.error(error);
                 return null;
