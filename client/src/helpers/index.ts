@@ -365,6 +365,12 @@ export namespace Helpers {
 
             const decodedJwt: Domains.AuthedJwtPayload = jwtDecode(token);
 
+            const tokenType = "undefined" === typeof decodedJwt.tkt ? Defines.TokenType.NONE : decodedJwt.tkt;
+            if (Defines.TokenType.NONE === tokenType) {
+                console.error(`packet - getUserFromToken: tokenType is empty.`);
+                return null;
+            }
+
             const id = "undefined" === typeof decodedJwt.id ? "" : decodedJwt.id;
             if (isEmpty(id)) {
                 console.error(`packet - getUserFromToken: id is empty.`);

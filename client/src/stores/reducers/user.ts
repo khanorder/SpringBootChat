@@ -9,6 +9,7 @@ import {Helpers} from "@/helpers";
 
 interface UserState {
     token: string;
+    refreshToken: string;
     id: string;
     accountType: Defines.AccountType;
     name: string;
@@ -26,6 +27,7 @@ interface UserState {
 
 const initialState: UserState = {
     token: "",
+    refreshToken: "",
     id: "",
     accountType: Defines.AccountType.NONE,
     name: "",
@@ -56,7 +58,7 @@ const userSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setRefreshToken: ${action.payload}`);
 
-            state.token = action.payload;
+            state.refreshToken = action.payload;
             Helpers.setCookie("rtk", action.payload, 365);
         },
         signIn: (state, action: PayloadAction<Domains.SignInProps>) => {
@@ -70,8 +72,10 @@ const userSlice = createSlice({
             }
 
             Helpers.setCookie("token", action.payload.token, 3650);
-            if (!isEmpty(action.payload.refreshToken))
+            if (!isEmpty(action.payload.refreshToken)) {
                 Helpers.setCookie("rtk", action.payload.refreshToken, 365);
+                state.refreshToken = action.payload.refreshToken;
+            }
 
             state.token = action.payload.token;
             state.authState = Defines.AuthStateType.SIGN_IN;
@@ -88,10 +92,41 @@ const userSlice = createSlice({
             state.follows = [];
             state.followers = [];
         },
+        updateSignIn: (state, action: PayloadAction<Domains.SignInProps>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - updateSignIn: ${action.payload}`);
+
+            if (isEmpty(action.payload.token)) {
+                if ('production' !== process.env.NODE_ENV)
+                    console.log(`reducer - updateSignIn: token is empty`);
+                return;
+            }
+
+            Helpers.setCookie("token", action.payload.token, 3650);
+            if (!isEmpty(action.payload.refreshToken)) {
+                Helpers.setCookie("rtk", action.payload.refreshToken, 365);
+                state.refreshToken = action.payload.refreshToken;
+            }
+
+            state.token = action.payload.token;
+            state.authState = Defines.AuthStateType.SIGN_IN;
+            state.id = action.payload.user.userId;
+            state.accountType = action.payload.user.accountType;
+            state.name = action.payload.user.userName;
+            state.message = action.payload.user.message;
+            state.haveProfile = action.payload.user.haveProfile;
+            state.latestActive = action.payload.user.latestActive;
+            state.profileImageUrl = defaultProfileImageUrl;
+            state.latestActiveUsers = [];
+            state.connectedUsers = [];
+            state.follows = [];
+            state.followers = [];
+        },
         signOut: (state) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - signOut`);
 
+            state.token = "";
             state.authState = Defines.AuthStateType.NONE;
             state.id = "";
             state.accountType = Defines.AccountType.NONE;
@@ -101,6 +136,24 @@ const userSlice = createSlice({
             state.latestActive = 0;
             state.profileImageUrl = defaultProfileImageUrl;
             state.others = [];
+            state.latestActiveUsers = [];
+            state.connectedUsers = [];
+            state.follows = [];
+            state.followers = [];
+        },
+        expireAccessToken: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - expireAccessToken`);
+
+            state.token = "";
+            state.authState = Defines.AuthStateType.NONE;
+            state.id = "";
+            state.accountType = Defines.AccountType.NONE;
+            state.name = "";
+            state.message = "";
+            state.haveProfile = false;
+            state.latestActive = 0;
+            state.profileImageUrl = defaultProfileImageUrl;
             state.latestActiveUsers = [];
             state.connectedUsers = [];
             state.follows = [];
@@ -171,7 +224,24 @@ const userSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setOthers: ${JSON.stringify(action.payload)}`);
 
+
             state.others = action.payload.filter(_ => _.userId != state.id);
+            localStorage.setItem("others", JSON.stringify((state.others)));
+        },
+        loadOthers: (state) => {
+            let others: Domains.User[] = [];
+            const othersJson = localStorage.getItem("others");
+            try {
+                if (null != othersJson && !isEmpty(othersJson))
+                    others = JSON.parse(othersJson);
+            } catch (error) {
+                console.error()
+            }
+
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - loadOthers: ${JSON.stringify(others)}`);
+
+            state.others = others.filter(_ => _.userId != state.id);
         },
         addOthers: (state, action: PayloadAction<Domains.User>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -188,6 +258,7 @@ const userSlice = createSlice({
 
             state.others.push(action.payload);
             state.others = deepmerge([], state.others);
+            localStorage.setItem("others", JSON.stringify((state.others)));
         },
         removeOthers: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -201,6 +272,7 @@ const userSlice = createSlice({
 
             state.others = state.others.filter(_ => _.userId != action.payload);
             state.others = deepmerge([], state.others);
+            localStorage.setItem("others", JSON.stringify((state.others)));
         },
         setLatestActiveUsers: (state, action: PayloadAction<Domains.User[]>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -394,7 +466,9 @@ export const {
     setToken,
     setRefreshToken,
     signIn,
+    updateSignIn,
     signOut,
+    expireAccessToken,
     setUserId,
     setUserAccountType,
     setUserName,
@@ -404,6 +478,7 @@ export const {
     setProfileImageUrl,
     setAuthState,
     setOthers,
+    loadOthers,
     addOthers,
     setLatestActiveUsers,
     setConnectedUsers,

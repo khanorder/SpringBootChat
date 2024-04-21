@@ -12,6 +12,7 @@ import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.domain.user.UserInterface;
 import com.zangho.game.server.error.*;
 import com.zangho.game.server.helper.Helpers;
+import com.zangho.game.server.service.JwtService;
 import com.zangho.game.server.service.NotificationService;
 import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ public class ResHandler {
     private final SessionHandler sessionHandler;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final JwtService jwtService;
 
     @Value("${server.version.main}")
     private int serverVersionMain;
@@ -38,12 +40,13 @@ public class ResHandler {
     @Value("${server.version.maintenance}")
     private int serverVersionMaintenance;
 
-    public ResHandler(SessionHandler sessionHandler, UserService userService, NotificationService notificationService) {
+    public ResHandler(SessionHandler sessionHandler, UserService userService, NotificationService notificationService, JwtService jwtService) {
         var config = System.getProperty("Config");
         isDevelopment = null == config || !config.equals("production");
         this.sessionHandler = sessionHandler;
         this.userService = userService;
         this.notificationService = notificationService;
+        this.jwtService = jwtService;
     }
 
     public Optional<WebSocketSession> getSessionByUserId(String userId) {
@@ -102,6 +105,47 @@ public class ResHandler {
             sessionHandler.consoleLogPackets(packetFlag, error.name());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resDemandRefreshToken(WebSocketSession session) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_DEMAND_REFRESH_TOKEN);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, ResType.RES_DEMAND_REFRESH_TOKEN.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public boolean resIsTokenExpired(WebSocketSession session, User user, String tokenString) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_TOKEN_EXPIRED);
+
+            var resultDeserialize = jwtService.deserializeToken(tokenString);
+            switch (resultDeserialize.getLeft()) {
+                case NONE:
+                    return false;
+
+                case TOKEN_EXPIRED:
+                    userService.removeConnectedUser(user);
+                    noticeDisconnectedUser(session, user);
+                    sessionHandler.sendOneSession(session, packetFlag);
+                    return true;
+
+                case DISPOSED_TOKEN:
+                    userService.removeConnectedUser(user);
+                    noticeDisconnectedUser(session, user);
+                    sessionHandler.sendOneSession(session, packetFlag);
+                    return true;
+
+                default:
+                    sessionHandler.sendOneSession(session, packetFlag);
+                    return true;
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return true;
         }
     }
 

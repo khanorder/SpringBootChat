@@ -14,7 +14,7 @@ import isEmpty from "lodash/isEmpty";
 import { dayjs } from '@/helpers/localizedDayjs';
 import {CommonAPI} from "@/apis/commonAPI";
 import {setServerHost, setServerProtocol} from "@/stores/reducers/appConfigs";
-import {setToken} from "@/stores/reducers/user";
+import {loadOthers, setRefreshToken, setToken} from "@/stores/reducers/user";
 
 export type NextPageWithLayout = NextPage & {
     getLayout?: (page: ReactElement) => ReactNode
@@ -34,10 +34,13 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
         if (firstRender.current) {
             const token = Helpers.getCookie("token");
             dispatch(setToken(token ?? ""));
+            const refreshToken = Helpers.getCookie("rtk");
+            dispatch(setRefreshToken(refreshToken ?? ""));
             const serverHost = Helpers.getCookie("SERVER_HOST");
             dispatch(setServerHost(serverHost));
             dispatch(setServerProtocol('production' === process.env.NODE_ENV ? 'https' : "http"));
             const socketURL = ('production' === process.env.NODE_ENV ? 'wss://' : "ws://") + (serverHost ?? "localhost:8080");
+            dispatch(loadOthers());
 
             firstRender.current = false;
             dispatch(webSocketActions.initSocket(socketURL));

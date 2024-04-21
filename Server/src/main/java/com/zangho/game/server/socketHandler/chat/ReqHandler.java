@@ -11,6 +11,7 @@ import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.*;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.NonNull;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,11 +85,8 @@ public class ReqHandler {
         lineNotifyService.Notify("채팅샘플 접속종료 (" + Helpers.getSessionIP(closeSession) + ")");
     }
 
-    public void onCheckConnection(ReqType reqType, WebSocketSession session, byte[] packet) {
+    public void onCheckConnection(WebSocketSession session, byte[] packet) {
         try {
-//            if (isDevelopment)
-//                logger.info(reqType.name() + ": " + Helpers.getSessionIP(session));
-
             if (4 > packet.length) {
                 resHandler.resCheckConnection(session, ErrorCheckConnection.UPDATE_REQUIRED);
                 return;
@@ -140,27 +138,27 @@ public class ReqHandler {
 
             Optional<User> optUser = Optional.empty();
             List<ChatRoomInfoInterface> chatRooms = new ArrayList<>();
-            var accessTokenString = "";
+            var tokenString = "";
             var refreshTokenString = "";
             if (1 < packet.length) {
-                var bytesAccessTokenString = Arrays.copyOfRange(packet, 1, packet.length);
-                accessTokenString = new String(bytesAccessTokenString);
-                var resultDeserialize = jwtService.deserializeAccessToken(accessTokenString);
+                var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
+                tokenString = new String(bytesTokenString);
+                var resultDeserialize = jwtService.deserializeToken(tokenString);
 
                 switch (resultDeserialize.getLeft()) {
                     case NONE:
                         if (resultDeserialize.getRight().isEmpty()) {
-                            resHandler.resCheckAuthentication(session, ErrorCheckAuth.NOT_VALID_TOKEN);
+                            resHandler.resCheckAuthentication(session, ErrorCheckAuth.TOKEN_IS_EMPTY);
                             return;
                         }
                         break;
 
                     case TOKEN_EXPIRED:
-                        resHandler.resCheckAuthentication(session, ErrorCheckAuth.AUTH_EXPIRED);
+                        resHandler.resDemandRefreshToken(session);
                         return;
 
                     case DISPOSED_TOKEN:
-                        resHandler.resCheckAuthentication(session, ErrorCheckAuth.AUTH_EXPIRED);
+                        resHandler.resDemandRefreshToken(session);
                         return;
 
                     default:
@@ -169,18 +167,32 @@ public class ReqHandler {
                 }
 
                 var token = resultDeserialize.getRight().get();
-                var id = token.getClaim("id");
-                var name = token.getClaim("name");
-                logger.info("id: " + id.asString() + ", name: " + name.asString());
-                logger.info("token: " + (new ObjectMapper()).registerModule(new JavaTimeModule()).writeValueAsString(token));
+                var userId = token.getClaim("id").asString();
 
-                var authenticatedUserInfo = userService.authenticateUser(id.asString(), session);
+                var authenticatedUserInfo = userService.authenticateUser(userId, session);
                 optUser = authenticatedUserInfo.getLeft();
                 chatRooms = authenticatedUserInfo.getRight();
 
                 if (optUser.isEmpty()) {
                     resHandler.resCheckAuthentication(session, ErrorCheckAuth.FAILED_TO_AUTH);
                     return;
+                }
+
+                // 인증확인 토큰이 리프레쉬 토크인 경우 토큰을 재 발행한다
+                var optTokenType = TokenType.getType(token.getClaim("tkt").asInt());
+                if (optTokenType.isPresent() && optTokenType.get().equals(TokenType.REFRESH)) {
+                    var resultIssueToken = jwtService.issueAccessToken(optUser.get());
+                    if (resultIssueToken.getLeft().equals(ErrorIssueJWT.FAILED_TO_ISSUE)) {
+                        // 토큰 재발행이 실패한 경우 메모리에서 인증 상태를 다시 제거한다.
+                        userService.removeConnectedUser(optUser.get());
+                        resHandler.resCheckAuthentication(session, ErrorCheckAuth.FAILED_TO_ISSUE_TOKEN);
+                        return;
+                    }
+
+                    // 재발행 후 기존 리프레쉬 토큰은 패기
+                    jwtService.disposeToken(token);
+                    tokenString = resultIssueToken.getRight().getLeft();
+                    refreshTokenString = resultIssueToken.getRight().getRight();
                 }
             } else {
                 optUser = userService.createTempUser(session);
@@ -195,13 +207,13 @@ public class ReqHandler {
                     return;
                 }
 
-                accessTokenString = resultIssueToken.getRight().getLeft();
+                tokenString = resultIssueToken.getRight().getLeft();
                 refreshTokenString = resultIssueToken.getRight().getRight();
             }
 
 
             // 팔로우, 팔로워, 사용 가능한 채팅방 정보 전달
-            resHandler.resCheckAuthentication(session, optUser.get(), accessTokenString, refreshTokenString);
+            resHandler.resCheckAuthentication(session, optUser.get(), tokenString, refreshTokenString);
             resHandler.resLatestActiveUsers(session);
             resHandler.resConnectedUsers(session);
             resHandler.resFollows(session, optUser.get().getFollowList());
@@ -241,6 +253,9 @@ public class ReqHandler {
                 }
                 break;
 
+            case DISPOSED_TOKEN:
+                break;
+
             case TOKEN_EXPIRED:
                 break;
 
@@ -249,7 +264,10 @@ public class ReqHandler {
                 return;
         }
 
+        // 연결된 유저 정보 제거
         userService.removeConnectedUser(connectedUser.get());
+        // 연결종료 전체알림
+        resHandler.noticeDisconnectedUser(session, connectedUser.get());
         resHandler.resSignOut(session, ErrorSignOut.NONE);
     }
 
@@ -330,7 +348,7 @@ public class ReqHandler {
         try {
             var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
             var tokenString = new String(bytesTokenString);
-            var resultDeserialize = jwtService.deserializeAccessToken(tokenString);
+            var resultDeserialize = jwtService.deserializeToken(tokenString);
 
             switch (resultDeserialize.getLeft()) {
                 case NONE:
@@ -341,7 +359,11 @@ public class ReqHandler {
                     break;
 
                 case TOKEN_EXPIRED:
-                    resHandler.resGetTokenUserInfo(session, ErrorGetTokenUserInfo.AUTH_EXPIRED);
+                    resHandler.resDemandRefreshToken(session);
+                    return;
+
+                case DISPOSED_TOKEN:
+                    resHandler.resDemandRefreshToken(session);
                     return;
 
                 default:
@@ -394,8 +416,13 @@ public class ReqHandler {
                 return;
             }
 
-            var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
+            var offsetUserId = 17;
+            var bytesUserId = Arrays.copyOfRange(packet, 1, offsetUserId);
             var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+            var bytesToken = Arrays.copyOfRange(packet, offsetUserId, packet.length);
+            var tokenString = new String(bytesToken);
+            if (resHandler.resIsTokenExpired(session, connectedUser.get(), tokenString))
+                return;
 
             var targetUser = userService.findUser(userId);
             if (targetUser.isEmpty()) {
@@ -435,8 +462,13 @@ public class ReqHandler {
                 return;
             }
 
-            var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
+            var offsetUserId = 17;
+            var bytesUserId = Arrays.copyOfRange(packet, 1, offsetUserId);
             var userId = Helpers.getUUIDFromByteArray(bytesUserId);
+            var bytesToken = Arrays.copyOfRange(packet, offsetUserId, packet.length);
+            var tokenString = new String(bytesToken);
+            if (resHandler.resIsTokenExpired(session, connectedUser.get(), tokenString))
+                return;
 
             var targetUser = userService.findUser(userId);
             if (targetUser.isEmpty()) {

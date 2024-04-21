@@ -1,6 +1,6 @@
-import {select} from "redux-saga/effects";
+import {call, put, select} from "redux-saga/effects";
 import {RootState} from "@/stores/reducers";
-import {UserState} from "@/stores/reducers/user";
+import {setRefreshToken, setToken, UserState} from "@/stores/reducers/user";
 import {WebSocketState} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
@@ -52,10 +52,17 @@ export function* callCheckAuthenticationReq() {
 
     try {
         const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
-        const token = Helpers.getCookie("token");
-        console.log(`saga - callCheckAuthenticationReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+        let token = Helpers.getCookie("token");
+        if (isEmpty(token))
+            token = Helpers.getCookie("rtk");
+
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckAuthenticationReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+
         if (isEmpty(token)) {
             alert("인증정보가 없습니다.");
+            yield put(setToken(""));
+            yield put(setRefreshToken(""));
             return;
         }
         const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
@@ -78,10 +85,17 @@ export function* callCheckAuthenticationOnOpenReq(socket?: WebSocket) {
 
     try {
         const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
-        const token = Helpers.getCookie("token");
-        console.log(`saga - callCheckAuthenticationOnOpenReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+        let token = Helpers.getCookie("token");
+        if (isEmpty(token))
+            token = Helpers.getCookie("rtk");
+
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckAuthenticationOnOpenReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+
         if (isEmpty(token)) {
             alert("인증정보가 없습니다.");
+            yield put(setToken(""));
+            yield put(setRefreshToken(""));
             return;
         }
         const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
@@ -134,9 +148,12 @@ export function* callSignOutReq() {
     try {
         const flag = new Uint8Array([Defines.ReqType.REQ_SIGN_OUT]);
         const token = Helpers.getCookie("token");
-        console.log(`saga - callSignOutReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSignOutReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+
         if (isEmpty(token)) {
             alert("인증정보가 없습니다.");
+            yield put(setToken(""));
             return;
         }
         const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
@@ -281,9 +298,15 @@ export function* callFollowReq(action: PayloadAction<Domains.User>) {
         return;
     }
 
+    if (isEmpty(userState.token)) {
+        alert("로그인 후 이용해 주세요.");
+        return;
+    }
+
     const flag = new Uint8Array([Defines.ReqType.REQ_FOLLOW]);
     const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.userId.trim());
-    const packet = Helpers.mergeBytesPacket([flag, bytesUserId]);
+    const bytesToken = new Uint8Array(Buffer.from(userState.token, 'utf8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesToken]);
     webSocketState.socket.send(packet);
 }
 
@@ -315,9 +338,15 @@ export function* callUnfollowReq(action: PayloadAction<Domains.User>) {
         return;
     }
 
+    if (isEmpty(userState.token)) {
+        alert("로그인 후 이용해 주세요.");
+        return;
+    }
+
     const flag = new Uint8Array([Defines.ReqType.REQ_UNFOLLOW]);
     const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.userId.trim());
-    const packet = Helpers.mergeBytesPacket([flag, bytesUserId]);
+    const bytesToken = new Uint8Array(Buffer.from(userState.token, 'utf8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesToken]);
     webSocketState.socket.send(packet);
 }
 

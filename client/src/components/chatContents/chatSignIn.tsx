@@ -7,9 +7,10 @@ import {checkAuthenticationReq, startGuestReq, getTokenUserInfoReq} from "@/stor
 import {Domains} from "@/domains";
 import {jwtDecode} from "jwt-decode";
 import {Helpers} from "@/helpers";
-import AuthedJwtPayload = Domains.AuthedJwtPayload;
 import isEmpty from "lodash/isEmpty";
 import {Defines} from "@/defines";
+import Image from "next/image";
+import titleLogo01 from "public/images/logo01.jpg";
 
 export default function ChatSignIn() {
     const firstRender = useRef(true);
@@ -26,8 +27,10 @@ export default function ChatSignIn() {
 
     const checkAuthentication = useCallback(() => {
         if (isEmpty(user.token) || isEmpty(user.name)) {
-            alert("기존 계정 정보가 없습니다.");
-            return;
+            if (isEmpty(user.refreshToken)) {
+                alert("기존 계정 정보가 없습니다.");
+                return;
+            }
         }
 
         if (!confirm(`${user.name} 계정으로 다시 로그인 하시겠습니까?`))
@@ -42,8 +45,9 @@ export default function ChatSignIn() {
 
     const signInButtons = useCallback(() => {
         const buttons: ReactElement[] = [];
-        if (!isEmpty(user.token)) {
-            dispatch(getTokenUserInfoReq(user.token));
+        if (!isEmpty(user.token) || !isEmpty(user.refreshToken)) {
+            if (isEmpty(user.name))
+                dispatch(getTokenUserInfoReq(isEmpty(user.token) ? user.refreshToken : user.token));
 
             buttons.push(
                 <button key={'existsTokenProfile'}
@@ -71,14 +75,19 @@ export default function ChatSignIn() {
 
 
         return buttons;
-    }, [user, checkAuthentication, startGuest]);
+    }, [user, dispatch, checkAuthentication, startGuest]);
 
     return (
         <div className={styles.chatSignInWrapper}>
             <div className={styles.chatSignIn}>
                 <div className={styles.signinEmpty}></div>
                 <div className={styles.title}>
-
+                    <div className={styles.titleLogoWrapper}>
+                        <Image className={styles.titleLogo} src={titleLogo01} fill={true} priority={true} alt="ZTalk" />
+                    </div>
+                    <div className={styles.titleTextWrapper}>
+                        <div className={styles.titleText}>ZTalk</div>
+                    </div>
                 </div>
                 <div className={styles.buttons}>
                     {signInButtons()}

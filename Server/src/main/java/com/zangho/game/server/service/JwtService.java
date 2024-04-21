@@ -24,6 +24,7 @@ import java.util.UUID;
 public class JwtService {
 
     private Logger logger = LoggerFactory.getLogger(JwtService.class);
+    private final boolean isDevelopment;
 
     private DisposedTokenRepository disposedTokenRepository;
 
@@ -43,6 +44,8 @@ public class JwtService {
     private int refreshExpireDay;
 
     public JwtService(DisposedTokenRepository disposedTokenRepository) {
+        var config = System.getProperty("Config");
+        isDevelopment = null == config || !config.equals("production");
         this.disposedTokenRepository = disposedTokenRepository;
     }
 
@@ -69,47 +72,16 @@ public class JwtService {
                 .sign(algorithm);
 
             var resultIssueRefreshToken = issueRefreshToken(user);
-            if (!resultIssueRefreshToken.getLeft().equals(ErrorIssueJWT.NONE))
+            if (!resultIssueRefreshToken.getLeft().equals(ErrorIssueJWT.NONE)) {
+                if (isDevelopment)
+                    logger.info(ErrorIssueJWT.FAILED_TO_ISSUE.toString());
                 return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, Pair.of("", ""));
+            }
 
             return Pair.of(ErrorIssueJWT.NONE, Pair.of(token, resultIssueRefreshToken.getRight()));
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, Pair.of("", ""));
-        }
-    }
-
-    public Pair<ErrorDeserializeJWT, Optional<DecodedJWT>> deserializeAccessToken(String token) {
-        try {
-            var algorithm = Algorithm.HMAC512(secretKey);
-            var verifier = JWT.require(algorithm).withIssuer(validIssuer).build();
-            var deserializedToken = verifier.verify(token);
-            if (null == deserializedToken.getId())
-                return Pair.of(ErrorDeserializeJWT.NOT_FOUND_TOKEN_ID, Optional.empty());
-
-            if (deserializedToken.getClaim("tkt").isMissing() || !deserializedToken.getClaim("tkt").asInt().equals(TokenType.ACCESS.getNumber()))
-                return Pair.of(ErrorDeserializeJWT.INVALID_TOKEN_TYPE, Optional.empty());
-
-            if (deserializedToken.getClaim("id").isMissing())
-                return Pair.of(ErrorDeserializeJWT.NOT_FOUND_USER_ID, Optional.empty());
-
-            if (deserializedToken.getClaim("accountType").isMissing())
-                return Pair.of(ErrorDeserializeJWT.NOT_FOUND_USER_ACCOUNT_TYPE, Optional.empty());
-
-            var accountTypeInt = deserializedToken.getClaim("accountType").asInt();
-            var optAccountType = AccountType.getType(accountTypeInt);
-            if (optAccountType.isEmpty())
-                return Pair.of(ErrorDeserializeJWT.NOT_FOUND_USER_ACCOUNT_TYPE, Optional.empty());
-
-            if (disposedTokenRepository.existsById(deserializedToken.getId()))
-                return Pair.of(ErrorDeserializeJWT.DISPOSED_TOKEN, Optional.empty());
-
-            return Pair.of(ErrorDeserializeJWT.NONE, Optional.of(deserializedToken));
-        } catch (TokenExpiredException ex) {
-            return Pair.of(ErrorDeserializeJWT.TOKEN_EXPIRED, Optional.empty());
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-            return Pair.of(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE, Optional.empty());
         }
     }
 
@@ -142,36 +114,112 @@ public class JwtService {
         }
     }
 
-    public Pair<ErrorDeserializeJWT, Optional<DecodedJWT>> deserializeRefreshToken(String token) {
+    public Pair<ErrorDeserializeJWT, Optional<DecodedJWT>> deserializeToken(String token) {
         try {
             var algorithm = Algorithm.HMAC512(secretKey);
             var verifier = JWT.require(algorithm).withIssuer(validIssuer).build();
             var deserializedToken = verifier.verify(token);
-            if (null == deserializedToken.getId())
+            if (null == deserializedToken.getId()) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.NOT_FOUND_TOKEN_ID.toString());
                 return Pair.of(ErrorDeserializeJWT.NOT_FOUND_TOKEN_ID, Optional.empty());
+            }
 
-            if (deserializedToken.getClaim("tkt").isMissing() || !deserializedToken.getClaim("tkt").asInt().equals(TokenType.REFRESH.getNumber()))
+            if (deserializedToken.getClaim("tkt").isMissing()) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.TOKEN_TYPE_IS_EMPTY.toString());
+                return Pair.of(ErrorDeserializeJWT.TOKEN_TYPE_IS_EMPTY, Optional.empty());
+            }
+
+            var optTokenType = TokenType.getType(deserializedToken.getClaim("tkt").asInt());
+            if (optTokenType.isEmpty() || optTokenType.get().equals(TokenType.NONE)) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.INVALID_TOKEN_TYPE.toString());
                 return Pair.of(ErrorDeserializeJWT.INVALID_TOKEN_TYPE, Optional.empty());
+            }
 
-            if (deserializedToken.getClaim("id").isMissing())
+            if (deserializedToken.getClaim("id").isMissing()) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.NOT_FOUND_USER_ID.toString());
                 return Pair.of(ErrorDeserializeJWT.NOT_FOUND_USER_ID, Optional.empty());
+            }
 
-            if (deserializedToken.getClaim("accountType").isMissing())
-                return Pair.of(ErrorDeserializeJWT.NOT_FOUND_USER_ACCOUNT_TYPE, Optional.empty());
+            if (deserializedToken.getClaim("accountType").isMissing()) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.USER_ACCOUNT_TYPE_IS_EMPTY.toString());
+                return Pair.of(ErrorDeserializeJWT.USER_ACCOUNT_TYPE_IS_EMPTY, Optional.empty());
+            }
 
             var accountTypeInt = deserializedToken.getClaim("accountType").asInt();
             var optAccountType = AccountType.getType(accountTypeInt);
-            if (optAccountType.isEmpty())
+            if (optAccountType.isEmpty()) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.NOT_FOUND_USER_ACCOUNT_TYPE.toString());
                 return Pair.of(ErrorDeserializeJWT.NOT_FOUND_USER_ACCOUNT_TYPE, Optional.empty());
+            }
 
-            if (disposedTokenRepository.existsById(deserializedToken.getId()))
+            if (disposedTokenRepository.existsById(deserializedToken.getId())) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.DISPOSED_TOKEN.toString());
                 return Pair.of(ErrorDeserializeJWT.DISPOSED_TOKEN, Optional.empty());
+            }
 
             return Pair.of(ErrorDeserializeJWT.NONE, Optional.of(deserializedToken));
         } catch (TokenExpiredException ex) {
+            if (isDevelopment)
+                logger.info(ErrorDeserializeJWT.TOKEN_EXPIRED.toString());
             return Pair.of(ErrorDeserializeJWT.TOKEN_EXPIRED, Optional.empty());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
+            if (isDevelopment)
+                logger.info(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE.toString());
+            return Pair.of(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE, Optional.empty());
+        }
+    }
+
+    public Pair<ErrorDeserializeJWT, Optional<DecodedJWT>> deserializeAccessToken(String token) {
+        try {
+            var deserializedResult = deserializeToken(token);
+            if (!deserializedResult.getLeft().equals(ErrorDeserializeJWT.NONE) || deserializedResult.getRight().isEmpty()) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE.toString());
+                return Pair.of(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE, Optional.empty());
+            }
+
+            var optTokenType = TokenType.getType(deserializedResult.getRight().get().getClaim("tkt").asInt());
+            if (optTokenType.isEmpty() || !optTokenType.get().equals(TokenType.ACCESS)) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.INVALID_TOKEN_TYPE.toString());
+                return Pair.of(ErrorDeserializeJWT.INVALID_TOKEN_TYPE, Optional.empty());
+            }
+
+            return deserializedResult;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            if (isDevelopment)
+                logger.info(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE.toString());
+            return Pair.of(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE, Optional.empty());
+        }
+    }
+
+    public Pair<ErrorDeserializeJWT, Optional<DecodedJWT>> deserializeRefreshToken(String token) {
+        try {
+            var deserializedResult = deserializeToken(token);
+            if (!deserializedResult.getLeft().equals(ErrorDeserializeJWT.NONE) || deserializedResult.getRight().isEmpty())
+                return Pair.of(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE, Optional.empty());
+
+            var optTokenType = TokenType.getType(deserializedResult.getRight().get().getClaim("tkt").asInt());
+            if (optTokenType.isEmpty() || !optTokenType.get().equals(TokenType.REFRESH)) {
+                if (isDevelopment)
+                    logger.info(ErrorDeserializeJWT.INVALID_TOKEN_TYPE.toString());
+                return Pair.of(ErrorDeserializeJWT.INVALID_TOKEN_TYPE, Optional.empty());
+            }
+
+            return deserializedResult;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            if (isDevelopment)
+                logger.info(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE.toString());
             return Pair.of(ErrorDeserializeJWT.FAILED_TO_DESERIALIZE, Optional.empty());
         }
     }

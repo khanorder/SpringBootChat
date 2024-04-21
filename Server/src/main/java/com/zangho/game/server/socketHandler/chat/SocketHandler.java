@@ -70,12 +70,12 @@ public class SocketHandler extends TextWebSocketHandler {
                 default -> userService.getConnectedUser(session);
             };
 
-            if (isDevelopment)
+            if (isDevelopment && !type.equals(ReqType.REQ_CHECK_CONNECTION))
                 logger.info(type.name() + ": " + Helpers.getSessionIP(session));
 
             switch (type) {
                 case REQ_CHECK_CONNECTION:
-                    reqHandler.onCheckConnection(type, session, packet);
+                    reqHandler.onCheckConnection(session, packet);
                     break;
 
                 case REQ_CHECK_AUTHENTICATION:

@@ -32,9 +32,12 @@ import {
     setProfileImageUrl,
     UserState,
     addOthers,
-    setLatestActiveUsers, setUserAccountType, signOut, signIn, setToken
+    setLatestActiveUsers,
+    signOut,
+    signIn,
+    setToken, setRefreshToken, expireAccessToken, updateSignIn
 } from '@/stores/reducers/user';
-import {put, select} from "redux-saga/effects";
+import {call, put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
 import {v4 as uuid} from "uuid";
 import {push} from "connected-next-router";
@@ -48,12 +51,11 @@ import {
     removeNotification
 } from "@/stores/reducers/notification";
 import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
-import {jwtDecode} from "jwt-decode";
-import AuthedJwtPayload = Domains.AuthedJwtPayload;
+import {callCheckAuthenticationReq} from "@/sagas/socketPackets/chatRequest";
 
 export function* checkConnectionRes(data: Uint8Array) {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - checkConnectionRes`);
+    // if ('production' !== process.env.NODE_ENV)
+    //     console.log(`packet - checkConnectionRes`);
 
     const response = Domains.CheckConnectionRes.decode(data);
 
@@ -113,7 +115,7 @@ export function* checkAuthenticationRes(data: Uint8Array) {
                 checkedUser.haveProfile = response.haveProfile;
                 checkedUser.latestActive = response.latestActive;
 
-                yield put(signIn({ token: response.token, refreshToken: response.refreshToken, user: checkedUser }));
+                yield put(updateSignIn({ token: response.token, refreshToken: response.refreshToken, user: checkedUser }));
 
             } catch (error) {
                 if ('production' !== process.env.NODE_ENV)
@@ -169,7 +171,7 @@ export function* signOutRes(data: Uint8Array) {
             break;
 
         case Errors.SignOut.AUTH_REQUIRED:
-            alert("로그인 상태가 안닙니다.");
+            alert("로그인 상태가 아닙니다.");
             break;
 
         case Errors.SignOut.FAILED_TO_SIGN_OUT:
@@ -178,6 +180,24 @@ export function* signOutRes(data: Uint8Array) {
     }
 
     return response;
+}
+
+export function* demandRefreshTokenRes() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - demandRefreshTokenRes`);
+
+    yield put(setToken(""));
+    const userState: UserState = yield select((state: RootState) => state.user);
+    if (!isEmpty(userState.refreshToken))
+        yield call(callCheckAuthenticationReq);
+}
+
+export function* tokenExpiredRes() {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - tokenExpiredRes`);
+
+    alert("사용자 인증이 만료되었습니다.");
+    yield put(expireAccessToken());
 }
 
 export function* notificationRes(data: Uint8Array) {

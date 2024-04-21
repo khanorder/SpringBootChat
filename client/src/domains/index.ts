@@ -21,6 +21,7 @@ export namespace Domains {
         iat?: number;
         jti?: string;
         id?: string;
+        tkt?: Defines.TokenType;
         accountType?: Defines.AccountType;
         haveProfile?: boolean;
         latestActiveAt?: number;
@@ -254,8 +255,8 @@ export namespace Domains {
                 const messageLength = bytes[offsetNameLength];
                 const bytesAccessTokenLength = bytes.slice(offsetMessageLength, offsetAccessTokenLength);
                 const accessTokenLength = Helpers.getShortIntFromByteArray(bytesAccessTokenLength);
-                const bytesShortTokenLength = bytes.slice(offsetAccessTokenLength, offsetRefreshTokenLength);
-                const refreshTokenLength = Helpers.getShortIntFromByteArray(bytesShortTokenLength);
+                const bytesRefreshTokenLength = bytes.slice(offsetAccessTokenLength, offsetRefreshTokenLength);
+                const refreshTokenLength = Helpers.getShortIntFromByteArray(bytesRefreshTokenLength);
                 const offsetName = offsetRefreshTokenLength + nameLength;
                 const offsetMessage = offsetName + messageLength;
                 const offsetAccessToken = offsetMessage + accessTokenLength;

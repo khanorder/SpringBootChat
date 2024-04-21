@@ -14,7 +14,31 @@
             flex: 1 0 auto
 
         .title
+            display: flex
+            flex-direction: column
+            justify-content: center
+            align-items: center
             flex: 1 0 auto
+
+            .titleLogoWrapper
+                position: relative
+                display: flex
+                justify-content: center
+                align-items: center
+                border: 3px solid #000000
+                border-radius: 100px
+                box-shadow: 0 0 30px #696969
+                width: 200px
+                height: 200px
+                overflow: hidden
+
+            .titleTextWrapper
+                display: flex
+                padding-top: 40px
+
+                .titleText
+                    font-weight: 700
+                    font-size: 30px
 
         .buttons
             display: flex
@@ -43,10 +67,11 @@
                         font-size: 14px
                         color: #696969
 
-
-
                 &:hover
                     cursor: pointer
+
+                    .profile
+                        box-shadow: 0 0 10px #696969
 
                 &:first-child
                     margin-top: 0

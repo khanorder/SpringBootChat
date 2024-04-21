@@ -76,7 +76,7 @@ import {
     openPreparedChatRoomRes,
     latestActiveUsersRes,
     notificationsStartChatRes,
-    notificationsFollowerRes, signOutRes, getTokenUserInfoRes
+    notificationsFollowerRes, signOutRes, getTokenUserInfoRes, demandRefreshTokenRes, tokenExpiredRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -297,8 +297,10 @@ function* onMessage (socket: WebSocket) {
 
                     const byteLen = event.data.byteLength;
 
-                    if (2 > byteLen)
+                    if (1 > byteLen) {
+                        console.error(`packet too short.`);
                         continue;
+                    }
 
                     const packetFlag = Helpers.getFlagBytes(event);
                     const packetData = Helpers.getDataBytes(event);
@@ -312,12 +314,20 @@ function* onMessage (socket: WebSocket) {
                             yield call(checkAuthenticationRes, packetData);
                             break;
 
-                        case Defines.ResType.RES_NOTIFICATION:
-                            yield call(notificationRes, packetData);
-                            break;
-
                         case Defines.ResType.RES_SIGN_OUT:
                             yield call(signOutRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_DEMAND_REFRESH_TOKEN:
+                            yield call(demandRefreshTokenRes);
+                            break;
+
+                        case Defines.ResType.RES_TOKEN_EXPIRED:
+                            yield call(tokenExpiredRes);
+                            break;
+
+                        case Defines.ResType.RES_NOTIFICATION:
+                            yield call(notificationRes, packetData);
                             break;
 
                         case Defines.ResType.RES_NOTIFICATIONS_START_CHAT:
