@@ -22,5 +22,8 @@ public interface DisposedTokenRepository extends JpaRepository<DisposedToken, St
     Optional<DisposedToken> findById(@NonNull String id);
 
     @Override
+    boolean existsById(String s);
+
+    @Override
     long count();
 }

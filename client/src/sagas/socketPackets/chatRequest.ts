@@ -38,11 +38,13 @@ export function* callCheckConnectionReq(socket: WebSocket) {
     }
 }
 
-export function* callCheckAuthenticationReq(socket: WebSocket) {
+export function* callCheckAuthenticationReq() {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callCheckAuthenticationReq`);
 
-    if (!socket || WebSocket.OPEN != socket.readyState) {
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callCheckAuthenticationReq: socket is not available.`);
         return;
@@ -52,6 +54,32 @@ export function* callCheckAuthenticationReq(socket: WebSocket) {
         const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
         const token = Helpers.getCookie("token");
         console.log(`saga - callCheckAuthenticationReq: ${isEmpty(token) ? 'token is empty.' : token}`);
+        if (isEmpty(token)) {
+            alert("인증정보가 없습니다.");
+            return;
+        }
+        const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
+        const reqPacket = Helpers.mergeBytesPacket([flag, bytesToken]);
+        webSocketState.socket.send(reqPacket);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+export function* callCheckAuthenticationOnOpenReq(socket?: WebSocket) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callCheckAuthenticationOnOpenReq`);
+
+    if (!socket || WebSocket.OPEN != socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callCheckAuthenticationOnOpenReq: socket is not available.`);
+        return;
+    }
+
+    try {
+        const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
+        const token = Helpers.getCookie("token");
+        console.log(`saga - callCheckAuthenticationOnOpenReq: ${isEmpty(token) ? 'token is empty.' : token}`);
         if (isEmpty(token)) {
             alert("인증정보가 없습니다.");
             return;
@@ -189,22 +217,39 @@ export function* callConnectedUsersReq() {
     webSocketState.socket.send(flag);
 }
 
-export function* callGetUserInfoReq(action: PayloadAction<string>) {
+export function* callGetOthersUserInfoReq(action: PayloadAction<string>) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callGetUserInfoReq`);
+        console.log(`saga - callGetOthersUserInfoReq`);
 
-    const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
         if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callGetUserInfoReq: socket is not available.`);
+            console.log(`saga - callGetOthersUserInfoReq: socket is not available.`);
         return;
     }
 
-    const flag = new Uint8Array([Defines.ReqType.REQ_GET_USER_INFO]);
+    const flag = new Uint8Array([Defines.ReqType.REQ_GET_OTHERS_USER_INFO]);
     const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.trim());
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId]);
+    webSocketState.socket.send(packet);
+}
+
+export function* callGetTokenUserInfoReq(action: PayloadAction<string>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callGetTokenUserInfoReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callGetTokenUserInfoReq: socket is not available.`);
+        return;
+    }
+
+    const flag = new Uint8Array([Defines.ReqType.REQ_GET_TOKEN_USER_INFO]);
+    const bytesToken = new Uint8Array(Buffer.from(action.payload.trim(), 'utf8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesToken]);
     webSocketState.socket.send(packet);
 }
 

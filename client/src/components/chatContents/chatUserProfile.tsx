@@ -1,7 +1,7 @@
 import styles from "@/styles/chatUserProfile.module.sass";
 import {useCallback, useEffect, useRef} from "react";
 import {useAppSelector} from "@/hooks";
-import useGetUserInfo from "@/components/common/useGetUserInfo";
+import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
 import {dayjs} from "@/helpers/localizedDayjs";
 
 export interface ChatUserProfileProps {
@@ -11,7 +11,7 @@ export interface ChatUserProfileProps {
 export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
     const firstRender = useRef(true);
     const user = useAppSelector(state => state.user);
-    const [getUserInfo] = useGetUserInfo();
+    const [getOthersUserInfo] = useGetOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -23,7 +23,7 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
     //#endregion
 
     const userProfile = useCallback(() => {
-        const userInfo = getUserInfo(userId);
+        const userInfo = getOthersUserInfo(userId);
 
         return (
             <div className={styles.userThumbWrapper}>
@@ -39,11 +39,11 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
                 }
             </div>
         );
-    }, [getUserInfo, userId]);
+    }, [getOthersUserInfo, userId]);
 
     const userName = useCallback(() => {
         const isMine = user.id == userId;
-        const userInfo = getUserInfo(userId);
+        const userInfo = getOthersUserInfo(userId);
 
         return (
             <div className={styles.userInfo}>
@@ -51,10 +51,10 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
                 <div className={styles.userMessage}>{isMine ? user.message : userInfo.message}</div>
             </div>
         );
-    }, [userId, getUserInfo, user]);
+    }, [userId, getOthersUserInfo, user]);
 
     const latestActive = useCallback(() => {
-        const userInfo = getUserInfo(userId);
+        const userInfo = getOthersUserInfo(userId);
 
         return (
             <div className={styles.latestActive}>
@@ -63,7 +63,7 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
                 </div>
             </div>
         );
-    }, [userId, getUserInfo]);
+    }, [userId, getOthersUserInfo]);
 
     return (
         <div className={styles.userProfileWrapper}>

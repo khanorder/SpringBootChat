@@ -47,10 +47,6 @@ export default function Layout({children}: { children: ReactNode }) {
             return <AlreadySignIn/>;
         }
 
-        if (Defines.AuthStateType.NONE == user.authState || isEmpty(user.id) || isEmpty(Helpers.getCookie("token"))) {
-            return <ChatSignIn />;
-        }
-
         const gnb = isEmpty(chat.currentChatRoomId) ? <ChatGNB/> : <></>;
         let contents = children;
 
@@ -59,13 +55,20 @@ export default function Layout({children}: { children: ReactNode }) {
         } else {
             switch (webSocket.connectionState) {
                 case WebSocket.CONNECTING:
-                    contents = <Loading/>;
-                    break;
+                    if (Defines.AuthStateType.SIGN_IN === user.authState) {
+                        contents =  <Loading/>;
+                        break;
+                    } else {
+                        return <Loading/>;
+                    }
 
                 case WebSocket.CLOSED:
-                    contents = <ChatDisconnected />;
-                    break;
+                    return <ChatDisconnected />;
             }
+        }
+
+        if (Defines.AuthStateType.NONE == user.authState || isEmpty(user.id) || isEmpty(Helpers.getCookie("token"))) {
+            return <ChatSignIn />;
         }
 
         return (

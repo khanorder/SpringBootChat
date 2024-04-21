@@ -8,7 +8,7 @@ import CloseIcon from "public/images/close.svg";
 import {Domains} from "@/domains";
 import {dayjs} from "@/helpers/localizedDayjs";
 import {checkNotificationReq, enterChatRoomReq, removeNotificationReq} from "@/stores/reducers/webSocket";
-import useGetUserInfo from "@/components/common/useGetUserInfo";
+import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
 import {useRouter} from "next/router";
 import {Helpers} from "@/helpers";
 import {setIsActiveNotification} from "@/stores/reducers/ui";
@@ -18,7 +18,7 @@ export default function ChatNotifications() {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const notificationState = useAppSelector(state => state.notification);
     const dispatch = useAppDispatch();
-    const [getUserInfo] = useGetUserInfo();
+    const [getOthersUserInfo] = useGetOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -56,7 +56,7 @@ export default function ChatNotifications() {
                 if (notification.isCheck)
                     notificationClass += ` ${styles.checked}`;
 
-                const userInfo = getUserInfo(notification.targetId);
+                const userInfo = getOthersUserInfo(notification.targetId);
                 let message = "";
                 switch (notification.type) {
                     case Defines.NotificationType.FOLLOWER:
@@ -101,7 +101,7 @@ export default function ChatNotifications() {
         }
 
         return list;
-    }, [getUserInfo, notificationState, appConfigs, checkNotification]);
+    }, [getOthersUserInfo, notificationState, appConfigs, checkNotification]);
 
     return (
             <div className={styles.chatNotificationsWrapper}>

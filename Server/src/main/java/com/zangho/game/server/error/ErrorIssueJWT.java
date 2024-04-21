@@ -6,7 +6,6 @@ public enum ErrorIssueJWT implements Types {
     NONE(0),
     FAILED_TO_ISSUE(1);
 
-
     private final int number;
     private ErrorIssueJWT(int number) {
         this.number = number;

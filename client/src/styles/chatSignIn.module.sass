@@ -18,9 +18,35 @@
 
         .buttons
             display: flex
+            flex-direction: column
             justify-content: center
             align-items: center
-            height: 50px
 
-            .createTempButton
+            .button
+                margin-top: 10px
                 padding: 5px 10px
+
+                &.existsToken
+                    display: flex
+                    justify-content: center
+                    align-items: center
+                    border: 0
+                    padding: 0
+                    background: none
+
+                    .profile
+                        width: 80px
+                        height: 80px
+                        border-radius: 40px
+
+                    .name
+                        font-size: 14px
+                        color: #696969
+
+
+
+                &:hover
+                    cursor: pointer
+
+                &:first-child
+                    margin-top: 0

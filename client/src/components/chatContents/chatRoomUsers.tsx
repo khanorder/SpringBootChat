@@ -3,13 +3,13 @@ import {useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import styles from "@/styles/chatRoomUsers.module.sass";
 import {Domains} from "@/domains";
-import useGetUserInfo from "@/components/common/useGetUserInfo";
+import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
 
 export default function ChatRoomUsers() {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
-    const [getUserInfo] = useGetUserInfo();
+    const [getOthersUserInfo] = useGetOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -21,18 +21,18 @@ export default function ChatRoomUsers() {
 
     const userProfile = useCallback((userId: string) => {
         const isMine = user.id == userId;
-        const userInfo = getUserInfo(userId);
+        const userInfo = getOthersUserInfo(userId);
 
         return (
             <div className={styles.chatRoomUserProfileWrapper}>
                 <img className={styles.chatRoomUserProfile} src={isMine ? user.profileImageUrl : userInfo.profileImageUrl} title={isMine ? user.name : userInfo.userName} alt={isMine ? user.name : userInfo.userName} />
             </div>
         );
-    }, [getUserInfo, user]);
+    }, [getOthersUserInfo, user]);
 
     const userName = useCallback((userId: string) => {
         const isMine = user.id == userId;
-        const userInfo = getUserInfo(userId);
+        const userInfo = getOthersUserInfo(userId);
 
         return (
             <div className={styles.chatRoomUserInfo}>
@@ -40,7 +40,7 @@ export default function ChatRoomUsers() {
                 <div className={styles.userMessage}>{isMine ? user.message : userInfo.message}</div>
             </div>
         );
-    }, [getUserInfo, user]);
+    }, [getOthersUserInfo, user]);
 
     const list = useCallback(() => {
         if (!chat || isEmpty(chat.currentChatRoomId))

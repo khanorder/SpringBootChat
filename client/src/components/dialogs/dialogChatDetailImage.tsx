@@ -5,7 +5,7 @@ import Image from "next/image";
 import CloseIcon from "public/images/close-circle.svg";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
-import {setDetailImageId} from "@/stores/reducers/chat";
+import {setChatDetailImageId} from "@/stores/reducers/chat";
 import {Domains} from "@/domains";
 import chatImageUrlPrefix = Domains.chatImageUrlPrefix;
 
@@ -38,7 +38,7 @@ export default function DialogChatDetailImage () {
 
     const hideDialog = useCallback(() => {
         dispatch(setIsActiveChatImageDetail(false));
-        dispatch(setDetailImageId(''));
+        dispatch(setChatDetailImageId(''));
     }, [dispatch]);
 
     const dialog = useCallback(() => {

@@ -98,8 +98,12 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onConnectedUsers(session);
                     break;
 
-                case REQ_GET_USER_INFO:
-                    reqHandler.onGetUserInfo(session, connectedUser, packet);
+                case REQ_GET_TOKEN_USER_INFO:
+                    reqHandler.onGetTokenUserInfo(session, connectedUser, packet);
+                    break;
+
+                case REQ_GET_OTHERS_USER_INFO:
+                    reqHandler.onGetOthersUserInfo(session, connectedUser, packet);
                     break;
 
                 case REQ_FOLLOW:

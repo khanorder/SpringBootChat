@@ -5,9 +5,12 @@ import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
 import AuthStateType = Defines.AuthStateType;
 import defaultProfileImageUrl = Domains.defaultProfileImageUrl;
+import {Helpers} from "@/helpers";
 
 interface UserState {
+    token: string;
     id: string;
+    accountType: Defines.AccountType;
     name: string;
     message: string;
     haveProfile: boolean;
@@ -22,9 +25,11 @@ interface UserState {
 }
 
 const initialState: UserState = {
-    id: '',
-    name: '',
-    message: '',
+    token: "",
+    id: "",
+    accountType: Defines.AccountType.NONE,
+    name: "",
+    message: "",
     haveProfile: false,
     latestActive: 0,
     profileImageUrl: defaultProfileImageUrl,
@@ -40,11 +45,78 @@ const userSlice = createSlice({
     name: 'User',
     initialState,
     reducers: {
+        setToken: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setToken: ${action.payload}`);
+
+            state.token = action.payload;
+            Helpers.setCookie("token", action.payload, 3650);
+        },
+        setRefreshToken: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setRefreshToken: ${action.payload}`);
+
+            state.token = action.payload;
+            Helpers.setCookie("rtk", action.payload, 365);
+        },
+        signIn: (state, action: PayloadAction<Domains.SignInProps>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - signIn: ${action.payload}`);
+
+            if (isEmpty(action.payload.token)) {
+                if ('production' !== process.env.NODE_ENV)
+                    console.log(`reducer - signIn: token is empty`);
+                return;
+            }
+
+            Helpers.setCookie("token", action.payload.token, 3650);
+            if (!isEmpty(action.payload.refreshToken))
+                Helpers.setCookie("rtk", action.payload.refreshToken, 365);
+
+            state.token = action.payload.token;
+            state.authState = Defines.AuthStateType.SIGN_IN;
+            state.id = action.payload.user.userId;
+            state.accountType = action.payload.user.accountType;
+            state.name = action.payload.user.userName;
+            state.message = action.payload.user.message;
+            state.haveProfile = action.payload.user.haveProfile;
+            state.latestActive = action.payload.user.latestActive;
+            state.profileImageUrl = defaultProfileImageUrl;
+            state.others = [];
+            state.latestActiveUsers = [];
+            state.connectedUsers = [];
+            state.follows = [];
+            state.followers = [];
+        },
+        signOut: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - signOut`);
+
+            state.authState = Defines.AuthStateType.NONE;
+            state.id = "";
+            state.accountType = Defines.AccountType.NONE;
+            state.name = "";
+            state.message = "";
+            state.haveProfile = false;
+            state.latestActive = 0;
+            state.profileImageUrl = defaultProfileImageUrl;
+            state.others = [];
+            state.latestActiveUsers = [];
+            state.connectedUsers = [];
+            state.follows = [];
+            state.followers = [];
+        },
         setUserId: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setUserId: ${action.payload}`);
 
             state.id = isEmpty(action.payload) ? '' : action.payload;
+        },
+        setUserAccountType: (state, action: PayloadAction<Defines.AccountType>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setUserAccountType: ${action.payload}`);
+
+            state.accountType = action.payload;
         },
         setUserName: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -319,7 +391,12 @@ export interface UpdateUsersDataProps {
 
 export type { UserState };
 export const {
+    setToken,
+    setRefreshToken,
+    signIn,
+    signOut,
     setUserId,
+    setUserAccountType,
     setUserName,
     setUserMessage,
     setHaveProfile,

@@ -49,6 +49,10 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - startReconnecting`);
         },
+        checkAuthenticationReq: (state) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - checkAuthenticationReq`);
+        },
         connectedUsersReq: (state) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - connectedUsersReq`);
@@ -61,9 +65,13 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - signOutReq`);
         },
-        getUserInfoReq: (state, action: PayloadAction<string>) => {
+        getTokenUserInfoReq: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - getUserInfoReq`);
+                console.log(`reducer - getTokenUserInfoReq`);
+        },
+        getOthersUserInfoReq: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - getOthersUserInfoReq`);
         },
         followReq: (state, action: PayloadAction<Domains.User>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -140,10 +148,12 @@ export const {
     addCountTryConnect,
     resetCountTryConnect,
     startReconnecting,
+    checkAuthenticationReq,
     connectedUsersReq,
     startGuestReq,
     signOutReq,
-    getUserInfoReq,
+    getTokenUserInfoReq,
+    getOthersUserInfoReq,
     followReq,
     unfollowReq,
     startChatReq,

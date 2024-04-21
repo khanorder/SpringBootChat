@@ -87,7 +87,14 @@ export namespace Errors {
         FAILED_TO_REMOVE = 6,
     }
 
-    export enum GetUserInfo {
+    export enum GetTokenUserInfo {
+        NONE = 0,
+        NOT_VALID_TOKEN = 1,
+        AUTH_EXPIRED = 2,
+        NOT_FOUND_USER = 3,
+    }
+
+    export enum GetOthersUserInfo {
         NONE = 0,
         AUTH_REQUIRED = 1,
         NOT_FOUND_USER = 2,

@@ -7,8 +7,8 @@ import dynamic from "next/dynamic";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
-import {setDetailImageId} from "@/stores/reducers/chat";
-import useGetUserInfo from "@/components/common/useGetUserInfo";
+import {setChatDetailImageId} from "@/stores/reducers/chat";
+import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
 import chatImageSmallUrlPrefix = Domains.chatImageSmallUrlPrefix;
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
@@ -21,7 +21,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
-    const [getUserInfo] = useGetUserInfo();
+    const [getOthersUserInfo] = useGetOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -35,7 +35,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
         if (isEmpty(chatId))
             return;
 
-        dispatch(setDetailImageId(chatId));
+        dispatch(setChatDetailImageId(chatId));
         dispatch(setIsActiveChatImageDetail(true));
     }, [dispatch]);
 
@@ -44,24 +44,24 @@ export default function ChatMessage({data}: ChatMessageProps) {
         if (isMine)
             return;
 
-        const userInfo = getUserInfo(data.userId);
+        const userInfo = getOthersUserInfo(data.userId);
 
         return (
             <div className={styles.chatUserProfileWrapper}>
                 <img className={styles.chatUserProfile} src={userInfo.profileImageUrl} title={userInfo.userName} alt={userInfo.userName} />
             </div>
         );
-    }, [getUserInfo, user, data]);
+    }, [getOthersUserInfo, user, data]);
 
     const userName = useCallback(() => {
         const isMine = user.id == data.userId;
         if (isMine)
             return;
 
-        const userInfo = getUserInfo(data.userId);
+        const userInfo = getOthersUserInfo(data.userId);
 
         return <div className={styles.chatUserName}>{userInfo.userName}</div>;
-    }, [getUserInfo, user, data]);
+    }, [getOthersUserInfo, user, data]);
 
     const chatElement = useCallback(() => {
         const isMine = user.id == data.userId;

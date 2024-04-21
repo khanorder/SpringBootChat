@@ -10,7 +10,7 @@ import {setIsActiveCreateChatRoom} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
-import useGetUserInfo from "@/components/common/useGetUserInfo";
+import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
 const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 const ChatSelectUsers = dynamic(() => import("@/components/chatContents/chatSelectUsers"), { ssr: false });
 
@@ -24,7 +24,7 @@ export default function DialogCreateChatRoom() {
     const [chatRoomName, setChatRoomName] = useState<string>('');
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [chatRoomOpenType, setChatRoomOpenType] = useState<Defines.RoomOpenType>(Defines.RoomOpenType.PRIVATE);
-    const [getUserInfo] = useGetUserInfo();
+    const [getOthersUserInfo] = useGetOthersUserInfo();
 
     useEffect(() => {
         if (!firstRender.current) {
@@ -120,7 +120,7 @@ export default function DialogCreateChatRoom() {
         if (0 < selectedUsers.length) {
             for (let i = 0; i < selectedUsers.length; i++) {
                 const selectedUserId = selectedUsers[i];
-                const userInfo = getUserInfo(selectedUserId);
+                const userInfo = getOthersUserInfo(selectedUserId);
                 list.push(<div key={i} className={stylesCommon.chip} onClick={e => onSelectUser(selectedUserId)}>{userInfo.userName}</div>);
             }
         }
@@ -130,7 +130,7 @@ export default function DialogCreateChatRoom() {
                 {list}
             </div>
         );
-    }, [getUserInfo, selectedUsers, onSelectUser]);
+    }, [getOthersUserInfo, selectedUsers, onSelectUser]);
 
     const dialog = useCallback(() => {
         let tabClassPrivate: string = stylesTabPanel.tab;

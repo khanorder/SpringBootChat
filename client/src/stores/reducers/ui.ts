@@ -30,6 +30,17 @@ const uiSlice = createSlice({
     name: 'UI',
     initialState,
     reducers: {
+        initUI: (state) => {
+            state.activeTab = Defines.TabType.FOLLOW;
+            state.isActiveProfile = false;
+            state.isActiveProfileImageInput = false;
+            state.isActiveNotification = false;
+            state.isActiveChatRoomInfo = false;
+            state.isActiveCreateChatRoom = false;
+            state.isActiveAddUser = false;
+            state.isActiveChatImageInput = false;
+            state.isActiveChatImageDetail = false;
+        },
         setActiveTab: (state, action: PayloadAction<Defines.TabType>) => {
             state.activeTab = action.payload;
         },
@@ -86,6 +97,7 @@ const uiSlice = createSlice({
 
 export type { UIState };
 export const {
+    initUI,
     setActiveTab,
     setIsActiveProfile,
     setIsActiveProfileImageInput,

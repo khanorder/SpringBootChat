@@ -12,7 +12,6 @@ import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.domain.user.UserInterface;
 import com.zangho.game.server.error.*;
 import com.zangho.game.server.helper.Helpers;
-import com.zangho.game.server.service.JwtService;
 import com.zangho.game.server.service.NotificationService;
 import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
@@ -76,28 +75,20 @@ public class ResHandler {
         }
     }
 
-    public void resCheckAuthentication(WebSocketSession session, User user) {
+    public void resCheckAuthentication(WebSocketSession session, User user, String accessTokenString, String refreshTokenString) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_AUTHENTICATION, ErrorCheckAuth.NONE);
             var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
-            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
             var bytesUserLatestActive = Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime());
             var bytesUserNameLength = new byte[] {(byte)user.getName().getBytes().length};
             var bytesMessageLength = new byte[] {(byte)user.getMessage().getBytes().length};
+            var bytesAccessTokenStringLength = Helpers.getByteArrayFromShortInt(accessTokenString.getBytes().length);
+            var bytesRefreshTokenStringLength = Helpers.getByteArrayFromShortInt(refreshTokenString.getBytes().length);
             var bytesUserName = user.getName().getBytes();
             var bytesMessage = user.getMessage().getBytes();
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesUserId, bytesUserLatestActive, bytesUserNameLength, bytesMessageLength, bytesUserName, bytesMessage);
-            sessionHandler.sendOneSession(session, resPacket);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-        }
-    }
-
-    public void resCheckAuthentication(WebSocketSession session, String tokenString) {
-        try {
-            var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_AUTHENTICATION, ErrorCheckAuth.NONE);
-            var bytesToken = tokenString.getBytes();
-            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesToken);
+            var bytesAccessTokenString = accessTokenString.getBytes();
+            var bytesRefreshTokenString = refreshTokenString.getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesHaveProfile, bytesUserLatestActive, bytesUserNameLength, bytesMessageLength, bytesAccessTokenStringLength, bytesRefreshTokenStringLength, bytesUserName, bytesMessage, bytesAccessTokenString, bytesRefreshTokenString);
             sessionHandler.sendOneSession(session, resPacket);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -357,9 +348,9 @@ public class ResHandler {
         }
     }
 
-    public void resGetUserInfo(WebSocketSession session, ErrorGetUserInfo error) {
+    public void resGetTokenUserInfo(WebSocketSession session, ErrorGetTokenUserInfo error) {
         try {
-            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_USER_INFO, error);
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_TOKEN_USER_INFO, error);
             sessionHandler.sendOneSession(session, packetFlag);
             sessionHandler.consoleLogPackets(packetFlag, error.name());
         } catch (Exception ex) {
@@ -367,9 +358,33 @@ public class ResHandler {
         }
     }
 
-    public void resGetUserInfo(WebSocketSession session, User user) {
+    public void resGetTokenUserInfo(WebSocketSession session, User user) {
         try {
-            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_USER_INFO, ErrorGetUserInfo.NONE);
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_TOKEN_USER_INFO, ErrorGetTokenUserInfo.NONE);
+            var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
+            var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
+            var bytesUserNameLength = new byte[] {(byte)user.getName().getBytes().length};
+            var bytesUserName = user.getName().getBytes();
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId, bytesHaveProfile, bytesUserNameLength, bytesUserName);
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resGetOthersUserInfo(WebSocketSession session, ErrorGetOthersUserInfo error) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_OTHERS_USER_INFO, error);
+            sessionHandler.sendOneSession(session, packetFlag);
+            sessionHandler.consoleLogPackets(packetFlag, error.name());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resGetOthersUserInfo(WebSocketSession session, User user) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_OTHERS_USER_INFO, ErrorGetOthersUserInfo.NONE);
             var bytesHaveProfile = new byte[] {(byte)user.getHaveProfile()};
             var bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
             var bytesLatestActive = Helpers.getByteArrayFromLong(user.getLatestActiveAt().getTime());

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -13,6 +14,7 @@ import java.util.Date;
 @Table(name = "disposed_tokens")
 @Data
 @NoArgsConstructor
+@RequiredArgsConstructor
 public class DisposedToken {
     @Id
     @NonNull

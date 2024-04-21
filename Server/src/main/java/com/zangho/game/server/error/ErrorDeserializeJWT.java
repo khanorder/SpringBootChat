@@ -4,9 +4,13 @@ import com.zangho.game.server.define.Types;
 
 public enum ErrorDeserializeJWT implements Types {
     NONE(0),
-    NOT_FOUND_TOKEN_ID(1),
+    INVALID_TOKEN_TYPE(1),
     TOKEN_EXPIRED(2),
-    FAILED_TO_DESERIALIZE(3);
+    NOT_FOUND_TOKEN_ID(3),
+    NOT_FOUND_USER_ID(4),
+    NOT_FOUND_USER_ACCOUNT_TYPE(5),
+    DISPOSED_TOKEN(6),
+    FAILED_TO_DESERIALIZE(7);
 
 
     private final int number;

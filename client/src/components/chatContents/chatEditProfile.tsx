@@ -149,8 +149,13 @@ export default function ChatEditProfile() {
     }, [user, dispatch]);
 
     const signOut = useCallback(() => {
-        dispatch(signOutReq());
-    }, [dispatch]);
+        let confirmMessage = "로그아웃 하시겠습니까?";
+        if (Defines.AccountType.TEMP === user.accountType)
+            confirmMessage = "게스트 계정은 정보가 사라집니다.\n정말 로그아웃 하시겠습니까?";
+
+        if (confirm(confirmMessage))
+            dispatch(signOutReq());
+    }, [dispatch, user]);
 
     return (
         <div className={styles.editProfileWrapper}>

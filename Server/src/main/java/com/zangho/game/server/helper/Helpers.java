@@ -56,6 +56,20 @@ public class Helpers {
         );
     }
 
+    public static byte[] getByteArrayFromShortInt(int value) {
+        byte[] byteArray = new byte[2];
+        byteArray[0] = (byte)(value >> 8);
+        byteArray[1] = (byte)(value);
+        return byteArray;
+    }
+
+    public static int getShortIntFromByteArray(byte[] bytes) {
+        return (
+            (((int)bytes[0] & 0xff) << 8) |
+            (((int)bytes[1] & 0xff))
+        );
+    }
+
     public static String getHexFromLong(long value) {
         var hex = new StringBuilder();
         byte[] byteArray = getByteArrayFromLong(value);

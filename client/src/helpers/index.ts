@@ -1,5 +1,8 @@
 import base from "base-x";
 import {Defines} from "@/defines";
+import {Domains} from "@/domains";
+import {jwtDecode} from "jwt-decode";
+import isEmpty from "lodash/isEmpty";
 const base62 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
 const base64 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
 
@@ -107,6 +110,24 @@ export namespace Helpers {
             return 0;
 
         return Buffer.from(bytes).readIntBE(0, 4);
+    }
+
+    export function getByteArrayFromShortInt(value: number): Uint8Array {
+        if (null == value || 0 > value || 4294967295 < value)
+            return new Uint8Array(2);
+
+        const byteArray = new Uint8Array(2);
+        byteArray[0] = (value >> 8);
+        byteArray[1] = (value);
+
+        return byteArray;
+    }
+
+    export function getShortIntFromByteArray(bytes: Uint8Array): number {
+        if (null == bytes || 2 != bytes.length)
+            return 0;
+
+        return Buffer.from(bytes).readIntBE(0, 2);
     }
 
     export function getFlagBytes(event: MessageEvent): Uint8Array {
@@ -334,6 +355,32 @@ export namespace Helpers {
 
             default:
                 return "";
+        }
+    }
+
+    export function getUserFromToken(token: string): Domains.User|null {
+        try {
+            if (isEmpty(token))
+                return null;
+
+            const decodedJwt: Domains.AuthedJwtPayload = jwtDecode(token);
+
+            const id = "undefined" === typeof decodedJwt.id ? "" : decodedJwt.id;
+            if (isEmpty(id)) {
+                console.error(`packet - getUserFromToken: id is empty.`);
+                return null;
+            }
+
+            const accountType = "undefined" === typeof decodedJwt.accountType ? Defines.AccountType.NONE : decodedJwt.accountType;
+            if (Defines.AccountType.NONE === accountType) {
+                console.error(`packet - getUserFromToken: accountType is empty.`);
+                return null;
+            }
+
+            return new Domains.User(id, accountType, "", "", false, 0);
+        } catch (error) {
+            console.error(error);
+            return null;
         }
     }
 }

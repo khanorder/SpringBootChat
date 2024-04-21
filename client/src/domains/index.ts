@@ -21,6 +21,7 @@ export namespace Domains {
         iat?: number;
         jti?: string;
         id?: string;
+        accountType?: Defines.AccountType;
         haveProfile?: boolean;
         latestActiveAt?: number;
         name?: string;
@@ -67,6 +68,7 @@ export namespace Domains {
 
     export class User {
         userId: string;
+        accountType: Defines.AccountType;
         userName: string;
         message: string;
         haveProfile: boolean;
@@ -74,8 +76,9 @@ export namespace Domains {
         profileImageUrl: string = defaultProfileImageUrl;
         online: boolean;
 
-        constructor(userId: string, userName: string, message: string, haveProfile: boolean, latestActive: number, online?: boolean) {
+        constructor(userId: string, accountType: Defines.AccountType, userName: string, message: string, haveProfile: boolean, latestActive: number, online?: boolean) {
             this.userId = userId;
+            this.accountType = accountType;
             this.userName = userName;
             this.message = message;
             this.haveProfile = haveProfile;
@@ -218,19 +221,58 @@ export namespace Domains {
 
     export class CheckAuthenticationRes {
         result: Errors.CheckAuth;
+        haveProfile: boolean;
+        latestActive: number;
+        userName: string;
+        userMessage: string;
         token: string;
+        refreshToken: string;
 
-        constructor(result: Errors.CheckAuth, token: string) {
+        constructor(result: Errors.CheckAuth, haveProfile: boolean, latestActive: number, userName: string, userMessage: string, token: string, refreshToken: string) {
             this.result = result;
+            this.haveProfile = haveProfile;
+            this.latestActive = latestActive;
+            this.userName = userName;
+            this.userMessage = userMessage;
             this.token = token;
+            this.refreshToken = refreshToken;
         }
 
         static decode(bytes: Uint8Array) {
             try {
-                const bytesToken = bytes.slice(1, bytes.byteLength);
-                const token = new TextDecoder().decode(bytesToken);
+                const offsetResult: number = 1;
+                const offsetHaveProfile = offsetResult + 1;
+                const offsetLatestActive = offsetHaveProfile + 8;
+                const offsetNameLength = offsetLatestActive + 1;
+                const offsetMessageLength = offsetNameLength + 1;
+                const offsetAccessTokenLength = offsetMessageLength + 2;
+                const offsetRefreshTokenLength = offsetAccessTokenLength + 2;
+                const haveProfile: boolean = bytes[offsetResult] > 0;
+                const bytesLatestActive = bytes.slice(offsetHaveProfile, offsetLatestActive);
+                const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
+                const nameLength = bytes[offsetLatestActive];
+                const messageLength = bytes[offsetNameLength];
+                const bytesAccessTokenLength = bytes.slice(offsetMessageLength, offsetAccessTokenLength);
+                const accessTokenLength = Helpers.getShortIntFromByteArray(bytesAccessTokenLength);
+                const bytesShortTokenLength = bytes.slice(offsetAccessTokenLength, offsetRefreshTokenLength);
+                const refreshTokenLength = Helpers.getShortIntFromByteArray(bytesShortTokenLength);
+                const offsetName = offsetRefreshTokenLength + nameLength;
+                const offsetMessage = offsetName + messageLength;
+                const offsetAccessToken = offsetMessage + accessTokenLength;
+                const offsetRefreshToken = offsetAccessToken + refreshTokenLength;
+                const bytesName = bytes.slice(offsetRefreshTokenLength, offsetName);
+                const name = new TextDecoder().decode(bytesName);
+                const bytesMessage = bytes.slice(offsetName, offsetMessage);
+                const message = new TextDecoder().decode(bytesMessage);
+                const bytesAccessToken = bytes.slice(offsetMessage, offsetAccessToken);
+                const accessToken = new TextDecoder().decode(bytesAccessToken);
+                let refreshToken = "";
+                if (0 < refreshTokenLength) {
+                    const bytesRefreshToken = bytes.slice(offsetAccessToken, bytes.byteLength);
+                    refreshToken = new TextDecoder().decode(bytesRefreshToken);
+                }
 
-                return new CheckAuthenticationRes(bytes[0], token);
+                return new CheckAuthenticationRes(bytes[0], haveProfile, latestActive, name, message, accessToken, refreshToken);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -474,7 +516,7 @@ export namespace Domains {
                 for (let i = 0; i < userCount; i++) {
                     const bytesUserId = bytes.slice((i * 16), ((i + 1) * 16));
                     const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                    users.push(new Domains.User(userId, "", "", false, 0, true));
+                    users.push(new Domains.User(userId, Defines.AccountType.NONE, "", "", false, 0, true));
                 }
 
                 return new LatestActiveUsersRes(users);
@@ -503,7 +545,7 @@ export namespace Domains {
                 for (let i = 0; i < userCount; i++) {
                     const bytesUserId = bytes.slice((i * 16), ((i + 1) * 16));
                     const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                    users.push(new Domains.User(userId, "", "", false, 0, true));
+                    users.push(new Domains.User(userId, Defines.AccountType.NONE, "", "", false, 0, true));
                 }
 
                 return new ConnectedUsersRes(users);
@@ -532,7 +574,7 @@ export namespace Domains {
                 for (let i = 0; i < userCount; i++) {
                     const bytesUserId = bytes.slice((i * 16), ((i + 1) * 16));
                     const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                    users.push(new Domains.User(userId, "", "", false, 0, true));
+                    users.push(new Domains.User(userId, Defines.AccountType.NONE, "", "", false, 0, true));
                 }
 
                 return new FollowsRes(users);
@@ -561,7 +603,7 @@ export namespace Domains {
                 for (let i = 0; i < userCount; i++) {
                     const bytesUserId = bytes.slice((i * 16), ((i + 1) * 16));
                     const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                    users.push(new Domains.User(userId, "", "", false, 0, true));
+                    users.push(new Domains.User(userId, Defines.AccountType.NONE, "", "", false, 0, true));
                 }
 
                 return new FollowersRes(users);
@@ -634,7 +676,7 @@ export namespace Domains {
             try {
                 const bytesId = bytes.slice(0, 16);
                 const id = Helpers.getUUIDFromByteArray(bytesId);
-                return new NoticeConnectedUserRes(new Domains.User(id, "", "", false, 0, true));
+                return new NoticeConnectedUserRes(new Domains.User(id, Defines.AccountType.NONE, "", "", false, 0, true));
             } catch (error) {
                 console.error(error);
                 return null;
@@ -661,11 +703,46 @@ export namespace Domains {
         }
     }
 
-    export class GetUserInfoRes {
-        result: Errors.GetUserInfo;
+    export class GetTokenUserInfoRes {
+        result: Errors.GetTokenUserInfo;
+        userId: string;
+        haveProfile: boolean;
+        userName: string;
+
+        constructor(result: Errors.GetTokenUserInfo, userId: string, haveProfile: boolean, userName: string) {
+            this.result = result;
+            this.userId = userId;
+            this.haveProfile = haveProfile;
+            this.userName = userName;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                const offsetResult: number = 1;
+                const offsetUserId = offsetResult + 16;
+                const offsetHaveProfile = offsetUserId + 1;
+                const offsetNameLength = offsetHaveProfile + 1;
+                const nameLength = bytes[offsetHaveProfile];
+                const offsetName = offsetNameLength + nameLength;
+                const bytesUserId = bytes.slice(offsetResult, offsetUserId);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                const haveProfile: boolean = bytes[offsetUserId] > 0;
+                const bytesName = bytes.slice(offsetNameLength, offsetName);
+                const name = new TextDecoder().decode(bytesName);
+
+                return new GetTokenUserInfoRes(bytes[0], userId, haveProfile, name);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class GetOthersUserInfoRes {
+        result: Errors.GetOthersUserInfo;
         user: Domains.User|null;
 
-        constructor(result: Errors.GetUserInfo, user?: Domains.User) {
+        constructor(result: Errors.GetOthersUserInfo, user?: Domains.User) {
             this.result = result;
             this.user = 'undefined' != typeof user && null != user ? user : null;
         }
@@ -690,7 +767,7 @@ export namespace Domains {
                 const name = new TextDecoder().decode(bytesName);
                 const bytesMessage = bytes.slice(offsetMessageLength + nameLength, offsetMessageLength + nameLength + messageLength)
                 const message = new TextDecoder().decode(bytesMessage);
-                return new GetUserInfoRes(bytes[0], new Domains.User(id, name, message, haveProfile, latestActive, online));
+                return new GetOthersUserInfoRes(bytes[0], new Domains.User(id, Defines.AccountType.NONE, name, message, haveProfile, latestActive, online));
             } catch (error) {
                 console.error(error);
                 return null;
@@ -713,7 +790,7 @@ export namespace Domains {
                 if (1 < bytes.byteLength) {
                     const bytesId = bytes.slice(1, 17);
                     const id = Helpers.getUUIDFromByteArray(bytesId);
-                    user = new Domains.User(id, "", "", false, 0, false);
+                    user = new Domains.User(id, Defines.AccountType.NONE, "", "", false, 0, false);
                 }
                 return new FollowRes(bytes[0], user);
             } catch (error) {
@@ -760,7 +837,7 @@ export namespace Domains {
                 if (1 < bytes.byteLength) {
                     const bytesId = bytes.slice(0, 16);
                     const id = Helpers.getUUIDFromByteArray(bytesId);
-                    user = new Domains.User(id, "", "", false, 0, false);
+                    user = new Domains.User(id, Defines.AccountType.NONE, "", "", false, 0, false);
                 }
                 return new FollowerRes(user);
             } catch (error) {
@@ -967,6 +1044,18 @@ export namespace Domains {
                 console.error(error);
                 return null;
             }
+        }
+    }
+
+    export class SignInProps {
+        token: string;
+        refreshToken: string;
+        user: Domains.User;
+
+        constructor(token: string, refreshToken: string, user: Domains.User) {
+            this.token = token;
+            this.refreshToken = refreshToken;
+            this.user = user;
         }
     }
 

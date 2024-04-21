@@ -32,7 +32,7 @@ import {
     setProfileImageUrl,
     UserState,
     addOthers,
-    setLatestActiveUsers
+    setLatestActiveUsers, setUserAccountType, signOut, signIn, setToken
 } from '@/stores/reducers/user';
 import {put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -99,43 +99,22 @@ export function* checkAuthenticationRes(data: Uint8Array) {
             }
 
             try {
-                const decodedJwt: AuthedJwtPayload = jwtDecode(response.token);
                 if ('production' !== process.env.NODE_ENV)
                     console.log(`packet - checkAuthenticationRes: ${response.token}`);
 
-                const id = "undefined" === typeof decodedJwt.id ? "" : decodedJwt.id;
-                if (isEmpty(id)) {
-                    if ('production' !== process.env.NODE_ENV)
-                        console.log(`packet - checkAuthenticationRes: id is empty.`);
-
+                const checkedUser = Helpers.getUserFromToken(response.token);
+                if (null == checkedUser) {
                     alert("인증 실패.");
                     return;
                 }
 
-                const name = "undefined" === typeof decodedJwt.name ? "" : decodedJwt.name;
-                if (isEmpty(name)) {
-                    if ('production' !== process.env.NODE_ENV)
-                        console.log(`packet - checkAuthenticationRes: name is empty.`);
+                checkedUser.userName = response.userName;
+                checkedUser.message = response.userMessage;
+                checkedUser.haveProfile = response.haveProfile;
+                checkedUser.latestActive = response.latestActive;
 
-                    alert("인증 실패.");
-                    return;
-                }
+                yield put(signIn({ token: response.token, refreshToken: response.refreshToken, user: checkedUser }));
 
-                const message = "undefined" === typeof decodedJwt.message ? "" : decodedJwt.message;
-                const haveProfile = "undefined" === typeof decodedJwt.haveProfile ? false : decodedJwt.haveProfile;
-
-                yield put(setAuthState(Defines.AuthStateType.SIGN_IN));
-                yield put(setUserId(id));
-                yield put(setUserName(name));
-                yield put(setUserMessage(message));
-                yield put(setHaveProfile(haveProfile));
-
-                const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-                if (haveProfile)
-                    yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${id}?${(new Date()).getTime()}`));
-
-                yield put(setLatestActive("undefined" === typeof decodedJwt.latestActiveAt || 1 > decodedJwt.latestActiveAt ? 0 : decodedJwt.latestActiveAt));
-                Helpers.setCookie("token", response.token, 3650);
             } catch (error) {
                 if ('production' !== process.env.NODE_ENV)
                     console.log(`packet - checkAuthenticationRes: failed to decode token.`);
@@ -147,12 +126,12 @@ export function* checkAuthenticationRes(data: Uint8Array) {
 
         case Errors.CheckAuth.NOT_VALID_TOKEN:
             alert('인증 실패.');
-            Helpers.setCookie("token", "");
+            yield put(setToken(""));
             break;
 
         case Errors.CheckAuth.AUTH_EXPIRED:
             alert('인증이 만료되었습니다.');
-            Helpers.setCookie("token", "");
+            yield put(setToken(""));
             break;
 
         case Errors.CheckAuth.ALREADY_SIGN_IN_USER:
@@ -185,12 +164,16 @@ export function* signOutRes(data: Uint8Array) {
     }
 
     switch (response.result) {
-        case Errors.SignOut.AUTH_REQUIRED:
-            alert("로그인 상태가 안닙니다.");
+        case Errors.SignOut.NONE:
+            yield put(signOut());
             break;
 
         case Errors.SignOut.AUTH_REQUIRED:
             alert("로그인 상태가 안닙니다.");
+            break;
+
+        case Errors.SignOut.FAILED_TO_SIGN_OUT:
+            alert("로그아웃 실패.");
             break;
     }
 
@@ -386,15 +369,52 @@ export function* noticeDisconnectedUserRes(data: Uint8Array) {
     return response;
 }
 
-export function* getUserInfoRes(data: Uint8Array) {
+export function* getTokenUserInfoRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - getUserInfoRes`);
+        console.log(`packet - getTokenUserInfoRes`);
 
-    const response = Domains.GetUserInfoRes.decode(data);
+    const response = Domains.GetTokenUserInfoRes.decode(data);
 
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
-            console.log(`packet - getUserInfoRes: response is null.`);
+            console.log(`packet - getTokenUserInfoRes: response is null.`);
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.GetTokenUserInfo.NONE:
+            try {
+                const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
+                const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
+                const profileImage = response.haveProfile ? imagePath + `${response.userId}?${(new Date()).getTime()}` : "";
+
+                yield put(setUserName(response.userName));
+                yield put(setHaveProfile(response.haveProfile));
+                yield put(setProfileImageUrl(profileImage));
+            } catch (error) {
+                if ('production' !== process.env.NODE_ENV)
+                    console.log(`packet - getTokenUserInfoRes: failed to get token user info.`);
+                return;
+            }
+            break;
+
+        default:
+            yield put(setToken(""));
+            break;
+    }
+
+    return response;
+}
+
+export function* getOthersUserInfoRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - getOthersUserInfoRes`);
+
+    const response = Domains.GetOthersUserInfoRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - getOthersUserInfoRes: response is null.`);
         return null;
     }
 
@@ -875,7 +895,7 @@ export function* updateChatRoomRes(data: Uint8Array) {
     if (0 < response.userIds.length) {
         const list: Domains.User[] = [];
         for (let i = 0; i < response.userIds.length; i++)
-            list.push(new Domains.User(response.userIds[i], "", "", false, 0));
+            list.push(new Domains.User(response.userIds[i], Defines.AccountType.NONE, "", "", false, 0));
 
         yield put(setChatRoomUsers({roomId: response?.roomId ?? '', chatRoomUsers: list}));
     }
@@ -897,7 +917,7 @@ export function* noticeAddChatRoomUserRes(data: Uint8Array) {
     if (isEmpty(response.roomId) || isEmpty(response.userId))
         return;
 
-    yield put(addChatRoomUser({ roomId: response.roomId, chatRoomUser: new Domains.User(response.userId, "", "", false, 0, false) }));
+    yield put(addChatRoomUser({ roomId: response.roomId, chatRoomUser: new Domains.User(response.userId, Defines.AccountType.NONE, "", "", false, 0, false) }));
     return response;
 }
 
@@ -916,7 +936,7 @@ export function* noticeRemoveChatRoomUserRes(data: Uint8Array) {
     if (isEmpty(response.roomId) || isEmpty(response.userId))
         return;
 
-    yield put(removeChatRoomUser({ roomId: response.roomId, chatRoomUser: new Domains.User(response.userId, "", "", false, 0, false) }));
+    yield put(removeChatRoomUser({ roomId: response.roomId, chatRoomUser: new Domains.User(response.userId, Defines.AccountType.NONE, "", "", false, 0, false) }));
     return response;
 }
 

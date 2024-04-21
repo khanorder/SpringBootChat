@@ -23,7 +23,11 @@ import {
     removeUserProfileReq,
     historyChatRoomReq,
     removeChatRoomReq,
-    getUserInfoReq, addUserChatRoomReq, startGuestReq, signOutReq
+    addUserChatRoomReq,
+    startGuestReq,
+    signOutReq,
+    checkAuthenticationReq,
+    getOthersUserInfoReq, getTokenUserInfoReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -66,13 +70,13 @@ import {
     noticeUserProfileChangedRes,
     removeUserProfileRes,
     noticeUserProfileRemovedRes,
-    getUserInfoRes,
+    getOthersUserInfoRes,
     noticeAddChatRoomUserRes,
     noticeRemoveChatRoomUserRes,
     openPreparedChatRoomRes,
     latestActiveUsersRes,
     notificationsStartChatRes,
-    notificationsFollowerRes, signOutRes
+    notificationsFollowerRes, signOutRes, getTokenUserInfoRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -93,9 +97,9 @@ import {
     callRemoveUserProfileReq,
     callHistoryChatRoomReq,
     callRemoveChatRoomReq,
-    callGetUserInfoReq,
+    callGetOthersUserInfoReq,
     callAddUserChatRoomReq,
-    callStartGuestReq, callSignOutReq
+    callStartGuestReq, callSignOutReq, callCheckAuthenticationOnOpenReq, callGetTokenUserInfoReq
 } from "@/sagas/socketPackets/chatRequest";
 import isEmpty from "lodash/isEmpty";
 
@@ -218,7 +222,7 @@ function* onOpen (socket: WebSocket) {
                     yield call(setConnectionState, WebSocket.OPEN);
                     const token = Helpers.getCookie("token");
                     if (!isEmpty(token))
-                        yield call(callCheckAuthenticationReq, socket);
+                        yield call(callCheckAuthenticationOnOpenReq, socket);
 
                     if ('production' !== process.env.NODE_ENV)
                         console.log("connection opened.");
@@ -340,8 +344,12 @@ function* onMessage (socket: WebSocket) {
                             yield call(connectedUsersRes, packetData);
                             break;
 
-                        case Defines.ResType.RES_GET_USER_INFO:
-                            yield call(getUserInfoRes, packetData);
+                        case Defines.ResType.RES_GET_TOKEN_USER_INFO:
+                            yield call(getTokenUserInfoRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_GET_OTHERS_USER_INFO:
+                            yield call(getOthersUserInfoRes, packetData);
                             break;
 
                         case Defines.ResType.RES_NOTICE_CONNECTED_USER:
@@ -529,10 +537,12 @@ function* callStartReconnecting() {
 export function* watchWebSocket() {
     yield takeLatest(initSocket, callInitSocket);
     yield takeLatest(startReconnecting, callStartReconnecting);
+    yield takeLatest(checkAuthenticationReq, callCheckAuthenticationReq);
     yield takeLatest(connectedUsersReq, callConnectedUsersReq);
     yield takeLatest(startGuestReq, callStartGuestReq);
     yield takeLatest(signOutReq, callSignOutReq);
-    yield takeLatest(getUserInfoReq, callGetUserInfoReq);
+    yield takeLatest(getTokenUserInfoReq, callGetTokenUserInfoReq);
+    yield takeLatest(getOthersUserInfoReq, callGetOthersUserInfoReq);
     yield takeLatest(followReq, callFollowReq);
     yield takeLatest(unfollowReq, callUnfollowReq);
     yield takeLatest(startChatReq, callStartChatReq);
