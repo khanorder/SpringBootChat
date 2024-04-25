@@ -12,6 +12,7 @@ interface UIState {
     isActiveAddUser: boolean;
     isActiveChatImageInput: boolean;
     isActiveChatImageDetail: boolean;
+    isActiveChangeUser: boolean;
 }
 
 const initialState: UIState = {
@@ -23,7 +24,8 @@ const initialState: UIState = {
     isActiveCreateChatRoom: false,
     isActiveAddUser: false,
     isActiveChatImageInput: false,
-    isActiveChatImageDetail: false
+    isActiveChatImageDetail: false,
+    isActiveChangeUser: false
 }
 
 const uiSlice = createSlice({
@@ -40,6 +42,7 @@ const uiSlice = createSlice({
             state.isActiveAddUser = false;
             state.isActiveChatImageInput = false;
             state.isActiveChatImageDetail = false;
+            state.isActiveChangeUser = false;
         },
         setActiveTab: (state, action: PayloadAction<Defines.TabType>) => {
             state.activeTab = action.payload;
@@ -68,6 +71,9 @@ const uiSlice = createSlice({
         setIsActiveChatImageDetail: (state, action: PayloadAction<boolean>) => {
             state.isActiveChatImageDetail = action.payload;
         },
+        setIsActiveChangeUser: (state, action: PayloadAction<boolean>) => {
+            state.isActiveChangeUser = action.payload;
+        },
         toggleIsActiveProfile: (state) => {
             state.isActiveProfile = !state.isActiveProfile;
         },
@@ -92,6 +98,9 @@ const uiSlice = createSlice({
         toggleIsActiveChatImageDetail: (state) => {
             state.isActiveChatImageDetail = !state.isActiveChatImageDetail;
         },
+        toggleIsActiveChangeUser: (state) => {
+            state.isActiveChangeUser = !state.isActiveChangeUser;
+        },
     }
 });
 
@@ -107,6 +116,7 @@ export const {
     setIsActiveAddUser,
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
+    setIsActiveChangeUser,
     toggleIsActiveNotification,
     toggleIsActiveProfile,
     toggleIsActiveProfileImageInput,
@@ -114,7 +124,8 @@ export const {
     toggleIsActiveCreateChatRoom,
     toggleIsActiveAddUser,
     toggleIsActiveChatImageInput,
-    toggleIsActiveChatImageDetail
+    toggleIsActiveChatImageDetail,
+    toggleIsActiveChangeUser,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

@@ -65,9 +65,6 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
         } else if (isEmpty(user.id)) {
             alert('로그인 후 이용해 주세요.');
             return;
-        } else if (isEmpty(user.name)) {
-            alert('대화명을 입력해 주세요.');
-            return;
         } else if (!chat || isEmpty(chat.currentChatRoomId)) {
             alert('채팅방에 입장해 주세요.');
             return;

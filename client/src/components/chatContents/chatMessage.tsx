@@ -8,7 +8,7 @@ import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import {setChatDetailImageId} from "@/stores/reducers/chat";
-import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
+import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import chatImageSmallUrlPrefix = Domains.chatImageSmallUrlPrefix;
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
@@ -21,7 +21,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
-    const [getOthersUserInfo] = useGetOthersUserInfo();
+    const [getOthersUserInfo] = useOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {

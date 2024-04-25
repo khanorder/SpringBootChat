@@ -5,11 +5,13 @@ import {Defines} from "@/defines";
 import dynamic from "next/dynamic";
 import isEmpty from "lodash/isEmpty";
 import {Helpers} from "@/helpers";
+import useCurrentUser from "@/components/common/useCurrentUser";
 
 const ChatDisconnected = dynamic(() => import("@/components/chatContents/chatDisconnected"), {ssr: false});
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
 const DialogProfile = dynamic(() => import("@/components/dialogs/dialogProfile"), {ssr: false});
 const DialogNotification = dynamic(() => import("@/components/dialogs/dialogNotification"), {ssr: false});
+const DialogChangeUser = dynamic(() => import("@/components/dialogs/dialogChangeUser"), {ssr: false});
 const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), {ssr: false});
 const Loading = dynamic(() => import("@/components/common/loading"), {ssr: false});
 const AlreadySignIn = dynamic(() => import("@/components/common/alreadySignIn"), {ssr: false});
@@ -20,6 +22,7 @@ export default function Layout({children}: { children: ReactNode }) {
     const chat = useAppSelector(state => state.chat);
     const webSocket = useAppSelector(state => state.webSocket);
     const user = useAppSelector(state => state.user);
+    const [currentUser] = useCurrentUser();
     const mainWrapper = createRef<HTMLDivElement>();
 
     const handleResize = useCallback(() => {
@@ -43,9 +46,8 @@ export default function Layout({children}: { children: ReactNode }) {
     //#endregion
 
     const layout = useCallback(() => {
-        if (Defines.AuthStateType.ALREADY_SIGN_IN == user.authState) {
+        if (Defines.AuthStateType.ALREADY_SIGN_IN == user.authState)
             return <AlreadySignIn/>;
-        }
 
         const gnb = isEmpty(chat.currentChatRoomId) ? <ChatGNB/> : <></>;
         let contents = children;
@@ -67,9 +69,13 @@ export default function Layout({children}: { children: ReactNode }) {
             }
         }
 
-        if (Defines.AuthStateType.NONE == user.authState || isEmpty(user.id) || isEmpty(Helpers.getCookie("token"))) {
-            return <ChatSignIn />;
-        }
+        if (Defines.AuthStateType.NONE == user.authState || isEmpty(user.id) || isEmpty(currentUser.accessToken))
+            return (
+                <>
+                    <ChatSignIn />
+                    <DialogChangeUser />
+                </>
+            );
 
         return (
             <>
@@ -80,7 +86,7 @@ export default function Layout({children}: { children: ReactNode }) {
                 {gnb}
             </>
         );
-    }, [children, webSocket, chat, user]);
+    }, [children, webSocket, chat, user, currentUser]);
 
     return (
         <main className={style.main} ref={mainWrapper}>

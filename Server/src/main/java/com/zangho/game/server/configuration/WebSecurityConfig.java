@@ -59,7 +59,8 @@ public class WebSecurityConfig {
             authorizationManagerRequestMatcherRegistry.requestMatchers("/tracking/visit").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/images/**").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/ws/game").permitAll();
-            authorizationManagerRequestMatcherRegistry.requestMatchers("/api/**").hasRole("user");
+            authorizationManagerRequestMatcherRegistry.requestMatchers("/api/**").permitAll();
+            //authorizationManagerRequestMatcherRegistry.requestMatchers("/api/**").hasRole("user");
             authorizationManagerRequestMatcherRegistry.anyRequest().authenticated();
         }));
 

@@ -10,7 +10,7 @@ import {setIsActiveCreateChatRoom} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
-import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
+import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 const ChatSelectUsers = dynamic(() => import("@/components/chatContents/chatSelectUsers"), { ssr: false });
 
@@ -24,7 +24,7 @@ export default function DialogCreateChatRoom() {
     const [chatRoomName, setChatRoomName] = useState<string>('');
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [chatRoomOpenType, setChatRoomOpenType] = useState<Defines.RoomOpenType>(Defines.RoomOpenType.PRIVATE);
-    const [getOthersUserInfo] = useGetOthersUserInfo();
+    const [getOthersUserInfo] = useOthersUserInfo();
 
     useEffect(() => {
         if (!firstRender.current) {

@@ -170,6 +170,7 @@ public class SessionHandler {
         try {
             var logPosition = (position.isEmpty() ? "" : position + " - ");
             logger.info(logPosition + "sessionCount: " + connectedSessions.size());
+            logger.info(logPosition + "signedUserCount: " + userService.getConnectedUsers().size());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

@@ -1,6 +1,5 @@
 package com.zangho.game.server.socketHandler.chat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.*;
 import com.zangho.game.server.domain.chat.Chat;
 import com.zangho.game.server.domain.chat.ChatRoom;
@@ -9,9 +8,7 @@ import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.error.*;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.*;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.NonNull;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -143,22 +140,40 @@ public class ReqHandler {
             if (1 < packet.length) {
                 var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
                 tokenString = new String(bytesTokenString);
-                var resultDeserialize = jwtService.deserializeToken(tokenString);
+                var verifiedResult = jwtService.verifyToken(tokenString);
 
-                switch (resultDeserialize.getLeft()) {
+                switch (verifiedResult.getLeft()) {
                     case NONE:
-                        if (resultDeserialize.getRight().isEmpty()) {
+                        if (verifiedResult.getRight().isEmpty()) {
                             resHandler.resCheckAuthentication(session, ErrorCheckAuth.TOKEN_IS_EMPTY);
                             return;
                         }
                         break;
 
                     case TOKEN_EXPIRED:
-                        resHandler.resDemandRefreshToken(session);
+                        if (verifiedResult.getRight().isEmpty()) {
+                            resHandler.resRefreshTokenExpired(session, "");
+                        } else {
+                            var token = verifiedResult.getRight().get();
+                            if (TokenType.REFRESH.equals(token.getTokenType())) {
+                                resHandler.resRefreshTokenExpired(session, token.getUserId());
+                            } else {
+                                resHandler.resDemandRefreshToken(session, token.getUserId());
+                            }
+                        }
                         return;
 
                     case DISPOSED_TOKEN:
-                        resHandler.resDemandRefreshToken(session);
+                        if (verifiedResult.getRight().isEmpty()) {
+                            resHandler.resRefreshTokenExpired(session, "");
+                        } else {
+                            var token = verifiedResult.getRight().get();
+                            if (TokenType.REFRESH.equals(token.getTokenType())) {
+                                resHandler.resRefreshTokenExpired(session, token.getUserId());
+                            } else {
+                                resHandler.resAccessTokenExpired(session, token.getUserId());
+                            }
+                        }
                         return;
 
                     default:
@@ -166,10 +181,9 @@ public class ReqHandler {
                         return;
                 }
 
-                var token = resultDeserialize.getRight().get();
-                var userId = token.getClaim("id").asString();
+                var token = verifiedResult.getRight().get();
 
-                var authenticatedUserInfo = userService.authenticateUser(userId, session);
+                var authenticatedUserInfo = userService.authenticateUser(token.getUserId(), session);
                 optUser = authenticatedUserInfo.getLeft();
                 chatRooms = authenticatedUserInfo.getRight();
 
@@ -179,7 +193,7 @@ public class ReqHandler {
                 }
 
                 // 인증확인 토큰이 리프레쉬 토크인 경우 토큰을 재 발행한다
-                var optTokenType = TokenType.getType(token.getClaim("tkt").asInt());
+                var optTokenType = TokenType.getType(token.getTokenType().getNumber());
                 if (optTokenType.isPresent() && optTokenType.get().equals(TokenType.REFRESH)) {
                     var resultIssueToken = jwtService.issueAccessToken(optUser.get());
                     if (resultIssueToken.getLeft().equals(ErrorIssueJWT.FAILED_TO_ISSUE)) {
@@ -240,7 +254,10 @@ public class ReqHandler {
 
         var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
         var tokenString = new String(bytesTokenString);
-        var resultDeserialize = jwtService.deserializeAccessToken(tokenString);
+        if (resHandler.resIsTokenExpired(session, connectedUser.get(), tokenString))
+            return;
+
+        var resultDeserialize = jwtService.verifyAccessToken(tokenString);
 
         switch (resultDeserialize.getLeft()) {
             case NONE:
@@ -251,12 +268,6 @@ public class ReqHandler {
                         return;
                     }
                 }
-                break;
-
-            case DISPOSED_TOKEN:
-                break;
-
-            case TOKEN_EXPIRED:
                 break;
 
             default:
@@ -348,22 +359,40 @@ public class ReqHandler {
         try {
             var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
             var tokenString = new String(bytesTokenString);
-            var resultDeserialize = jwtService.deserializeToken(tokenString);
+            var verifiedResult = jwtService.verifyToken(tokenString);
 
-            switch (resultDeserialize.getLeft()) {
+            switch (verifiedResult.getLeft()) {
                 case NONE:
-                    if (resultDeserialize.getRight().isEmpty()) {
+                    if (verifiedResult.getRight().isEmpty()) {
                         resHandler.resGetTokenUserInfo(session, ErrorGetTokenUserInfo.NOT_VALID_TOKEN);
                         return;
                     }
                     break;
 
                 case TOKEN_EXPIRED:
-                    resHandler.resDemandRefreshToken(session);
+                    if (verifiedResult.getRight().isEmpty()) {
+                        resHandler.resRefreshTokenExpired(session, "");
+                    } else {
+                        var token = verifiedResult.getRight().get();
+                        if (TokenType.REFRESH.equals(token.getTokenType())) {
+                            resHandler.resRefreshTokenExpired(session, token.getUserId());
+                        } else {
+                            resHandler.resDemandRefreshToken(session, token.getUserId());
+                        }
+                    }
                     return;
 
                 case DISPOSED_TOKEN:
-                    resHandler.resDemandRefreshToken(session);
+                    if (verifiedResult.getRight().isEmpty()) {
+                        resHandler.resRefreshTokenExpired(session, "");
+                    } else {
+                        var token = verifiedResult.getRight().get();
+                        if (TokenType.REFRESH.equals(token.getTokenType())) {
+                            resHandler.resRefreshTokenExpired(session, token.getUserId());
+                        } else {
+                            resHandler.resAccessTokenExpired(session, token.getUserId());
+                        }
+                    }
                     return;
 
                 default:
@@ -371,10 +400,9 @@ public class ReqHandler {
                     return;
             }
 
-            var token = resultDeserialize.getRight().get();
-            var id = token.getClaim("id");
+            var token = verifiedResult.getRight().get();
 
-            var optUser = userService.findUser(id.asString());
+            var optUser = userService.findUser(token.getUserId());
             if (optUser.isEmpty()) {
                 resHandler.resGetTokenUserInfo(session, ErrorGetTokenUserInfo.NOT_FOUND_USER);
                 return;

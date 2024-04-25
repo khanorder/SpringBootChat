@@ -6,7 +6,7 @@ import Image from "next/image";
 import CloseIcon from "public/images/close.svg";
 import stylesCommon from "@/styles/common.module.sass";
 import {
-    setIsActiveAddUser,
+    setIsActiveAddUser, setIsActiveChangeUser,
     setIsActiveChatImageInput,
     setIsActiveCreateChatRoom,
     setIsActiveProfileImageInput
@@ -50,6 +50,10 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
             case Defines.CenterDialogType.ADD_USER_CHAT_ROOM:
                 dispatch(setIsActiveAddUser(false));
                 break;
+
+            case Defines.CenterDialogType.CHANGE_USER:
+                dispatch(setIsActiveChangeUser(false));
+                break;
         }
 
     }, [type, dispatch]);
@@ -79,6 +83,12 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
             case Defines.CenterDialogType.ADD_USER_CHAT_ROOM:
                 title = "사용자 초대";
                 if (ui.isActiveAddUser)
+                    dialogWrapperClass += ` ${styles.active}`;
+                break;
+
+            case Defines.CenterDialogType.CHANGE_USER:
+                title = "계정변경";
+                if (ui.isActiveChangeUser)
                     dialogWrapperClass += ` ${styles.active}`;
                 break;
         }

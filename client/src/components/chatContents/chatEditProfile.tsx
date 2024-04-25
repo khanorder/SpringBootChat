@@ -11,12 +11,14 @@ import {Helpers} from "@/helpers";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 import {Defines} from "@/defines";
+import useCurrentUser from "@/components/common/useCurrentUser";
 const DialogProfileImageInput = dynamic(() => import("@/components/dialogs/dialogProfileImageInput"), { ssr: false });
 
 export default function ChatEditProfile() {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
+    const [currentUser] = useCurrentUser();
     const [newUserName, setNewUserName] = useState<string>('');
     const [newUserMessage, setNewUserMessage] = useState<string>('');
     const nameInputRef = createRef<HTMLInputElement>();
@@ -38,21 +40,19 @@ export default function ChatEditProfile() {
     const onSaveUserName = useCallback(() => {
         if (!newUserName.trim() || 2 > newUserName.trim().length) {
             alert('대화명은 2글자 이상으로 입력해주세요.');
-            dispatch(setUserName(user.name));
             return;
         }
 
         if (10 < newUserName.trim().length) {
             alert('대화명은 10글자 이하로 입력해 주세요.');
-            dispatch(setUserName(user.name));
             return;
         }
 
-        if (newUserName.trim() != user.name) {
+        if (newUserName.trim() != currentUser.userName) {
             dispatch(setUserName(newUserName.trim()))
             dispatch(saveUserNameReq());
         }
-    }, [dispatch, user, newUserName]);
+    }, [dispatch, currentUser, newUserName]);
 
     const onKeyUpUserName = useCallback((e: any) => {
         if (e.key == 'Enter')
@@ -66,15 +66,14 @@ export default function ChatEditProfile() {
     const onSaveUserMessage = useCallback(() => {
         if (128 < newUserMessage.trim().length) {
             alert('상태 메세지는 128글자 이내로 입력해 주세요.');
-            dispatch(setUserMessage(user.message.trim()));
             return;
         }
 
-        if (newUserMessage.trim() != user.message) {
+        if (newUserMessage.trim() != currentUser.message) {
             dispatch(setUserMessage(newUserMessage.trim()))
             dispatch(saveUserMessageReq());
         }
-    }, [dispatch, user, newUserMessage]);
+    }, [dispatch, currentUser, newUserMessage]);
 
     const onKeyUpUserMessage = useCallback((e: any) => {
         if (e.key == 'Enter')
@@ -132,12 +131,12 @@ export default function ChatEditProfile() {
 
     const userProfileImage = useCallback(() => {
         return (
-            <img className={styles.userThumbImage} src={user.profileImageUrl} alt='내 프로필'/>
+            <img className={styles.userThumbImage} src={currentUser.profileImageUrl} alt='내 프로필'/>
         );
-    }, [user]);
+    }, [currentUser]);
 
     const removeUserProfile = useCallback(() => {
-        if (!user.haveProfile || isEmpty(user.profileImageUrl)) {
+        if (!currentUser.haveProfile || isEmpty(currentUser.profileImageUrl)) {
             alert("프로필 이미지가 없습니다.");
             return;
         }
@@ -146,14 +145,14 @@ export default function ChatEditProfile() {
             return;
 
         dispatch(removeUserProfileReq());
-    }, [user, dispatch]);
+    }, [currentUser, dispatch]);
 
     const signOut = useCallback(() => {
         let confirmMessage = "로그아웃 하시겠습니까?";
 
         if (confirm(confirmMessage))
             dispatch(signOutReq());
-    }, [dispatch, user]);
+    }, [dispatch]);
 
     return (
         <div className={styles.editProfileWrapper}>
@@ -169,28 +168,28 @@ export default function ChatEditProfile() {
             </div>
             <div className={styles.userInfo}>
                 <div className={styles.userName}>
-                    <div className={styles.currentUserName}>{user.name}</div>
+                    <div className={styles.currentUserName}>{currentUser.userName}</div>
                     <div className={styles.userNameInputWrapper}>
                         <input className={styles.userNameInput} value={newUserName} ref={nameInputRef}
                                onKeyUp={e => onKeyUpUserName(e)}
                                onChange={e => onChangeUserName(e)}
                                onBlur={onSaveUserName}
                                onFocus={e => {
-                                   setNewUserName(user.name)
+                                   setNewUserName(currentUser.userName)
                                }}
                                placeholder={appConfigs.isProd ? '대화명' : ''}/>
                     </div>
                 </div>
                 <div className={styles.separator}></div>
                 <div className={styles.userMessage}>
-                    <div className={`${styles.currentUserMessage}${isEmpty(user.message) ? ` ${styles.none}` : ""}`}>{isEmpty(user.message) ? "내 상태를 공유해보세요." : user.message}</div>
+                    <div className={`${styles.currentUserMessage}${isEmpty(currentUser.message) ? ` ${styles.none}` : ""}`}>{isEmpty(currentUser.message) ? "내 상태를 공유해보세요." : currentUser.message}</div>
                     <div className={styles.userMessageInputWrapper}>
                         <input className={styles.userMessageInput} value={newUserMessage} ref={messageInputRef}
                                onKeyUp={e => onKeyUpUserMessage(e)}
                                onChange={e => onChangeUserMessage(e)}
                                onBlur={onSaveUserMessage}
                                onFocus={e => {
-                                   setNewUserMessage(user.message)
+                                   setNewUserMessage(currentUser.message)
                                }}
                                placeholder={appConfigs.isProd ? '상태 메세지' : ''}/>
                     </div>

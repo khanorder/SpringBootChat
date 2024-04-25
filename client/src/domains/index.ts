@@ -12,6 +12,18 @@ export namespace Domains {
     export const chatImageUrlPrefix: string = '/images/chat/';
     export const chatImageSmallUrlPrefix: string = '/images/chat/small/';
 
+    export interface UserInfo {
+        userId: string;
+        accessToken: string;
+        refreshToken: string;
+        accountType: Defines.AccountType;
+        userName: string;
+        message: string;
+        haveProfile: boolean;
+        latestActiveAt: number;
+        profileImageUrl: string;
+    }
+
     export interface AuthedJwtPayload extends JwtPayload {
         iss?: string;
         sub?: string;
@@ -23,10 +35,6 @@ export namespace Domains {
         id?: string;
         tkt?: Defines.TokenType;
         accountType?: Defines.AccountType;
-        haveProfile?: boolean;
-        latestActiveAt?: number;
-        name?: string;
-        message?: string;
     }
 
     export class ChatRoom {
@@ -291,6 +299,72 @@ export namespace Domains {
         static decode(bytes: Uint8Array) {
             try {
                 return new SignOutRes(bytes[0]);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class DemandRefreshTokenRes {
+        userId: string;
+
+        constructor(userId: string) {
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                if (16 !== bytes.byteLength)
+                    return new DemandRefreshTokenRes("");
+
+                const bytesUserId = bytes.slice(0, 16);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                return new DemandRefreshTokenRes(userId);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class AccessTokenExpiredRes {
+        userId: string;
+
+        constructor(userId: string) {
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                if (16 !== bytes.byteLength)
+                    return new AccessTokenExpiredRes("");
+
+                const bytesUserId = bytes.slice(0, 16);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                return new AccessTokenExpiredRes(userId);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class RefreshTokenExpiredRes {
+        userId: string;
+
+        constructor(userId: string) {
+            this.userId = userId;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                if (16 !== bytes.byteLength)
+                    return new RefreshTokenExpiredRes("");
+
+                const bytesUserId = bytes.slice(0, 16);
+                const userId = Helpers.getUUIDFromByteArray(bytesUserId);
+                return new RefreshTokenExpiredRes(userId);
             } catch (error) {
                 console.error(error);
                 return null;

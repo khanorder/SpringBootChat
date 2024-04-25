@@ -3,13 +3,15 @@ import {useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import styles from "@/styles/chatRoomUsers.module.sass";
 import {Domains} from "@/domains";
-import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
+import useOthersUserInfo from "@/components/common/useOthersUserInfo";
+import useCurrentUser from "@/components/common/useCurrentUser";
 
 export default function ChatRoomUsers() {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
-    const [getOthersUserInfo] = useGetOthersUserInfo();
+    const [currentUser] = useCurrentUser();
+    const [getOthersUserInfo] = useOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -25,10 +27,10 @@ export default function ChatRoomUsers() {
 
         return (
             <div className={styles.chatRoomUserProfileWrapper}>
-                <img className={styles.chatRoomUserProfile} src={isMine ? user.profileImageUrl : userInfo.profileImageUrl} title={isMine ? user.name : userInfo.userName} alt={isMine ? user.name : userInfo.userName} />
+                <img className={styles.chatRoomUserProfile} src={isMine ? currentUser.profileImageUrl : userInfo.profileImageUrl} title={isMine ? currentUser.userName : userInfo.userName} alt={isMine ? currentUser.userName : userInfo.userName} />
             </div>
         );
-    }, [getOthersUserInfo, user]);
+    }, [user, getOthersUserInfo, currentUser]);
 
     const userName = useCallback((userId: string) => {
         const isMine = user.id == userId;
@@ -36,11 +38,11 @@ export default function ChatRoomUsers() {
 
         return (
             <div className={styles.chatRoomUserInfo}>
-                <div className={styles.userName}>{isMine ? user.name : userInfo.userName}</div>
-                <div className={styles.userMessage}>{isMine ? user.message : userInfo.message}</div>
+                <div className={styles.userName}>{isMine ? currentUser.userName : userInfo.userName}</div>
+                <div className={styles.userMessage}>{isMine ? currentUser.message : userInfo.message}</div>
             </div>
         );
-    }, [getOthersUserInfo, user]);
+    }, [user, getOthersUserInfo, currentUser]);
 
     const list = useCallback(() => {
         if (!chat || isEmpty(chat.currentChatRoomId))
@@ -75,7 +77,7 @@ export default function ChatRoomUsers() {
                 {users}
             </ul>
         );
-    }, [chat, user]);
+    }, [chat, user, userProfile, userName]);
 
     return (
         <div className={styles.chatRoomUserListWrapper}>

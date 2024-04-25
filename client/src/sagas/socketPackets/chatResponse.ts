@@ -35,7 +35,7 @@ import {
     setLatestActiveUsers,
     signOut,
     signIn,
-    setToken, setRefreshToken, expireAccessToken, updateSignIn
+    expireAccessToken, updateSignIn, expireRefreshToken, setUserInfos
 } from '@/stores/reducers/user';
 import {call, put, select} from "redux-saga/effects";
 import {Defines} from "@/defines";
@@ -128,12 +128,12 @@ export function* checkAuthenticationRes(data: Uint8Array) {
 
         case Errors.CheckAuth.NOT_VALID_TOKEN:
             alert('인증 실패.');
-            yield put(setToken(""));
+            yield put(setUserId(""));
             break;
 
         case Errors.CheckAuth.AUTH_EXPIRED:
             alert('인증이 만료되었습니다.');
-            yield put(setToken(""));
+            yield put(setUserId(""));
             break;
 
         case Errors.CheckAuth.ALREADY_SIGN_IN_USER:
@@ -182,22 +182,52 @@ export function* signOutRes(data: Uint8Array) {
     return response;
 }
 
-export function* demandRefreshTokenRes() {
+export function* demandRefreshTokenRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`packet - demandRefreshTokenRes`);
 
-    yield put(setToken(""));
-    const userState: UserState = yield select((state: RootState) => state.user);
-    if (!isEmpty(userState.refreshToken))
-        yield call(callCheckAuthenticationReq);
+    const response = Domains.DemandRefreshTokenRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - demandRefreshTokenRes: response is null.`);
+        return null;
+    }
+
+    yield put(expireAccessToken(response.userId));
+    yield call(callCheckAuthenticationReq);
 }
 
-export function* tokenExpiredRes() {
+export function* accessTokenExpiredRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - tokenExpiredRes`);
+        console.log(`packet - accessTokenExpiredRes`);
+
+    const response = Domains.AccessTokenExpiredRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - accessTokenExpiredRes: response is null.`);
+        return null;
+    }
 
     alert("사용자 인증이 만료되었습니다.");
-    yield put(expireAccessToken());
+    yield put(expireAccessToken(response.userId));
+}
+
+export function* refreshTokenExpiredRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - refreshTokenExpiredRes`);
+
+    const response = Domains.RefreshTokenExpiredRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - refreshTokenExpiredRes: response is null.`);
+        return null;
+    }
+
+    alert("사용자 인증 갱신이 만료되었습니다.");
+    yield put(expireRefreshToken(response.userId));
 }
 
 export function* notificationRes(data: Uint8Array) {
@@ -407,7 +437,6 @@ export function* getTokenUserInfoRes(data: Uint8Array) {
                 const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
                 const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
                 const profileImage = response.haveProfile ? imagePath + `${response.userId}?${(new Date()).getTime()}` : "";
-
                 yield put(setUserName(response.userName));
                 yield put(setHaveProfile(response.haveProfile));
                 yield put(setProfileImageUrl(profileImage));
@@ -419,7 +448,7 @@ export function* getTokenUserInfoRes(data: Uint8Array) {
             break;
 
         default:
-            yield put(setToken(""));
+            yield put(setUserId(""));
             break;
     }
 

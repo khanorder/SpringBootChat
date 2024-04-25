@@ -3,6 +3,8 @@ import {Defines} from "@/defines";
 import {Domains} from "@/domains";
 import {jwtDecode} from "jwt-decode";
 import isEmpty from "lodash/isEmpty";
+import AccountType = Defines.AccountType;
+
 const base62 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
 const base64 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');
 
@@ -47,7 +49,7 @@ export namespace Helpers {
         const bytes = new Uint8Array(16);
 
         for (let i = 0; i < hex.length; i += 2)
-            bytes[i/2] = parseInt(hex.substring(i, i+2), 16);
+            bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
 
         return bytes;
     }
@@ -65,7 +67,7 @@ export namespace Helpers {
         const paddingBytes = new Uint8Array(8 - (hex.length / 2));
 
         for (let i = 0; i < hex.length; i += 2)
-            hexBytes[i/2] = parseInt(hex.substring(i, i+2), 16);
+            hexBytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
 
         const longBytes = new Uint8Array(8);
         longBytes.set(paddingBytes);
@@ -77,10 +79,10 @@ export namespace Helpers {
         if (8 != value.byteLength)
             return '0000000000000000';
 
-        let hex= '';
+        let hex = '';
 
         for (let i = 0; i < value.byteLength; i++) {
-            let hexByte= value[i].toString(16);
+            let hexByte = value[i].toString(16);
             hex += (2 == hexByte.length ? '' : '0') + hexByte;
         }
 
@@ -208,8 +210,8 @@ export namespace Helpers {
             let expires = "";
             if (exdays) {
                 const d = new Date();
-                d.setTime(d.getTime() + (exdays*24*60*60*1000));
-                expires = "expires="+ d.toUTCString();
+                d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                expires = "expires=" + d.toUTCString();
             }
 
             document.cookie = cname + "=" + cvalue + ";" + (expires ? expires + ";" : "") + "path=/";
@@ -222,14 +224,14 @@ export namespace Helpers {
         try {
             const d = new Date();
             d.setTime(d.getTime() + (30 * 60 * 1000));
-            let expires = "expires="+ d.toUTCString();
+            let expires = "expires=" + d.toUTCString();
             document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
         } catch (error) {
             console.error(error);
         }
     }
 
-    export function getCookie(cname?: string|null): string {
+    export function getCookie(cname?: string | null): string {
         if ('undefined' === typeof document)
             return '';
 
@@ -237,7 +239,7 @@ export namespace Helpers {
             let name = cname + "=";
             let decodedCookie = decodeURIComponent(document.cookie);
             let ca = decodedCookie.split(';');
-            for(let i = 0; i <ca.length; i++) {
+            for (let i = 0; i < ca.length; i++) {
                 let c = ca[i];
                 while (c.charAt(0) == ' ') {
                     c = c.substring(1);
@@ -302,7 +304,7 @@ export namespace Helpers {
             let reader = new FileReader();
             reader.onload = () => {
                 try {
-                    let { result } = reader;
+                    let {result} = reader;
                     const fileBytes = new Uint8Array('object' == typeof result ? result as ArrayBuffer : []);
                     const fileBuffer = Buffer.from(fileBytes.buffer, fileBytes.byteOffset, fileBytes.byteLength);
                     const base64 = fileBuffer.toString('base64');
@@ -339,7 +341,7 @@ export namespace Helpers {
             ia[i] = byteString.charCodeAt(i);
         }
 
-        return { blob: new Blob([ab], {type: mimeString}), mime: mimeString};
+        return {blob: new Blob([ab], {type: mimeString}), mime: mimeString};
     }
 
     export function getChatRoomOpenTypeName(openType: Defines.RoomOpenType) {
@@ -358,35 +360,312 @@ export namespace Helpers {
         }
     }
 
-    export function getUserFromToken(token: string): Domains.User|null {
-        try {
-            if (isEmpty(token))
-                return null;
+    export function replacer(key: any, value: any) {
+        if (value instanceof Map) {
+            return {
+                dataType: 'Map',
+                value: Array.from(value.entries()),
+            };
+        } else {
+            return value;
+        }
+    }
 
+    export function reviver(key: any, value: any) {
+        if (typeof value === 'object' && value !== null) {
+            if (value.dataType === 'Map') {
+                return new Map(value.value);
+            }
+        }
+        return value;
+    }
+
+    export function mapToObject<V>(map: Map<string, V>): {[p: string]: V} {
+        try {
+            return Object.fromEntries(map.entries());
+        } catch (error) {
+            console.error(error);
+            return {};
+        }
+    }
+
+    export function objectToMap<V>(object: {[p: string]: V}): Map<string, V> {
+        try {
+            return new Map(Object.entries(object));
+        } catch (error) {
+            console.error(error);
+            return new Map();
+        }
+    }
+
+    export function getAuthedJwt(token: string): Domains.AuthedJwtPayload | null {
+        try {
             const decodedJwt: Domains.AuthedJwtPayload = jwtDecode(token);
+
+            if ("undefined" === typeof decodedJwt.jti || isEmpty(decodedJwt.jti)) {
+                console.error(`Helpers - getAuthedJwt: JWT id is empty.`);
+                return null;
+            }
 
             const tokenType = "undefined" === typeof decodedJwt.tkt ? Defines.TokenType.NONE : decodedJwt.tkt;
             if (Defines.TokenType.NONE === tokenType) {
-                console.error(`packet - getUserFromToken: tokenType is empty.`);
+                console.error(`Helpers - getAuthedJwt: tokenType is empty.`);
                 return null;
             }
 
             const id = "undefined" === typeof decodedJwt.id ? "" : decodedJwt.id;
             if (isEmpty(id)) {
-                console.error(`packet - getUserFromToken: id is empty.`);
+                console.error(`Helpers - getAuthedJwt: userId is empty.`);
                 return null;
             }
 
             const accountType = "undefined" === typeof decodedJwt.accountType ? Defines.AccountType.NONE : decodedJwt.accountType;
             if (Defines.AccountType.NONE === accountType) {
-                console.error(`packet - getUserFromToken: accountType is empty.`);
+                console.error(`Helpers - getAuthedJwt: accountType is empty.`);
                 return null;
             }
 
-            return new Domains.User(id, accountType, "", "", false, 0);
+            return decodedJwt;
         } catch (error) {
             console.error(error);
             return null;
         }
+    }
+
+    export function getUserFromToken(token: string): Domains.User | null {
+        try {
+            if (isEmpty(token))
+                return null;
+
+            const decodedJwt = getAuthedJwt(token);
+            if (null === decodedJwt)
+                return null;
+
+            return new Domains.User(decodedJwt.id ?? "", decodedJwt.accountType ?? Defines.AccountType.NONE, "", "", false, 0);
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+
+    export function mergeUserIdCookie(userId: string) {
+        setCookie("userId", userId, 365);
+    }
+
+    export function getUserIdCookie() {
+        return getCookie("userId");
+    }
+
+    export function mergeUserInfoCookie(userInfo: Domains.UserInfo): Map<string, Domains.UserInfo> {
+        let result = new Map<string, Domains.UserInfo>();
+
+        try {
+            if ("undefined" === typeof userInfo.userId || isEmpty(userInfo.userId)) {
+                console.log(`Helpers - mergeUserInfoCookie: userId is required to set token user info.`);
+                return result;
+            }
+
+            if ("undefined" !== typeof userInfo.accessToken && !isEmpty(userInfo.accessToken)) {
+                if ("undefined" === typeof userInfo.refreshToken || isEmpty(userInfo.refreshToken)) {
+                    console.log(`Helpers - mergeUserInfoCookie: refreshToken is required to generate token user info.`);
+                    return result;
+                }
+
+                const accessToken = getAuthedJwt(userInfo.accessToken);
+                if (!accessToken) {
+                    console.log(`Helpers - mergeUserInfoCookie: accessToken is null.`);
+                    return result;
+                }
+
+                if (Defines.TokenType.ACCESS !== accessToken?.tkt) {
+                    console.log(`Helpers - mergeUserInfoCookie: accessToken is not suitable.`);
+                    return result;
+                }
+
+                if ("undefined" !== typeof userInfo.refreshToken && !isEmpty(userInfo.refreshToken)) {
+                    const refreshToken = getAuthedJwt(userInfo.refreshToken);
+                    if (!refreshToken) {
+                        console.log(`Helpers - mergeUserInfoCookie: refreshToken is null.`);
+                        return result;
+                    }
+
+                    if (Defines.TokenType.REFRESH !== refreshToken?.tkt) {
+                        console.log(`Helpers - mergeUserInfoCookie: refreshToken is not suitable.`);
+                        return result;
+                    }
+                }
+            }
+
+            result = getUserInfosCookie() as Map<string, Domains.UserInfo>;
+            console.log(`Helpers - mergeUserInfoCookie: ${JSON.stringify(result, replacer)}`);
+            if ("undefined" === typeof userInfo.accessToken || isEmpty(userInfo.accessToken) || "undefined" === typeof userInfo.refreshToken || isEmpty(userInfo.refreshToken)) {
+                console.log(`Helpers - mergeUserInfoCookie: both tokens are required to generate token user info.`);
+                return result;
+            }
+
+            result.set(userInfo.userId, userInfo);
+            setUserInfosCookie(result);
+        } catch (error: any) {
+            console.error(`Helpers - mergeUserInfoCookie: ${error.message}`);
+        }
+
+        return result;
+    }
+
+    export function expireAccessTokenCookie(id: string): Map<string, Domains.UserInfo>|null {
+        const result = getUserInfosCookie() as Map<string, Domains.UserInfo>;
+        const userInfo = result.get(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.accessToken = "";
+        result.set(userInfo.userId, userInfo);
+        setUserInfosCookie(result);
+        return result;
+    }
+
+    export function expireRefreshTokenCookie(id: string): Map<string, Domains.UserInfo>|null {
+        const result = getUserInfosCookie() as Map<string, Domains.UserInfo>;
+        const userInfo = result.get(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.accessToken = "";
+        userInfo.refreshToken = "";
+        result.set(userInfo.userId, userInfo);
+        setUserInfosCookie(result);
+        return result;
+    }
+
+    export function setUserAccountTypeCookie(id: string, accountType: Defines.AccountType): Map<string, Domains.UserInfo>|null {
+        const userInfo = getUserInfoCookie(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.accountType = accountType;
+        return mergeUserInfoCookie(userInfo);
+    }
+
+    export function setUserNameCookie(id: string, name: string): Map<string, Domains.UserInfo>|null {
+        const userInfo = getUserInfoCookie(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.userName = name;
+        return mergeUserInfoCookie(userInfo);
+    }
+
+    export function setUserMessageCookie(id: string, message: string): Map<string, Domains.UserInfo>|null {
+        const userInfo = getUserInfoCookie(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.message = message;
+        return mergeUserInfoCookie(userInfo);
+    }
+
+    export function setUserHaveProfileCookie(id: string, haveProfile: boolean): Map<string, Domains.UserInfo>|null {
+        const userInfo = getUserInfoCookie(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.haveProfile = haveProfile
+        if (!haveProfile)
+            userInfo.profileImageUrl = Domains.defaultProfileImageUrl;
+        return mergeUserInfoCookie(userInfo);
+    }
+
+    export function setUserLatestActiveAtCookie(id: string, latestActiveAt: number): Map<string, Domains.UserInfo>|null {
+        const userInfo = getUserInfoCookie(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.latestActiveAt = latestActiveAt;
+        return mergeUserInfoCookie(userInfo);
+    }
+
+    export function setUserProfileImageCookie(id: string, profileImage: string): Map<string, Domains.UserInfo>|null {
+        const userInfo = getUserInfoCookie(id);
+        if (!userInfo)
+            return null;
+
+        userInfo.haveProfile = !isEmpty(profileImage);
+        userInfo.profileImageUrl = isEmpty(profileImage) ? Domains.defaultProfileImageUrl : profileImage;
+        return mergeUserInfoCookie(userInfo);
+    }
+
+    export function setUserInfosCookie(userInfos: Map<string, Domains.UserInfo>) {
+        try {
+            const userInfosString = JSON.stringify(userInfos, replacer);
+            setCookie("userInfos", userInfosString, 365);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    export function getUserInfosCookie(): Map<string, Domains.UserInfo> {
+        let result = new Map<string, Domains.UserInfo>();
+        try {
+            const userInfosString = getCookie("userInfos");
+            if (isEmpty(userInfosString))
+                return result;
+
+            result = JSON.parse(userInfosString, reviver);
+        } catch (error) {
+            console.error(error);
+        }
+        return result;
+    }
+
+    export function getUserInfoCookie(id: string): Domains.UserInfo|null {
+        const userInfos = getUserInfosCookie();
+        let result: Domains.UserInfo|null = null;
+        try {
+            result = userInfos.get(id) ?? null;
+        } catch (error) {
+            console.error(error);
+        }
+        return result;
+    }
+
+    export function getUserInfo(id: string, userInfos: {[p: string]: Domains.UserInfo}): Domains.UserInfo {
+        const empty: Domains.UserInfo = {
+            userId: "",
+            accessToken: "",
+            refreshToken: "",
+            accountType: Defines.AccountType.NONE,
+            userName: "",
+            message: "",
+            haveProfile: false,
+            latestActiveAt: 0,
+            profileImageUrl: ""
+        };
+
+        if (!userInfos)
+            return empty;
+
+        try {
+            const userInfosMap = objectToMap(userInfos);
+            let userInfo: Domains.UserInfo|undefined|null = null;
+            if ("undefined" !== id && !isEmpty(id))
+                userInfo = userInfosMap.get(id);
+
+            if (userInfo && !isEmpty(userInfo.userId) && !isEmpty(userInfo.userName) && !isEmpty(userInfo.refreshToken))
+                return userInfo;
+
+            if (0 < userInfosMap.size) {
+                const userInfosIterator = userInfosMap.entries();
+                while (!userInfosIterator.next().done) {
+                    const [userId, userInfo] = userInfosIterator.next().value;
+                    if (!isEmpty(userInfo.userId) && !isEmpty(userInfo.userName) && !isEmpty(userInfo.refreshToken))
+                        return userInfo;
+                }
+            }
+
+            return userInfo ?? empty;
+        } catch (error) {
+            console.error(error);
+        }
+        return empty;
     }
 }

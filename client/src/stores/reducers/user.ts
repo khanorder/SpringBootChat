@@ -4,19 +4,11 @@ import {Defines} from "@/defines";
 import {Domains} from "@/domains";
 import deepmerge from "deepmerge";
 import AuthStateType = Defines.AuthStateType;
-import defaultProfileImageUrl = Domains.defaultProfileImageUrl;
 import {Helpers} from "@/helpers";
 
 interface UserState {
-    token: string;
-    refreshToken: string;
+    userInfos: {[p: string]: Domains.UserInfo};
     id: string;
-    accountType: Defines.AccountType;
-    name: string;
-    message: string;
-    haveProfile: boolean;
-    latestActive: number;
-    profileImageUrl: string;
     authState: Defines.AuthStateType;
     others: Domains.User[];
     latestActiveUsers: Domains.User[];
@@ -26,15 +18,8 @@ interface UserState {
 }
 
 const initialState: UserState = {
-    token: "",
-    refreshToken: "",
+    userInfos: {},
     id: "",
-    accountType: Defines.AccountType.NONE,
-    name: "",
-    message: "",
-    haveProfile: false,
-    latestActive: 0,
-    profileImageUrl: defaultProfileImageUrl,
     authState: AuthStateType.NONE,
     others: [],
     latestActiveUsers: [],
@@ -47,19 +32,18 @@ const userSlice = createSlice({
     name: 'User',
     initialState,
     reducers: {
-        setToken: (state, action: PayloadAction<string>) => {
+        setUserInfo: (state, action: PayloadAction<Domains.UserInfo>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setToken: ${action.payload}`);
+                console.log(`reducer - setUserInfo: ${JSON.stringify(action.payload)}`);
 
-            state.token = action.payload;
-            Helpers.setCookie("token", action.payload, 3650);
+            state.userInfos = Helpers.mapToObject(Helpers.mergeUserInfoCookie(action.payload));
         },
-        setRefreshToken: (state, action: PayloadAction<string>) => {
+        setUserInfos: (state, action: PayloadAction<Map<string, Domains.UserInfo>>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setRefreshToken: ${action.payload}`);
+                console.log(`reducer - setUserInfos: ${JSON.stringify(action.payload, Helpers.replacer)}`);
 
-            state.refreshToken = action.payload;
-            Helpers.setCookie("rtk", action.payload, 365);
+            state.userInfos = Helpers.mapToObject(action.payload);
+            Helpers.setUserInfosCookie(action.payload);
         },
         signIn: (state, action: PayloadAction<Domains.SignInProps>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -71,21 +55,23 @@ const userSlice = createSlice({
                 return;
             }
 
-            Helpers.setCookie("token", action.payload.token, 3650);
-            if (!isEmpty(action.payload.refreshToken)) {
-                Helpers.setCookie("rtk", action.payload.refreshToken, 365);
-                state.refreshToken = action.payload.refreshToken;
-            }
+            const userTokenInfo: Domains.UserInfo = {
+                userId: action.payload.user.userId,
+                accessToken: action.payload.token,
+                refreshToken: action.payload.refreshToken,
+                accountType: action.payload.user.accountType,
+                userName: action.payload.user.userName,
+                message: action.payload.user.message,
+                haveProfile: action.payload.user.haveProfile,
+                latestActiveAt: action.payload.user.latestActive,
+                profileImageUrl: Domains.defaultProfileImageUrl
+            };
 
-            state.token = action.payload.token;
+            const userInfos = Helpers.mergeUserInfoCookie(userTokenInfo);
+            state.userInfos = Helpers.mapToObject(userInfos);
             state.authState = Defines.AuthStateType.SIGN_IN;
             state.id = action.payload.user.userId;
-            state.accountType = action.payload.user.accountType;
-            state.name = action.payload.user.userName;
-            state.message = action.payload.user.message;
-            state.haveProfile = action.payload.user.haveProfile;
-            state.latestActive = action.payload.user.latestActive;
-            state.profileImageUrl = defaultProfileImageUrl;
+            Helpers.mergeUserIdCookie(action.payload.user.userId);
             state.others = [];
             state.latestActiveUsers = [];
             state.connectedUsers = [];
@@ -94,7 +80,7 @@ const userSlice = createSlice({
         },
         updateSignIn: (state, action: PayloadAction<Domains.SignInProps>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - updateSignIn: ${action.payload}`);
+                console.log(`reducer - updateSignIn: ${JSON.stringify(action.payload)}`);
 
             if (isEmpty(action.payload.token)) {
                 if ('production' !== process.env.NODE_ENV)
@@ -102,21 +88,22 @@ const userSlice = createSlice({
                 return;
             }
 
-            Helpers.setCookie("token", action.payload.token, 3650);
-            if (!isEmpty(action.payload.refreshToken)) {
-                Helpers.setCookie("rtk", action.payload.refreshToken, 365);
-                state.refreshToken = action.payload.refreshToken;
-            }
-
-            state.token = action.payload.token;
+            const userTokenInfo: Domains.UserInfo = {
+                userId: action.payload.user.userId,
+                accessToken: action.payload.token,
+                refreshToken: action.payload.refreshToken,
+                accountType: action.payload.user.accountType,
+                userName: action.payload.user.userName,
+                message: action.payload.user.message,
+                haveProfile: action.payload.user.haveProfile,
+                latestActiveAt: action.payload.user.latestActive,
+                profileImageUrl: Domains.defaultProfileImageUrl
+            };
+            const userInfos = Helpers.mergeUserInfoCookie(userTokenInfo);
+            state.userInfos = Helpers.mapToObject(userInfos);
             state.authState = Defines.AuthStateType.SIGN_IN;
             state.id = action.payload.user.userId;
-            state.accountType = action.payload.user.accountType;
-            state.name = action.payload.user.userName;
-            state.message = action.payload.user.message;
-            state.haveProfile = action.payload.user.haveProfile;
-            state.latestActive = action.payload.user.latestActive;
-            state.profileImageUrl = defaultProfileImageUrl;
+            Helpers.mergeUserIdCookie(action.payload.user.userId);
             state.latestActiveUsers = [];
             state.connectedUsers = [];
             state.follows = [];
@@ -126,34 +113,47 @@ const userSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - signOut`);
 
-            state.token = "";
+            if (!isEmpty(state.id)) {
+                const userInfos = Helpers.expireAccessTokenCookie(state.id);
+                if (null != userInfos)
+                    state.userInfos = Helpers.mapToObject(userInfos);
+            }
             state.authState = Defines.AuthStateType.NONE;
-            state.id = "";
-            state.accountType = Defines.AccountType.NONE;
-            state.name = "";
-            state.message = "";
-            state.haveProfile = false;
-            state.latestActive = 0;
-            state.profileImageUrl = defaultProfileImageUrl;
             state.others = [];
             state.latestActiveUsers = [];
             state.connectedUsers = [];
             state.follows = [];
             state.followers = [];
         },
-        expireAccessToken: (state) => {
+        expireAccessToken: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - expireAccessToken`);
 
-            state.token = "";
             state.authState = Defines.AuthStateType.NONE;
-            state.id = "";
-            state.accountType = Defines.AccountType.NONE;
-            state.name = "";
-            state.message = "";
-            state.haveProfile = false;
-            state.latestActive = 0;
-            state.profileImageUrl = defaultProfileImageUrl;
+            const userId = isEmpty(action.payload) ? state.id : action.payload;
+
+            if (!isEmpty(userId)) {
+                const userInfos = Helpers.expireAccessTokenCookie(userId);
+                if (null != userInfos)
+                    state.userInfos = Helpers.mapToObject(userInfos);
+            }
+            state.latestActiveUsers = [];
+            state.connectedUsers = [];
+            state.follows = [];
+            state.followers = [];
+        },
+        expireRefreshToken: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - expireRefreshToken`);
+
+            state.authState = Defines.AuthStateType.NONE;
+            const userId = isEmpty(action.payload) ? state.id : action.payload;
+
+            if (!isEmpty(userId)) {
+                const userInfos = Helpers.expireRefreshTokenCookie(userId);
+                if (null != userInfos)
+                    state.userInfos = Helpers.mapToObject(userInfos);
+            }
             state.latestActiveUsers = [];
             state.connectedUsers = [];
             state.follows = [];
@@ -164,55 +164,95 @@ const userSlice = createSlice({
                 console.log(`reducer - setUserId: ${action.payload}`);
 
             state.id = isEmpty(action.payload) ? '' : action.payload;
+            Helpers.mergeUserIdCookie(state.id);
         },
         setUserAccountType: (state, action: PayloadAction<Defines.AccountType>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setUserAccountType: ${action.payload}`);
 
-            state.accountType = action.payload;
+            if (isEmpty(state.id)) {
+                alert(`선택된 사용자가 없습니다.`);
+                return;
+            }
+
+            const userInfos = Helpers.setUserAccountTypeCookie(state.id, action.payload);
+            if (null != userInfos)
+                state.userInfos = Helpers.mapToObject(userInfos);
         },
         setUserName: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setUserName: ${action.payload}`);
 
-            if (action.payload && 10 < action.payload.trim().length) {
-                alert(`대화명은 10글자 이내로 입력해주세요.`);
-                state.name = state.name.trim();
+            if (isEmpty(state.id)) {
+                alert(`선택된 사용자가 없습니다.`);
                 return;
             }
 
-            state.name = isEmpty(action.payload) ? '' : action.payload;
+            if (action.payload && 10 < action.payload.trim().length) {
+                alert(`대화명은 10글자 이내로 입력해주세요.`);
+                return;
+            }
+
+            const userInfos = Helpers.setUserNameCookie(state.id, action.payload.trim());
+            if (null != userInfos)
+                state.userInfos = Helpers.mapToObject(userInfos);
         },
         setUserMessage: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setUserMessage: ${action.payload}`);
 
-            if (action.payload && 128 < action.payload.trim().length) {
-                alert(`상태 메시지는 128글자 이내로 입력해주세요.`);
-                state.message = state.message.trim();
+            if (isEmpty(state.id)) {
+                alert(`선택된 사용자가 없습니다.`);
                 return;
             }
 
-            state.message = isEmpty(action.payload) ? '' : action.payload;
+            if (action.payload && 128 < action.payload.trim().length) {
+                alert(`상태 메시지는 128글자 이내로 입력해주세요.`);
+                return;
+            }
+
+            const userInfos = Helpers.setUserMessageCookie(state.id, action.payload.trim());
+            if (null != userInfos)
+                state.userInfos = Helpers.mapToObject(userInfos);
         },
         setHaveProfile: (state, action: PayloadAction<boolean>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setHaveProfile: ${action.payload}`);
 
-            state.haveProfile = action.payload ?? false;
+            if (isEmpty(state.id)) {
+                alert(`선택된 사용자가 없습니다.`);
+                return;
+            }
+
+            const userInfos = Helpers.setUserHaveProfileCookie(state.id, action.payload ?? false);
+            if (null != userInfos)
+                state.userInfos = Helpers.mapToObject(userInfos);
         },
         setLatestActive: (state, action: PayloadAction<number>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setLatestActive: ${action.payload}`);
 
-            state.latestActive = 0 > action.payload ? 0 : action.payload;
+            if (isEmpty(state.id)) {
+                alert(`선택된 사용자가 없습니다.`);
+                return;
+            }
+
+            const userInfos = Helpers.setUserLatestActiveAtCookie(state.id, 0 > action.payload ? 0 : action.payload);
+            if (null != userInfos)
+                state.userInfos = Helpers.mapToObject(userInfos);
         },
         setProfileImageUrl: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setHaveProfile: ${action.payload}`);
+                console.log(`reducer - setProfileImageUrl: ${action.payload}`);
 
-            state.haveProfile = !isEmpty(action.payload);
-            state.profileImageUrl = isEmpty(action.payload) ? defaultProfileImageUrl : action.payload;
+            if (isEmpty(state.id)) {
+                alert(`선택된 사용자가 없습니다.`);
+                return;
+            }
+
+            const userInfos = Helpers.setUserProfileImageCookie(state.id, action.payload);
+            if (null != userInfos)
+                state.userInfos = Helpers.mapToObject(userInfos);
         },
         setAuthState: (state, action: PayloadAction<Defines.AuthStateType>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -224,7 +264,6 @@ const userSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setOthers: ${JSON.stringify(action.payload)}`);
 
-
             state.others = action.payload.filter(_ => _.userId != state.id);
             localStorage.setItem("others", JSON.stringify((state.others)));
         },
@@ -232,14 +271,17 @@ const userSlice = createSlice({
             let others: Domains.User[] = [];
             const othersJson = localStorage.getItem("others");
             try {
-                if (null != othersJson && !isEmpty(othersJson))
+                if (null != othersJson && !isEmpty(othersJson)) {
                     others = JSON.parse(othersJson);
+                    for (let i = 0; i < others.length; i++)
+                        others[i].online = false;
+                }
             } catch (error) {
-                console.error()
+                console.error(error);
             }
 
-            if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - loadOthers: ${JSON.stringify(others)}`);
+            // if ('production' !== process.env.NODE_ENV)
+            //     console.log(`reducer - loadOthers: ${JSON.stringify(others)}`);
 
             state.others = others.filter(_ => _.userId != state.id);
         },
@@ -285,6 +327,14 @@ const userSlice = createSlice({
                 console.log(`reducer - setConnectedUsers: ${JSON.stringify(action.payload)}`);
 
             state.connectedUsers = action.payload.filter(_ => _.userId != state.id);
+            for (let i = 0; i < state.connectedUsers.length; i++) {
+                if (1 > state.others.length)
+                    return;
+
+                const other = state.others.find(_ => _.userId == state.connectedUsers[i].userId);
+                if (null != other)
+                    other.online = true;
+            }
         },
         addConnectedUser: (state, action: PayloadAction<Domains.User>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -307,6 +357,7 @@ const userSlice = createSlice({
                 other.online = true;
                 state.others = deepmerge([], state.others);
             }
+            localStorage.setItem("others", JSON.stringify((state.others)));
         },
         removeConnectedUser: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -326,6 +377,7 @@ const userSlice = createSlice({
                 other.online = false;
                 state.others = deepmerge([], state.others);
             }
+            localStorage.setItem("others", JSON.stringify((state.others)));
         },
         setFollows: (state, action: PayloadAction<Domains.User[]>) => {
             if ('production' !== process.env.NODE_ENV)
@@ -442,7 +494,7 @@ const userSlice = createSlice({
                     if (null != other) {
                         if (isEmpty(action.payload.userData)) {
                             other.haveProfile = false;
-                            other.profileImageUrl = defaultProfileImageUrl;
+                            other.profileImageUrl = Domains.defaultProfileImageUrl;
                         } else {
                             other.haveProfile = true;
                             other.profileImageUrl = action.payload.userData;
@@ -451,6 +503,8 @@ const userSlice = createSlice({
                     }
                     break;
             }
+
+            localStorage.setItem("others", JSON.stringify((state.others)));
         },
     }
 });
@@ -463,12 +517,14 @@ export interface UpdateUsersDataProps {
 
 export type { UserState };
 export const {
-    setToken,
-    setRefreshToken,
+    // setToken,
+    // setRefreshToken,
+    setUserInfos,
     signIn,
     updateSignIn,
     signOut,
     expireAccessToken,
+    expireRefreshToken,
     setUserId,
     setUserAccountType,
     setUserName,

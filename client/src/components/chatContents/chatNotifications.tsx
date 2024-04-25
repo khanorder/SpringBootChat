@@ -8,7 +8,7 @@ import CloseIcon from "public/images/close.svg";
 import {Domains} from "@/domains";
 import {dayjs} from "@/helpers/localizedDayjs";
 import {checkNotificationReq, enterChatRoomReq, removeNotificationReq} from "@/stores/reducers/webSocket";
-import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
+import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import {useRouter} from "next/router";
 import {Helpers} from "@/helpers";
 import {setIsActiveNotification} from "@/stores/reducers/ui";
@@ -18,7 +18,7 @@ export default function ChatNotifications() {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const notificationState = useAppSelector(state => state.notification);
     const dispatch = useAppDispatch();
-    const [getOthersUserInfo] = useGetOthersUserInfo();
+    const [getOthersUserInfo] = useOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -101,7 +101,7 @@ export default function ChatNotifications() {
         }
 
         return list;
-    }, [getOthersUserInfo, notificationState, appConfigs, checkNotification]);
+    }, [notificationState, getOthersUserInfo, checkNotification, removeNotification]);
 
     return (
             <div className={styles.chatNotificationsWrapper}>

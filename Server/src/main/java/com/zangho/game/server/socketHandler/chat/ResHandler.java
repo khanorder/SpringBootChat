@@ -108,10 +108,16 @@ public class ResHandler {
         }
     }
 
-    public void resDemandRefreshToken(WebSocketSession session) {
+    public void resDemandRefreshToken(WebSocketSession session, String userId) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_DEMAND_REFRESH_TOKEN);
-            sessionHandler.sendOneSession(session, packetFlag);
+            var bytesUserId = new byte[0];
+            if (!userId.isEmpty())
+                bytesUserId = Helpers.getByteArrayFromUUID(userId);
+
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId);
+
+            sessionHandler.sendOneSession(session, resPacket);
             sessionHandler.consoleLogPackets(packetFlag, ResType.RES_DEMAND_REFRESH_TOKEN.name());
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -120,32 +126,60 @@ public class ResHandler {
 
     public boolean resIsTokenExpired(WebSocketSession session, User user, String tokenString) {
         try {
-            var packetFlag = Helpers.getPacketFlag(ResType.RES_TOKEN_EXPIRED);
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_ACCESS_TOKEN_EXPIRED);
+            var bytesUserId = new byte[0];
+            if (!user.getId().isEmpty())
+                bytesUserId = Helpers.getByteArrayFromUUID(user.getId());
 
-            var resultDeserialize = jwtService.deserializeToken(tokenString);
-            switch (resultDeserialize.getLeft()) {
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId);
+            var verifiedResult = jwtService.verifyToken(tokenString);
+            switch (verifiedResult.getLeft()) {
                 case NONE:
                     return false;
 
-                case TOKEN_EXPIRED:
+                case TOKEN_EXPIRED, DISPOSED_TOKEN:
                     userService.removeConnectedUser(user);
                     noticeDisconnectedUser(session, user);
-                    sessionHandler.sendOneSession(session, packetFlag);
-                    return true;
-
-                case DISPOSED_TOKEN:
-                    userService.removeConnectedUser(user);
-                    noticeDisconnectedUser(session, user);
-                    sessionHandler.sendOneSession(session, packetFlag);
+                    sessionHandler.sendOneSession(session, resPacket);
                     return true;
 
                 default:
-                    sessionHandler.sendOneSession(session, packetFlag);
+                    sessionHandler.sendOneSession(session, resPacket);
                     return true;
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             return true;
+        }
+    }
+
+    public void resAccessTokenExpired(WebSocketSession session, String userId) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_ACCESS_TOKEN_EXPIRED);
+            var bytesUserId = new byte[0];
+            if (!userId.isEmpty())
+                bytesUserId = Helpers.getByteArrayFromUUID(userId);
+
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId);
+
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void resRefreshTokenExpired(WebSocketSession session, String userId) {
+        try {
+            var packetFlag = Helpers.getPacketFlag(ResType.RES_REFRESH_TOKEN_EXPIRED);
+            var bytesUserId = new byte[0];
+            if (!userId.isEmpty())
+                bytesUserId = Helpers.getByteArrayFromUUID(userId);
+
+            var resPacket = Helpers.mergeBytePacket(packetFlag, bytesUserId);
+
+            sessionHandler.sendOneSession(session, resPacket);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
         }
     }
 

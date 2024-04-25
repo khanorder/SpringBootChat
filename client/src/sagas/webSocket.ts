@@ -76,7 +76,12 @@ import {
     openPreparedChatRoomRes,
     latestActiveUsersRes,
     notificationsStartChatRes,
-    notificationsFollowerRes, signOutRes, getTokenUserInfoRes, demandRefreshTokenRes, tokenExpiredRes
+    notificationsFollowerRes,
+    signOutRes,
+    getTokenUserInfoRes,
+    demandRefreshTokenRes,
+    accessTokenExpiredRes,
+    refreshTokenExpiredRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -220,9 +225,7 @@ function* onOpen (socket: WebSocket) {
                 try {
                     const event: Event = yield take(channel);
                     yield call(setConnectionState, WebSocket.OPEN);
-                    const token = Helpers.getCookie("token");
-                    if (!isEmpty(token))
-                        yield call(callCheckAuthenticationOnOpenReq, socket);
+                    yield call(callCheckAuthenticationOnOpenReq, socket);
 
                     if ('production' !== process.env.NODE_ENV)
                         console.log("connection opened.");
@@ -319,11 +322,15 @@ function* onMessage (socket: WebSocket) {
                             break;
 
                         case Defines.ResType.RES_DEMAND_REFRESH_TOKEN:
-                            yield call(demandRefreshTokenRes);
+                            yield call(demandRefreshTokenRes, packetData);
                             break;
 
-                        case Defines.ResType.RES_TOKEN_EXPIRED:
-                            yield call(tokenExpiredRes);
+                        case Defines.ResType.RES_ACCESS_TOKEN_EXPIRED:
+                            yield call(accessTokenExpiredRes, packetData);
+                            break;
+
+                        case Defines.ResType.RES_REFRESH_TOKEN_EXPIRED:
+                            yield call(refreshTokenExpiredRes, packetData);
                             break;
 
                         case Defines.ResType.RES_NOTIFICATION:

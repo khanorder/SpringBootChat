@@ -54,10 +54,6 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
             alert('연결 안됨');
         } else if (isEmpty(roomId)) {
             alert('채팅방 정보 없음');
-        } else if (isEmpty(user.name)) {
-            alert('대화명을 입력해 주세요.');
-        } else if (10 < user.name.length) {
-            alert('대화명은 10글자 이내로 입력해주세요.');
         } else {
             dispatch(enterChatRoomReq(roomId));
         }

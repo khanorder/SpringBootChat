@@ -1,8 +1,9 @@
 import styles from "@/styles/chatUserProfile.module.sass";
 import {useCallback, useEffect, useRef} from "react";
 import {useAppSelector} from "@/hooks";
-import useGetOthersUserInfo from "@/components/common/useGetOthersUserInfo";
+import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import {dayjs} from "@/helpers/localizedDayjs";
+import useCurrentUser from "@/components/common/useCurrentUser";
 
 export interface ChatUserProfileProps {
     userId: string;
@@ -11,7 +12,8 @@ export interface ChatUserProfileProps {
 export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
     const firstRender = useRef(true);
     const user = useAppSelector(state => state.user);
-    const [getOthersUserInfo] = useGetOthersUserInfo();
+    const [currentUser] = useCurrentUser();
+    const [getOthersUserInfo] = useOthersUserInfo();
 
     //#region OnRender
     useEffect(() => {
@@ -47,11 +49,11 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
 
         return (
             <div className={styles.userInfo}>
-                <div className={styles.userName}>{isMine ? user.name : userInfo.userName}</div>
-                <div className={styles.userMessage}>{isMine ? user.message : userInfo.message}</div>
+                <div className={styles.userName}>{isMine ? currentUser.userName : userInfo.userName}</div>
+                <div className={styles.userMessage}>{isMine ? currentUser.message : userInfo.message}</div>
             </div>
         );
-    }, [userId, getOthersUserInfo, user]);
+    }, [user, userId, getOthersUserInfo, currentUser]);
 
     const latestActive = useCallback(() => {
         const userInfo = getOthersUserInfo(userId);

@@ -1,6 +1,6 @@
 import {call, put, select} from "redux-saga/effects";
 import {RootState} from "@/stores/reducers";
-import {setRefreshToken, setToken, UserState} from "@/stores/reducers/user";
+import {expireAccessToken, expireRefreshToken, setUserId, UserState} from "@/stores/reducers/user";
 import {WebSocketState} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
 import {Helpers} from "@/helpers";
@@ -9,7 +9,6 @@ import {Domains} from "@/domains";
 import isEmpty from "lodash/isEmpty";
 import {AppConfigsState} from "@/stores/reducers/appConfigs";
 import {ChatState} from "@/stores/reducers/chat";
-import AuthStateType = Defines.AuthStateType;
 
 export function* callCheckConnectionReq(socket: WebSocket) {
     if ('production' !== process.env.NODE_ENV)
@@ -50,19 +49,22 @@ export function* callCheckAuthenticationReq() {
         return;
     }
 
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
+
     try {
         const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
-        let token = Helpers.getCookie("token");
+
+        let token = userInfo.accessToken;
         if (isEmpty(token))
-            token = Helpers.getCookie("rtk");
+            token = userInfo.refreshToken;
 
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callCheckAuthenticationReq: ${isEmpty(token) ? 'token is empty.' : token}`);
 
         if (isEmpty(token)) {
             alert("인증정보가 없습니다.");
-            yield put(setToken(""));
-            yield put(setRefreshToken(""));
+            yield put(expireRefreshToken(""));
             return;
         }
         const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
@@ -83,21 +85,21 @@ export function* callCheckAuthenticationOnOpenReq(socket?: WebSocket) {
         return;
     }
 
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
+    if (isEmpty(userState.id) && !isEmpty(userInfo.userId))
+        yield put(setUserId(userInfo.userId));
+
     try {
         const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_AUTHENTICATION]);
-        let token = Helpers.getCookie("token");
-        if (isEmpty(token))
-            token = Helpers.getCookie("rtk");
+        let token = userInfo.accessToken;
 
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callCheckAuthenticationOnOpenReq: ${isEmpty(token) ? 'token is empty.' : token}`);
 
-        if (isEmpty(token)) {
-            alert("인증정보가 없습니다.");
-            yield put(setToken(""));
-            yield put(setRefreshToken(""));
+        if (isEmpty(token))
             return;
-        }
+
         const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
         const reqPacket = Helpers.mergeBytesPacket([flag, bytesToken]);
         socket.send(reqPacket);
@@ -139,24 +141,22 @@ export function* callSignOutReq() {
     }
 
     const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
 
-    if (AuthStateType.SIGN_IN != userState.authState || isEmpty(userState.id)) {
+    if (Defines.AuthStateType.SIGN_IN != userState.authState || isEmpty(userState.id)) {
         alert("로그인 상태가 아닙니다.");
         return;
     }
 
     try {
         const flag = new Uint8Array([Defines.ReqType.REQ_SIGN_OUT]);
-        const token = Helpers.getCookie("token");
-        if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSignOutReq: ${isEmpty(token) ? 'token is empty.' : token}`);
 
-        if (isEmpty(token)) {
-            alert("인증정보가 없습니다.");
-            yield put(setToken(""));
+        if (isEmpty(userInfo.accessToken)) {
+            alert("로그인 후 이용해 주세요.");
             return;
         }
-        const bytesToken = isEmpty(token.trim()) ? new Uint8Array() : new Uint8Array(Buffer.from(token.trim(), 'utf-8'));
+
+        const bytesToken = new Uint8Array(Buffer.from(userInfo.accessToken.trim(), 'utf-8'));
         const reqPacket = Helpers.mergeBytesPacket([flag, bytesToken]);
         webSocketState.socket.send(reqPacket);
     } catch (error) {
@@ -188,6 +188,14 @@ export function* callCheckNotificationReq(action: PayloadAction<Domains.Notifica
         return;
     }
 
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
+
+    if (isEmpty(userInfo.accessToken)) {
+        alert("로그인 후 이용해 주세요.");
+        return;
+    }
+
     const flag = new Uint8Array([Defines.ReqType.REQ_CHECK_NOTIFICATION]);
     const bytesId = Helpers.getByteArrayFromUUID(action.payload.id.trim());
     const packet = Helpers.mergeBytesPacket([flag, bytesId]);
@@ -209,6 +217,14 @@ export function* callRemoveNotificationReq(action: PayloadAction<Domains.Notific
     if (!action.payload || isEmpty(action.payload.id)) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callRemoveNotificationReq: not notification id.`);
+        return;
+    }
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
+
+    if (isEmpty(userInfo.accessToken)) {
+        alert("로그인 후 이용해 주세요.");
         return;
     }
 
@@ -274,7 +290,6 @@ export function* callFollowReq(action: PayloadAction<Domains.User>) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callFollowReq`);
 
-    const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
@@ -282,6 +297,9 @@ export function* callFollowReq(action: PayloadAction<Domains.User>) {
             console.log(`saga - callFollowReq: socket is not available.`);
         return;
     }
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
 
     if (!action || !action.payload || isEmpty(action.payload.userId)) {
         alert('팔로우할 사용자를 선택해 주세요.');
@@ -298,14 +316,14 @@ export function* callFollowReq(action: PayloadAction<Domains.User>) {
         return;
     }
 
-    if (isEmpty(userState.token)) {
+    if (isEmpty(userInfo.accessToken)) {
         alert("로그인 후 이용해 주세요.");
         return;
     }
 
     const flag = new Uint8Array([Defines.ReqType.REQ_FOLLOW]);
     const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.userId.trim());
-    const bytesToken = new Uint8Array(Buffer.from(userState.token, 'utf8'));
+    const bytesToken = new Uint8Array(Buffer.from(userInfo.accessToken, 'utf8'));
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesToken]);
     webSocketState.socket.send(packet);
 }
@@ -314,7 +332,6 @@ export function* callUnfollowReq(action: PayloadAction<Domains.User>) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callUnfollowReq`);
 
-    const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
@@ -322,6 +339,9 @@ export function* callUnfollowReq(action: PayloadAction<Domains.User>) {
             console.log(`saga - callUnfollowReq: socket is not available.`);
         return;
     }
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
 
     if (!action || !action.payload || isEmpty(action.payload.userId)) {
         alert('언팔로우할 사용자를 선택해 주세요.');
@@ -338,14 +358,14 @@ export function* callUnfollowReq(action: PayloadAction<Domains.User>) {
         return;
     }
 
-    if (isEmpty(userState.token)) {
+    if (isEmpty(userInfo.accessToken)) {
         alert("로그인 후 이용해 주세요.");
         return;
     }
 
     const flag = new Uint8Array([Defines.ReqType.REQ_UNFOLLOW]);
     const bytesUserId = Helpers.getByteArrayFromUUID(action.payload.userId.trim());
-    const bytesToken = new Uint8Array(Buffer.from(userState.token, 'utf8'));
+    const bytesToken = new Uint8Array(Buffer.from(userInfo.accessToken, 'utf8'));
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesToken]);
     webSocketState.socket.send(packet);
 }
@@ -372,7 +392,6 @@ export function* callSaveUserNameReq() {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callSaveUserNameReq`);
 
-    const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
@@ -381,13 +400,16 @@ export function* callSaveUserNameReq() {
         return;
     }
 
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
+
     if (!userState.id) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callSaveUserNameReq: not found user id.`);
         return;
     }
 
-    if (2 > userState.name.length || 10 < userState.name.length) {
+    if (2 > userInfo.userName.length || 10 < userInfo.userName.length) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callSaveUserNameReq: not suitable user name length.`);
 
@@ -397,7 +419,7 @@ export function* callSaveUserNameReq() {
 
     const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_NAME]);
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const bytesUserName = new Uint8Array(Buffer.from(userState.name.trim(), 'utf8'));
+    const bytesUserName = new Uint8Array(Buffer.from(userInfo.userName.trim(), 'utf8'));
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserName]);
     webSocketState.socket.send(packet);
 }
@@ -406,7 +428,6 @@ export function* callSaveUserMessageReq() {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callSaveUserMessageReq`);
 
-    const userState: UserState = yield select((state: RootState) => state.user);
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
@@ -415,13 +436,16 @@ export function* callSaveUserMessageReq() {
         return;
     }
 
+    const userState: UserState = yield select((state: RootState) => state.user);
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
+
     if (!userState.id) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callSaveUserMessageReq: not found user id.`);
         return;
     }
 
-    if (128 < userState.message.length) {
+    if (128 < userInfo.message.length) {
         if ('production' !== process.env.NODE_ENV)
             console.log(`saga - callSaveUserMessageReq: too long user message.`);
 
@@ -431,7 +455,7 @@ export function* callSaveUserMessageReq() {
 
     const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_MESSAGE]);
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const bytesUserMessage = new Uint8Array(Buffer.from(userState.message.trim(), 'utf8'));
+    const bytesUserMessage = new Uint8Array(Buffer.from(userInfo.message.trim(), 'utf8'));
     const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserMessage]);
     webSocketState.socket.send(packet);
 }
