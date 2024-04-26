@@ -1,6 +1,10 @@
 package com.zangho.game.server.error;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.zangho.game.server.define.Types;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 public enum ErrorRemoveUserProfile implements Types {
     NONE(0),
@@ -9,16 +13,22 @@ public enum ErrorRemoveUserProfile implements Types {
     FAILED_TO_REMOVE(3);
 
     private final int number;
-    private ErrorRemoveUserProfile(int number) {
+
+    ErrorRemoveUserProfile(int number) {
         this.number = number;
     }
 
+    @JsonValue
     public int getNumber() {
         return number;
     }
 
     public byte getByte() {
         return (byte)number;
+    }
+
+    public static Optional<ErrorRemoveUserProfile> getType(int number) {
+        return Arrays.stream(values()).filter(no -> no.number == number).findFirst();
     }
 }
 

@@ -12,7 +12,7 @@ export default function useOthersUserInfo() {
 
     const getOthersUserInfo = useCallback((userId: string): Domains.User => {
         if (userId === currentUser.userId)
-            return new Domains.User(currentUser.userId, currentUser.accountType, currentUser.userName, currentUser.message, currentUser.haveProfile, currentUser.latestActiveAt, true);
+            return new Domains.User(currentUser.userId, currentUser.accountType, currentUser.nickName, currentUser.message, currentUser.haveProfile, currentUser.latestActiveAt, true);
 
         let userInfo = user.others.find(_ => _.userId == userId);
         if (!userInfo) {

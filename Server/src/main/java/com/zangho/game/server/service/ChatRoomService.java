@@ -139,7 +139,7 @@ public class ChatRoomService {
 
     public Optional<ChatRoom> createOneToOneChatRoom(User user, User targetUser) {
         try {
-            var optChatRoom = createRoom(targetUser.getName(), user, RoomOpenType.PREPARED);
+            var optChatRoom = createRoom(targetUser.getNickName(), user, RoomOpenType.PREPARED);
             if (optChatRoom.isEmpty())
                 return Optional.empty();
 

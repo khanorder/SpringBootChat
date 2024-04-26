@@ -1,17 +1,13 @@
 package com.zangho.game.server.service;
 
 import com.zangho.game.server.define.ChatType;
-import com.zangho.game.server.domain.UploadChatImageRequest;
 import com.zangho.game.server.domain.chat.Chat;
-import com.zangho.game.server.domain.chat.ChatImage;
-import com.zangho.game.server.repository.chat.ChatImageRepository;
 import com.zangho.game.server.repository.chat.ChatRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 public class ChatService {
 

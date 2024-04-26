@@ -1,0 +1,69 @@
+.chatSignUpWrapper
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-items: center
+    width: 100%
+    height: 100%
+    padding-top: 10px
+    overflow-x: hidden
+    overflow-y: auto
+
+    .inputForm
+        width: 100%
+
+        .inputWrapper
+            position: relative
+            padding: 10px
+            width: 100%
+
+            &.inputUserName
+                
+                &:before
+                    position: absolute
+                    top: 17px
+                    left: 15px
+                    content: ''
+                    width: 35px
+                    height: 25px
+                    background: center / contain no-repeat url('/images/person.svg')
+
+            &.inputPassword
+
+                &:before
+                    position: absolute
+                    top: 17px
+                    left: 15px
+                    content: ''
+                    width: 35px
+                    height: 25px
+                    background: center / contain no-repeat url('/images/password.svg')
+
+            .input
+                position: relative
+                border: 1px solid #797979
+                border-radius: 8px
+                padding: 10px 10px 10px 40px
+                width: 100%
+                height: 40px
+                background: none
+
+
+
+
+
+
+
+
+.button
+    margin-left: 10px
+    padding: 5px
+    width: 70px
+
+    &:first-child
+        margin-left: 0
+
+@media (max-width: 700px)
+    .chatSignUpWrapper
+        width: 100%
+        flex-direction: column

@@ -10,7 +10,7 @@
 
     .dialog
         position: absolute
-        top: calc(50% - 30vh)
+        top: calc(50% - 20vh)
         left: calc(50% - 20vw)
         display: flex
         flex-direction: column
@@ -18,7 +18,7 @@
         border-radius: 8px
         padding: 10px
         width: 40vw
-        height: 60vh
+        height: 40vh
         background: #ffffff
         z-index: 1002
 
@@ -99,6 +99,10 @@
 
     &.small
         .dialog
+            top: calc(50% - 25vh)
+            left: calc(50% - 25vw)
+            width: 50vw
+            height: 50vh
 
     &.medium
         .dialog

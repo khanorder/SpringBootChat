@@ -1,11 +1,9 @@
-package com.zangho.game.server.domain;
+package com.zangho.game.server.domain.user;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.zangho.game.server.define.AccountType;
 import com.zangho.game.server.define.TokenType;
-import com.zangho.game.server.error.ErrorVerifyJWT;
 import lombok.Data;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +21,9 @@ public class AuthedJwt {
     String userId;
     TokenType tokenType;
     AccountType accountType;
+    String userName;
+    String name;
+    String nickName;
 
     Logger logger = LoggerFactory.getLogger(AuthedJwt.class);
     
@@ -40,6 +41,22 @@ public class AuthedJwt {
                 optTokenType = TokenType.getType(decodedJWT.getClaim("tkt").asInt());
 
             this.tokenType = optTokenType.orElse(TokenType.NONE);
+            switch (this.tokenType) {
+                case NONE:
+                    this.userId = "";
+                    this.accountType = AccountType.NONE;
+                    this.userName = "";
+                    this.name = "";
+                    this.nickName = "";
+                    return;
+
+                case ACCESS:
+                    this.userName = decodedJWT.getClaim("userName").isMissing() || decodedJWT.getClaim("userName").isNull() ? "" : decodedJWT.getClaim("userName").asString();
+                    this.name = decodedJWT.getClaim("name").isMissing() || decodedJWT.getClaim("name").isNull() ? "" : decodedJWT.getClaim("name").asString();
+                    this.nickName = decodedJWT.getClaim("nickName").isMissing() || decodedJWT.getClaim("nickName").isNull() ? "" : decodedJWT.getClaim("nickName").asString();
+                    break;
+            }
+
             this.userId = decodedJWT.getClaim("id").isMissing() || decodedJWT.getClaim("id").isNull() ? "" : decodedJWT.getClaim("id").asString();
 
             Optional<AccountType> optAccountType = Optional.empty();

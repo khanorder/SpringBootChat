@@ -43,13 +43,13 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
         );
     }, [getOthersUserInfo, userId]);
 
-    const userName = useCallback(() => {
+    const nickName = useCallback(() => {
         const isMine = user.id == userId;
         const userInfo = getOthersUserInfo(userId);
 
         return (
             <div className={styles.userInfo}>
-                <div className={styles.userName}>{isMine ? currentUser.userName : userInfo.userName}</div>
+                <div className={styles.nickName}>{isMine ? currentUser.nickName : userInfo.nickName}</div>
                 <div className={styles.userMessage}>{isMine ? currentUser.message : userInfo.message}</div>
             </div>
         );
@@ -70,7 +70,7 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
     return (
         <div className={styles.userProfileWrapper}>
             {userProfile()}
-            {userName()}
+            {nickName()}
             {latestActive()}
         </div>
     )

@@ -14,13 +14,16 @@ import com.zangho.game.server.repository.user.UserRepository;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
@@ -98,16 +101,22 @@ public class UserService {
         userRoomRepository.save(new UserRoom(currentUser.getId(), chatRoom.getRoomId()));
     }
 
-    public Optional<User> createTempUser(WebSocketSession session) throws Exception {
-        var count = userRepository.count();
-        var tempUser = new User(AccountType.TEMP, "user-" + (count + 1));
-        var result = userRepository.save(tempUser);
-        result.setSessionId(session.getId());
-        connectedUsers.computeIfAbsent(result.getId(), key -> result);
-        return Optional.of(result);
+    public Optional<User> createTempUser(WebSocketSession session) {
+        try {
+            var count = userRepository.count();
+            var tempUserName = "user_" + (count + 1);
+            var tempUser = new User(AccountType.TEMP, tempUserName, tempUserName, tempUserName);
+            var result = userRepository.save(tempUser);
+            result.setSessionId(session.getId());
+            connectedUsers.computeIfAbsent(result.getId(), key -> result);
+            return Optional.of(result);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Optional.empty();
+        }
     }
 
-    public Optional<User> findUserWithChatRooms(String userId) throws Exception {
+    public Optional<User> findUserByIdWithChatRooms(String userId) throws Exception {
         var user = userRepository.findById(userId);
         if (user.isPresent()) {
             var chatRooms = chatRoomRepository.findInUserChatRoomInfos(userId);
@@ -116,7 +125,7 @@ public class UserService {
         return user;
     }
 
-    public Optional<User> findUser(String userId) {
+    public Optional<User> findUserById(String userId) {
         return userRepository.findById(userId);
     }
 
@@ -168,14 +177,40 @@ public class UserService {
         return result;
     }
 
-    public boolean updateUser(User user) {
+    public boolean saveUser(User user) {
         var existsUser = userRepository.save(user);
         return null != existsUser;
     }
 
+    public boolean createNewUserAccount(String userName, String password) {
+        var newUser = new User(AccountType.NORMAL, userName, userName, userName);
+        newUser.setPassword(password);
+
+        var existsUser = userRepository.save(newUser);
+        return null != existsUser;
+    }
+
+    public boolean upgradeUserAccount(String userId, String userName, String password) {
+        var optExistsUser = userRepository.findById(userId);
+        if (optExistsUser.isEmpty())
+            return false;
+
+        optExistsUser.get().setUserName(userName);
+        optExistsUser.get().setPassword(password);
+        optExistsUser.get().setAccountType(AccountType.NORMAL);
+        optExistsUser.get().setLatestActiveAt(new Date());
+
+        var existsUser = userRepository.save(optExistsUser.get());
+        return null != existsUser;
+    }
+
     public boolean updateActiveUser(User user) {
-        user.setLatestActiveAt(new Date());
-        var existsUser = userRepository.save(user);
+        var optExistsUser = userRepository.findById(user.getId());
+        if (optExistsUser.isEmpty())
+            return false;
+
+        optExistsUser.get().setLatestActiveAt(new Date());
+        var existsUser = userRepository.save(optExistsUser.get());
         return null != existsUser;
     }
 
@@ -214,4 +249,13 @@ public class UserService {
         return relationRepository.findYourRelatedUsers(user.getId(), RelationState.BAN);
     }
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        var optUser = userRepository.findByUserName(username);
+        return optUser.orElse(null);
+    }
+
+    public Optional<User> findByUserName(String userName) {
+        return userRepository.findByUserName(userName);
+    }
 }

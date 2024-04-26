@@ -1,11 +1,10 @@
-package com.zangho.game.server.domain;
+package com.zangho.game.server.domain.request;
 
 import com.zangho.game.server.define.AllowedImageType;
 import lombok.Data;
-import nl.martijndwars.webpush.Subscription;
 
 @Data
-public class UploadChatImageRequest {
+public class ReqUploadChatImage {
     private String roomId;
     private String chatId;
     private AllowedImageType mime;

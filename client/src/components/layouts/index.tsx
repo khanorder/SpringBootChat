@@ -11,6 +11,8 @@ const ChatDisconnected = dynamic(() => import("@/components/chatContents/chatDis
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
 const DialogProfile = dynamic(() => import("@/components/dialogs/dialogProfile"), {ssr: false});
 const DialogNotification = dynamic(() => import("@/components/dialogs/dialogNotification"), {ssr: false});
+const DialogSignUp = dynamic(() => import("@/components/dialogs/dialogSignUp"), {ssr: false});
+const DialogSignIn = dynamic(() => import("@/components/dialogs/dialogSignIn"), {ssr: false});
 const DialogChangeUser = dynamic(() => import("@/components/dialogs/dialogChangeUser"), {ssr: false});
 const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), {ssr: false});
 const Loading = dynamic(() => import("@/components/common/loading"), {ssr: false});
@@ -72,13 +74,16 @@ export default function Layout({children}: { children: ReactNode }) {
         if (Defines.AuthStateType.NONE == user.authState || isEmpty(user.id) || isEmpty(currentUser.accessToken))
             return (
                 <>
-                    <ChatSignIn />
+                    <DialogSignIn />
+                    <DialogSignUp />
                     <DialogChangeUser />
+                    <ChatSignIn />
                 </>
             );
 
         return (
             <>
+                <DialogSignUp />
                 <DialogProfile/>
                 <DialogNotification/>
                 <ChatHeader/>

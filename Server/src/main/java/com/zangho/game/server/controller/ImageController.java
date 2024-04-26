@@ -1,25 +1,18 @@
 package com.zangho.game.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.AllowedImageType;
 import com.zangho.game.server.define.SavedImageSize;
-import com.zangho.game.server.domain.SubscriptionRequest;
-import com.zangho.game.server.domain.UploadChatImageRequest;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.*;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.Optional;
 
 @Controller
@@ -151,7 +144,7 @@ public class ImageController {
             if (id.isEmpty())
                 return ResponseEntity.notFound().build();
 
-            var optUser = userService.findUser(id);
+            var optUser = userService.findUserById(id);
             if (optUser.isEmpty())
                 return ResponseEntity.notFound().build();
 

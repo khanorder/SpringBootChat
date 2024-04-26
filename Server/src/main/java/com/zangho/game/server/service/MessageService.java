@@ -1,20 +1,15 @@
 package com.zangho.game.server.service;
 
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.Security;
 import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.domain.chat.ChatRoom;
 import com.zangho.game.server.error.ErrorSubscribeChatRoom;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
-import com.zangho.game.server.repository.user.UserRepository;
 import lombok.Getter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jose4j.lang.JoseException;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

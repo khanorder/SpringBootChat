@@ -1,4 +1,4 @@
-package com.zangho.game.server.domain;
+package com.zangho.game.server.domain.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +9,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Visit {
+public class ReqVisit {
     public String session = "";
     public long fp;
     public String deviceType = "";

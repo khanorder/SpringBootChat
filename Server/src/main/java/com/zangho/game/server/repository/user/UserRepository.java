@@ -4,6 +4,7 @@ import com.zangho.game.server.domain.user.User;
 import lombok.NonNull;
 import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Override
     @NonNull
     Optional<User> findById(@NonNull String id);
+
+    Optional<User> findByUserName(String userName);
 
     Optional<User> findByName(String name);
 

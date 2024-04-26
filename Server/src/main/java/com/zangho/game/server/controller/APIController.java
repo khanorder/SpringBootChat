@@ -1,29 +1,21 @@
 package com.zangho.game.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zangho.game.server.define.AllowedImageType;
-import com.zangho.game.server.define.SavedImageSize;
-import com.zangho.game.server.domain.SubscriptionRequest;
-import com.zangho.game.server.domain.UploadChatImageRequest;
-import com.zangho.game.server.domain.Visit;
+import com.zangho.game.server.domain.request.ReqSubscription;
+import com.zangho.game.server.domain.request.ReqUploadChatImage;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.FileOutputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.Optional;
-import java.util.UUID;
 
 @Controller
 public class APIController {
@@ -60,10 +52,10 @@ public class APIController {
 
     @PostMapping(value = "/api/subscription")
     @ResponseBody
-    public String subscription(@RequestBody SubscriptionRequest subscriptionRequest) throws Exception {
+    public String subscription(@RequestBody ReqSubscription reqSubscription) throws Exception {
         var response = new HashMap<String, Object>();
-        chatRoomService.subscribeUserRoom(subscriptionRequest.getSubscription(), subscriptionRequest.getRoomId(), subscriptionRequest.getUserId());
-        var result = messageService.subscribeChatRoom(subscriptionRequest.getSubscription(), subscriptionRequest.getRoomId(), subscriptionRequest.getUserId());
+        chatRoomService.subscribeUserRoom(reqSubscription.getSubscription(), reqSubscription.getRoomId(), reqSubscription.getUserId());
+        var result = messageService.subscribeChatRoom(reqSubscription.getSubscription(), reqSubscription.getRoomId(), reqSubscription.getUserId());
         response.put("result", result.getNumber());
 
         return (new ObjectMapper()).writeValueAsString(response);
@@ -77,16 +69,16 @@ public class APIController {
 
     @PostMapping(value = "/api/uploadChatImage")
     @ResponseBody
-    public String uploadChatImage(@RequestBody UploadChatImageRequest uploadChatImageRequest) throws Exception {
+    public String uploadChatImage(@RequestBody ReqUploadChatImage reqUploadChatImage) throws Exception {
         var response = new HashMap<String, Object>();
         response.put("result", false);
 
         try {
-            var result = chatImageService.saveUploadChatImage(uploadChatImageRequest);
+            var result = chatImageService.saveUploadChatImage(reqUploadChatImage);
             if (result.isEmpty())
                 return (new ObjectMapper()).writeValueAsString(response);
 
-            var roomIdBase62 = Helpers.getBase62FromUUID(uploadChatImageRequest.getRoomId());
+            var roomIdBase62 = Helpers.getBase62FromUUID(reqUploadChatImage.getRoomId());
 
             var currentPath = System.getProperty("user.dir");
             var smallDirectoryPath = Paths.get(currentPath, "images", "chat", "small", roomIdBase62);
@@ -99,15 +91,15 @@ public class APIController {
 
             var extension = Helpers.getImageExtension(result.get().getMime());
             var fileName = Helpers.getBase62FromUUID(result.get().getId());
-            var bytesLargeImage = Base64.getDecoder().decode(uploadChatImageRequest.getBase64Large());
+            var bytesLargeImage = Base64.getDecoder().decode(reqUploadChatImage.getBase64Large());
             var largeImagePath = Paths.get(largeDirectoryPath.toString(), fileName + "." + extension);
             var fosLarge = new FileOutputStream(largeImagePath.toString());
             fosLarge.write(bytesLargeImage);
             fosLarge.flush();
             fosLarge.close();
 
-            if (!uploadChatImageRequest.getBase64Small().isEmpty()) {
-                var bytesSmallImage = Base64.getDecoder().decode(uploadChatImageRequest.getBase64Small());
+            if (!reqUploadChatImage.getBase64Small().isEmpty()) {
+                var bytesSmallImage = Base64.getDecoder().decode(reqUploadChatImage.getBase64Small());
                 var smallImagePath = Paths.get(smallDirectoryPath.toString(), fileName + "." + extension);
                 var fosSmall = new FileOutputStream(smallImagePath.toString());
                 fosSmall.write(bytesSmallImage);

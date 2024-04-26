@@ -1,32 +1,42 @@
 package com.zangho.game.server.error;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.zangho.game.server.define.Types;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 public enum ErrorVerifyJWT implements Types {
     NONE(0),
-    TOKEN_TYPE_IS_EMPTY(1),
-    INVALID_TOKEN_TYPE(2),
-    TOKEN_EXPIRED(3),
-    NOT_FOUND_TOKEN_ID(4),
-    USER_ID_IS_EMPTY(5),
-    NOT_FOUND_USER_ID(6),
-    USER_ACCOUNT_TYPE_IS_EMPTY(7),
-    NOT_FOUND_USER_ACCOUNT_TYPE(8),
-    DISPOSED_TOKEN(9),
-    FAILED_TO_DECODE(10);
-
+    TOKEN_IS_EMPTY(1),
+    TOKEN_TYPE_IS_EMPTY(2),
+    INVALID_TOKEN_TYPE(3),
+    TOKEN_EXPIRED(4),
+    NOT_FOUND_TOKEN_ID(5),
+    USER_ID_IS_EMPTY(6),
+    NOT_FOUND_USER_ID(7),
+    USER_ACCOUNT_TYPE_IS_EMPTY(8),
+    NOT_FOUND_USER_ACCOUNT_TYPE(9),
+    DISPOSED_TOKEN(10),
+    FAILED_TO_DECODE(11);
 
     private final int number;
-    private ErrorVerifyJWT(int number) {
+
+    ErrorVerifyJWT(int number) {
         this.number = number;
     }
 
+    @JsonValue
     public int getNumber() {
         return number;
     }
 
     public byte getByte() {
         return (byte)number;
+    }
+
+    public static Optional<ErrorVerifyJWT> getType(int number) {
+        return Arrays.stream(values()).filter(no -> no.number == number).findFirst();
     }
 }
 

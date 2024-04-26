@@ -48,19 +48,19 @@ export default function ChatMessage({data}: ChatMessageProps) {
 
         return (
             <div className={styles.chatUserProfileWrapper}>
-                <img className={styles.chatUserProfile} src={userInfo.profileImageUrl} title={userInfo.userName} alt={userInfo.userName} />
+                <img className={styles.chatUserProfile} src={userInfo.profileImageUrl} title={userInfo.nickName} alt={userInfo.nickName} />
             </div>
         );
     }, [getOthersUserInfo, user, data]);
 
-    const userName = useCallback(() => {
+    const nickName = useCallback(() => {
         const isMine = user.id == data.userId;
         if (isMine)
             return;
 
         const userInfo = getOthersUserInfo(data.userId);
 
-        return <div className={styles.chatUserName}>{userInfo.userName}</div>;
+        return <div className={styles.chatNickName}>{userInfo.nickName}</div>;
     }, [getOthersUserInfo, user, data]);
 
     const chatElement = useCallback(() => {
@@ -79,7 +79,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
                     <li className={chatContentsClass}>
                         {userProfile()}
                         <div className={styles.chatWrapper}>
-                            {userName()}
+                            {nickName()}
                             <div className={chatMessageClass}>
                                 <NL2BR text={data.message} />
                             </div>
@@ -95,7 +95,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
                     <li className={chatContentsClass}>
                         {userProfile()}
                         <div className={styles.chatWrapper}>
-                            {userName()}
+                            {nickName()}
                             <div className={chatMessageClass}>
                                 <img className={styles.chatImage}
                                      src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${chatImageSmallUrlPrefix}${data.id}`}
@@ -107,7 +107,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
                     </li>
                 );
         }
-    }, [user, data, userProfile, userName, appConfigs, openChatImageDetailDialog]);
+    }, [user, data, userProfile, nickName, appConfigs, openChatImageDetailDialog]);
 
     return chatElement();
 }

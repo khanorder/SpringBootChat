@@ -1,9 +1,7 @@
 package com.zangho.game.server.repository.user;
 
 import com.zangho.game.server.define.RelationState;
-import com.zangho.game.server.domain.user.RelatedUserInterface;
 import com.zangho.game.server.domain.user.Relation;
-import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.domain.user.UserInterface;
 import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,7 +30,7 @@ public interface RelationRepository extends JpaRepository<Relation, String> {
     Optional<Relation> findByUserIdAndTargetIdAndRelationState(String userId, String targetId, RelationState relationState);
 
     @Query(
-            value = "SELECT b.id AS id, b.name AS name, b.message AS message, b.latestActiveAt AS latestActiveAt, ('' != TRIM(b.profileImage)) AS haveProfile " +
+            value = "SELECT b.id AS id, b.nickName AS nickName, b.message AS message, b.latestActiveAt AS latestActiveAt, ('' != TRIM(b.profileImage)) AS haveProfile " +
                     "FROM relations AS a " +
                     "LEFT JOIN users AS b ON a.targetId = b.id " +
                     "WHERE a.userId = :userId AND a.relationState = :relationState",
@@ -41,7 +39,7 @@ public interface RelationRepository extends JpaRepository<Relation, String> {
     List<UserInterface> findMineRelatedUsers(String userId, RelationState relationState);
 
     @Query(
-            value = "SELECT b.id AS id, b.name AS name, b.message AS message, b.latestActiveAt AS latestActiveAt, ('' != TRIM(b.profileImage)) AS haveProfile " +
+            value = "SELECT b.id AS id, b.nickName AS nickName, b.message AS message, b.latestActiveAt AS latestActiveAt, ('' != TRIM(b.profileImage)) AS haveProfile " +
                     "FROM relations AS a " +
                     "LEFT JOIN users AS b ON a.userId = b.id " +
                     "WHERE a.targetId = :userId AND a.relationState = :relationState",

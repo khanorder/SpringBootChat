@@ -1,6 +1,6 @@
 package com.zangho.game.server.repository;
 
-import com.zangho.game.server.domain.Visit;
+import com.zangho.game.server.domain.request.ReqVisit;
 import com.zangho.game.server.service.VisitService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.TimeZone;
@@ -25,7 +24,7 @@ public class VisitDatabaseTest {
     @Test
     public void saveVisit() {
         TimeZone.setDefault( TimeZone.getTimeZone("UTC"));
-        var visit = new Visit(
+        var visit = new ReqVisit(
                 "MmI7je7TDRbxuvCrQgdDc",
                 5063922095L,
                 "mobile",

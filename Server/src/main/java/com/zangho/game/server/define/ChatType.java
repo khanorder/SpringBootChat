@@ -1,5 +1,6 @@
 package com.zangho.game.server.define;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -12,10 +13,12 @@ public enum ChatType implements Types {
     NOTICE(2);
 
     private final int number;
+
     ChatType(int number) {
         this.number = number;
     }
 
+    @JsonValue
     public int getNumber() {
         return number;
     }
@@ -23,6 +26,7 @@ public enum ChatType implements Types {
     public byte getByte() {
         return (byte)number;
     }
+
     public static Optional<ChatType> getType(int number) {
         return Arrays.stream(values()).filter(no -> no.number == number).findFirst();
     }

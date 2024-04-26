@@ -3,19 +3,22 @@ package com.zangho.game.server.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.zangho.game.server.define.AccountType;
 import com.zangho.game.server.define.TokenType;
-import com.zangho.game.server.domain.AuthedJwt;
+import com.zangho.game.server.domain.user.AuthedJwt;
 import com.zangho.game.server.domain.user.DisposedToken;
 import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.error.ErrorVerifyJWT;
 import com.zangho.game.server.error.ErrorIssueJWT;
 import com.zangho.game.server.repository.user.DisposedTokenRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.util.StringUtils;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -50,13 +53,13 @@ public class JwtService {
         this.disposedTokenRepository = disposedTokenRepository;
     }
 
-    public Pair<ErrorIssueJWT, Pair<String, String>> issueAccessToken(User user) {
+    public Pair<ErrorIssueJWT, String> issueAccessToken(User user) {
         try {
             var algorithm = Algorithm.HMAC512(secretKey);
             var now = new Date();
             var cal = Calendar.getInstance();
             cal.setTime(now);
-            cal.add(Calendar.MINUTE, user.getAccountType().equals(AccountType.TEMP) ? 5 : accessExpireMinutes);
+            cal.add(Calendar.MINUTE, accessExpireMinutes);
             var expire = new Date(cal.getTimeInMillis());
             var jti = UUID.randomUUID().toString();
 
@@ -70,19 +73,15 @@ public class JwtService {
                 .withClaim("tkt", TokenType.ACCESS.getNumber())
                 .withClaim("id", user.getId())
                 .withClaim("accountType", user.getAccountType().getNumber())
+                .withClaim("userName", user.getUsername())
+                .withClaim("name", user.getName())
+                .withClaim("nickName", user.getNickName())
                 .sign(algorithm);
 
-            var resultIssueRefreshToken = issueRefreshToken(user);
-            if (!resultIssueRefreshToken.getLeft().equals(ErrorIssueJWT.NONE)) {
-                if (isDevelopment)
-                    logger.info(ErrorIssueJWT.FAILED_TO_ISSUE.toString());
-                return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, Pair.of("", ""));
-            }
-
-            return Pair.of(ErrorIssueJWT.NONE, Pair.of(token, resultIssueRefreshToken.getRight()));
+            return Pair.of(ErrorIssueJWT.NONE, token);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, Pair.of("", ""));
+            return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, "");
         }
     }
 
@@ -92,7 +91,7 @@ public class JwtService {
             var now = new Date();
             var cal = Calendar.getInstance();
             cal.setTime(now);
-            cal.add(Calendar.DATE, user.getAccountType().equals(AccountType.TEMP) ? 5 : refreshExpireDay);
+            cal.add(Calendar.DATE, refreshExpireDay);
             var expire = new Date(cal.getTimeInMillis());
             var jti = UUID.randomUUID().toString();
 
@@ -112,6 +111,29 @@ public class JwtService {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, "");
+        }
+    }
+
+    public Pair<ErrorIssueJWT, Pair<String, String>> issueAccessTokenWithRefresh(User user) {
+        try {
+            var resultIssueAccessToken = issueAccessToken(user);
+            if (!resultIssueAccessToken.getLeft().equals(ErrorIssueJWT.NONE)) {
+                if (isDevelopment)
+                    logger.info(ErrorIssueJWT.FAILED_TO_ISSUE.toString());
+                return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, Pair.of("", ""));
+            }
+
+            var resultIssueRefreshToken = issueRefreshToken(user);
+            if (!resultIssueRefreshToken.getLeft().equals(ErrorIssueJWT.NONE)) {
+                if (isDevelopment)
+                    logger.info(ErrorIssueJWT.FAILED_TO_ISSUE.toString());
+                return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, Pair.of("", ""));
+            }
+
+            return Pair.of(ErrorIssueJWT.NONE, Pair.of(resultIssueAccessToken.getRight(), resultIssueRefreshToken.getRight()));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Pair.of(ErrorIssueJWT.FAILED_TO_ISSUE, Pair.of("", ""));
         }
     }
 
@@ -182,6 +204,9 @@ public class JwtService {
 
     public Pair<ErrorVerifyJWT, Optional<AuthedJwt>> verifyAccessToken(String token) {
         try {
+            if (token.isEmpty())
+                return Pair.of(ErrorVerifyJWT.TOKEN_IS_EMPTY, Optional.empty());
+
             var verifiedResult = verifyToken(token);
             if (!verifiedResult.getLeft().equals(ErrorVerifyJWT.NONE) || verifiedResult.getRight().isEmpty()) {
                 if (isDevelopment)
@@ -229,6 +254,30 @@ public class JwtService {
         var disposedToken = new DisposedToken(authedJwt.getJwtId());
         var result = disposedTokenRepository.save(disposedToken);
         return Optional.of(result);
+    }
+
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer"))
+            return bearerToken.substring(7);
+
+        return "";
+    }
+
+    public Optional<Authentication> getAuthentication(String accessToken) {
+        try {
+            var resultVerified = verifyAccessToken(accessToken);
+            if (ErrorVerifyJWT.NONE.equals(resultVerified.getLeft()) && resultVerified.getRight().isPresent()) {
+                var authedUser = resultVerified.getRight().get();
+                var user = new User(authedUser.getAccountType(), authedUser.getUserName(), authedUser.getName(), authedUser.getNickName());
+                return Optional.of(new UsernamePasswordAuthenticationToken(user, "", user.getAuthorities()));
+            } else {
+                return Optional.empty();
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Optional.empty();
+        }
     }
 
 }

@@ -53,6 +53,10 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - checkAuthenticationReq`);
         },
+        signInReq: (state, action: PayloadAction<Domains.SignInReq>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - signInReq`);
+        },
         signOutReq: (state) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - signOutReq`);
@@ -109,9 +113,9 @@ const webSocketSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - sendMessage`);
         },
-        saveUserNameReq: (state) => {
+        saveNickNameReq: (state) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - saveUserNameReq`);
+                console.log(`reducer - saveNickNameReq`);
         },
         saveUserMessageReq: (state) => {
             if ('production' !== process.env.NODE_ENV)
@@ -151,6 +155,7 @@ export const {
     checkAuthenticationReq,
     connectedUsersReq,
     startGuestReq,
+    signInReq,
     signOutReq,
     getTokenUserInfoReq,
     getOthersUserInfoReq,
@@ -163,7 +168,7 @@ export const {
     exitChatRoomReq,
     removeChatRoomReq,
     sendMessageReq,
-    saveUserNameReq,
+    saveNickNameReq,
     saveUserMessageReq,
     saveUserProfileReq,
     removeUserProfileReq,

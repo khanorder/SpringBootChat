@@ -9,7 +9,7 @@ import {
     setIsActiveAddUser, setIsActiveChangeUser,
     setIsActiveChatImageInput,
     setIsActiveCreateChatRoom,
-    setIsActiveProfileImageInput
+    setIsActiveProfileImageInput, setIsActiveSignIn, setIsActiveSignUp
 } from "@/stores/reducers/ui";
 
 export interface LayoutDialogCenterProps {
@@ -22,6 +22,7 @@ export interface LayoutDialogCenterProps {
 export default function LayoutDialogSlide({ type, size, children, buttons }: LayoutDialogCenterProps) {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
+    const user = useAppSelector(state => state.user);
     const ui = useAppSelector(state => state.ui);
     const dispatch = useAppDispatch();
 
@@ -53,6 +54,14 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
 
             case Defines.CenterDialogType.CHANGE_USER:
                 dispatch(setIsActiveChangeUser(false));
+                break;
+
+            case Defines.CenterDialogType.SIGN_UP:
+                dispatch(setIsActiveSignUp(false));
+                break;
+
+            case Defines.CenterDialogType.SIGN_IN:
+                dispatch(setIsActiveSignIn(false));
                 break;
         }
 
@@ -89,6 +98,21 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
             case Defines.CenterDialogType.CHANGE_USER:
                 title = "계정변경";
                 if (ui.isActiveChangeUser)
+                    dialogWrapperClass += ` ${styles.active}`;
+                break;
+
+            case Defines.CenterDialogType.SIGN_UP:
+                title = "계정생성";
+                if (Defines.AuthStateType.SIGN_IN === user.authState)
+                    title = "계정등록";
+
+                if (ui.isActiveSignUp)
+                    dialogWrapperClass += ` ${styles.active}`;
+                break;
+
+            case Defines.CenterDialogType.SIGN_IN:
+                title = "로그인";
+                if (ui.isActiveSignIn)
                     dialogWrapperClass += ` ${styles.active}`;
                 break;
         }
@@ -135,7 +159,7 @@ export default function LayoutDialogSlide({ type, size, children, buttons }: Lay
                 <div className={styles.dialogPane} onClick={hideDialog}></div>
             </div>
         );
-    }, [type, size, appConfigs, hideDialog, children, buttons, ui]);
+    }, [type, size, appConfigs, hideDialog, children, buttons, ui, user]);
 
     return dialogLayout();
 }

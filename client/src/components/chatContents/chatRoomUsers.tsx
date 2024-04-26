@@ -27,18 +27,18 @@ export default function ChatRoomUsers() {
 
         return (
             <div className={styles.chatRoomUserProfileWrapper}>
-                <img className={styles.chatRoomUserProfile} src={isMine ? currentUser.profileImageUrl : userInfo.profileImageUrl} title={isMine ? currentUser.userName : userInfo.userName} alt={isMine ? currentUser.userName : userInfo.userName} />
+                <img className={styles.chatRoomUserProfile} src={isMine ? currentUser.profileImageUrl : userInfo.profileImageUrl} title={isMine ? currentUser.nickName : userInfo.nickName} alt={isMine ? currentUser.nickName : userInfo.nickName} />
             </div>
         );
     }, [user, getOthersUserInfo, currentUser]);
 
-    const userName = useCallback((userId: string) => {
+    const nickName = useCallback((userId: string) => {
         const isMine = user.id == userId;
         const userInfo = getOthersUserInfo(userId);
 
         return (
             <div className={styles.chatRoomUserInfo}>
-                <div className={styles.userName}>{isMine ? currentUser.userName : userInfo.userName}</div>
+                <div className={styles.nickName}>{isMine ? currentUser.nickName : userInfo.nickName}</div>
                 <div className={styles.userMessage}>{isMine ? currentUser.message : userInfo.message}</div>
             </div>
         );
@@ -66,7 +66,7 @@ export default function ChatRoomUsers() {
                 users.push(
                     <li key={i} className={chatRoomUserClass}>
                         {userProfile(chatRoomUsers[i].userId)}
-                        {userName(chatRoomUsers[i].userId)}
+                        {nickName(chatRoomUsers[i].userId)}
                     </li>
                 );
             }
@@ -77,7 +77,7 @@ export default function ChatRoomUsers() {
                 {users}
             </ul>
         );
-    }, [chat, user, userProfile, userName]);
+    }, [chat, user, userProfile, nickName]);
 
     return (
         <div className={styles.chatRoomUserListWrapper}>

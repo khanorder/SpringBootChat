@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 import {Domains} from "@/domains";
 import useUserInfos from "@/components/common/useUserInfos";
 import Image from "next/image";
-import {setUserId} from "@/stores/reducers/user";
+import {removeUserInfo, setUserId} from "@/stores/reducers/user";
 const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 
 export default function DialogChangeUser() {
@@ -35,35 +35,53 @@ export default function DialogChangeUser() {
     }, [dispatch]);
 
     const changeUser = useCallback((userInfo: Domains.UserInfo) => {
-        if (isEmpty(userInfo.userId) || isEmpty(userInfo.userName) || isEmpty(userInfo.refreshToken)) {
-            alert("만료된 계정입니다.");
+        if (isEmpty(userInfo.userId) || isEmpty(userInfo.nickName) || isEmpty(userInfo.refreshToken)) {
+            alert("사용자 인증이 만료된 계정입니다.");
             return;
         }
 
         dispatch(setUserId(userInfo.userId));
         hideDialog();
     }, [dispatch, hideDialog]);
+    
+    const removeUser = useCallback((userId: string) => {
+        const userInfo = userInfos.get(userId);
+        if (!userInfo) {
+            alert("삭제할 계정 정보가 없습니다.");
+            return;
+        }
+
+        if (Defines.AccountType.TEMP === userInfo.accountType) {
+            if (!confirm("Guest 계정은 삭제하면 다시 로그인 할 수 없습니다.\n계속 하시겠습니까?"))
+                return;
+        }
+        dispatch(removeUserInfo(userId));
+    }, [dispatch, userInfos]);
 
     const userList = useCallback(() => {
         const list: ReactElement[] = [];
         if (0 < userInfos.size) {
-            const userInfoList = Array.from(userInfos.values());
-            for (let i = 0; i < userInfoList.length; i++) {
-                const userInfo = userInfoList[i];
+            const userIdList = Array.from(userInfos.keys());
+            for (let i = 0; i < userIdList.length; i++) {
+                const userId = userIdList[i];
+                const userInfo = userInfos.get(userId);
+                if (!userInfo)
+                    continue;
+                
                 let userAccountWrapperClass = styles.userAccountWrapper;
-                if (isEmpty(userInfo.userId) || isEmpty(userInfo.userName) || isEmpty(userInfo.refreshToken))
+                if (isEmpty(userInfo.userId) || isEmpty(userInfo.nickName) || isEmpty(userInfo.refreshToken))
                     userAccountWrapperClass += ` ${styles.expired}`;
 
                 list.push(
                     <div key={i} className={userAccountWrapperClass} onClick={(e) => changeUser(userInfo)}>
                         <div className={styles.userProfileWrapper}>
-                            <img className={styles.userProfileImage} src={userInfo.profileImageUrl} alt={userInfo.userName} />
+                            <img className={styles.userProfileImage} src={userInfo.profileImageUrl} alt={userInfo.nickName} />
                         </div>
                         <div className={styles.userInfoWrapper}>
-                            <div className={styles.userName}>{userInfo.userName}</div>
+                            <div className={styles.nickName}>{userInfo.nickName}</div>
                         </div>
                         <div className={styles.buttonWrapper}>
-                            <button className={styles.button}><Image src={RemoveIcon} alt="삭제" fill={true} priority={true} /></button>
+                            <button className={styles.button} onClick={(e) => removeUser(userId)} title="계정정보 삭제"><Image src={RemoveIcon} alt="계정정보 삭제" fill={true} priority={true} /></button>
                         </div>
                     </div>
                 );
@@ -71,13 +89,13 @@ export default function DialogChangeUser() {
         }
 
         return list;
-    }, [userInfos, changeUser]);
+    }, [userInfos, changeUser, removeUser]);
 
     const dialog = useCallback(() => {
         return (
             <LayoutCenterDialog
                 type={Defines.CenterDialogType.CHANGE_USER}
-                size={Defines.CenterDialogSize.SMALL}
+                size={Defines.CenterDialogSize.MEDIUM}
                 buttons={
                     <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog} title="취소">취소</button>
                 }>

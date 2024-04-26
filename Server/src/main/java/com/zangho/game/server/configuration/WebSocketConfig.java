@@ -7,6 +7,7 @@ import com.zangho.game.server.socketHandler.chat.SocketHandler;
 import com.zangho.game.server.socketHandler.chat.SessionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -22,14 +23,16 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final MessageService messageService;
     private final NotificationService notificationService;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
-    public WebSocketConfig (UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService, JwtService jwtService) {
+    public WebSocketConfig (UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService, JwtService jwtService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.chatRoomService = chatRoomService;
         this.lineNotifyService = lineNotifyService;
         this.messageService = messageService;
         this.notificationService = notificationService;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Bean
@@ -44,7 +47,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public ReqHandler reqHandler() {
-        return new ReqHandler(sessionHandler(), resHandler(), userService, chatRoomService, lineNotifyService, messageService, notificationService, jwtService);
+        return new ReqHandler(sessionHandler(), resHandler(), userService, chatRoomService, lineNotifyService, messageService, notificationService, jwtService, passwordEncoder);
     }
 
     @Override

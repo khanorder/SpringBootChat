@@ -17,7 +17,7 @@ export namespace Domains {
         accessToken: string;
         refreshToken: string;
         accountType: Defines.AccountType;
-        userName: string;
+        nickName: string;
         message: string;
         haveProfile: boolean;
         latestActiveAt: number;
@@ -32,9 +32,12 @@ export namespace Domains {
         nbf?: number;
         iat?: number;
         jti?: string;
-        id?: string;
         tkt?: Defines.TokenType;
+        id?: string;
         accountType?: Defines.AccountType;
+        userName?: string;
+        name?: string;
+        nickName?: string;
     }
 
     export class ChatRoom {
@@ -78,17 +81,17 @@ export namespace Domains {
     export class User {
         userId: string;
         accountType: Defines.AccountType;
-        userName: string;
+        nickName: string;
         message: string;
         haveProfile: boolean;
         latestActive: number;
         profileImageUrl: string = defaultProfileImageUrl;
         online: boolean;
 
-        constructor(userId: string, accountType: Defines.AccountType, userName: string, message: string, haveProfile: boolean, latestActive: number, online?: boolean) {
+        constructor(userId: string, accountType: Defines.AccountType, nickName: string, message: string, haveProfile: boolean, latestActive: number, online?: boolean) {
             this.userId = userId;
             this.accountType = accountType;
-            this.userName = userName;
+            this.nickName = nickName;
             this.message = message;
             this.haveProfile = haveProfile;
             this.latestActive = latestActive;
@@ -149,12 +152,12 @@ export namespace Domains {
                 const id = Helpers.getUUIDFromByteArray(bytesId);
                 const bytesTime = bytes.slice(49, 57);
                 const time = Helpers.getLongFromByteArray(bytesTime);
-                const userNameByteLength = bytes[57];
+                const nickNameByteLength = bytes[57];
                 const bytesMessageByteLength = bytes.slice(58, 62);
                 const messageByteLength = Helpers.getIntFromByteArray(bytesMessageByteLength);
-                const bytesUserName = bytes.slice(62, 62 + userNameByteLength);
-                const userName = new TextDecoder().decode(bytesUserName);
-                const bytesMessage = bytes.slice(62 + userNameByteLength, 62 + userNameByteLength + messageByteLength);
+                const bytesNickName = bytes.slice(62, 62 + nickNameByteLength);
+                const nickName = new TextDecoder().decode(bytesNickName);
+                const bytesMessage = bytes.slice(62 + nickNameByteLength, 62 + nickNameByteLength + messageByteLength);
                 const message = new TextDecoder().decode(bytesMessage);
 
                 return new Chat(type, roomId, userId, id, time, message);
@@ -232,16 +235,16 @@ export namespace Domains {
         result: Errors.CheckAuth;
         haveProfile: boolean;
         latestActive: number;
-        userName: string;
+        nickName: string;
         userMessage: string;
         token: string;
         refreshToken: string;
 
-        constructor(result: Errors.CheckAuth, haveProfile: boolean, latestActive: number, userName: string, userMessage: string, token: string, refreshToken: string) {
+        constructor(result: Errors.CheckAuth, haveProfile: boolean, latestActive: number, nickName: string, userMessage: string, token: string, refreshToken: string) {
             this.result = result;
             this.haveProfile = haveProfile;
             this.latestActive = latestActive;
-            this.userName = userName;
+            this.nickName = nickName;
             this.userMessage = userMessage;
             this.token = token;
             this.refreshToken = refreshToken;
@@ -252,26 +255,26 @@ export namespace Domains {
                 const offsetResult: number = 1;
                 const offsetHaveProfile = offsetResult + 1;
                 const offsetLatestActive = offsetHaveProfile + 8;
-                const offsetNameLength = offsetLatestActive + 1;
-                const offsetMessageLength = offsetNameLength + 1;
+                const offsetNickNameLength = offsetLatestActive + 1;
+                const offsetMessageLength = offsetNickNameLength + 1;
                 const offsetAccessTokenLength = offsetMessageLength + 2;
                 const offsetRefreshTokenLength = offsetAccessTokenLength + 2;
                 const haveProfile: boolean = bytes[offsetResult] > 0;
                 const bytesLatestActive = bytes.slice(offsetHaveProfile, offsetLatestActive);
                 const latestActive = Helpers.getLongFromByteArray(bytesLatestActive);
-                const nameLength = bytes[offsetLatestActive];
-                const messageLength = bytes[offsetNameLength];
+                const nickNameLength = bytes[offsetLatestActive];
+                const messageLength = bytes[offsetNickNameLength];
                 const bytesAccessTokenLength = bytes.slice(offsetMessageLength, offsetAccessTokenLength);
                 const accessTokenLength = Helpers.getShortIntFromByteArray(bytesAccessTokenLength);
                 const bytesRefreshTokenLength = bytes.slice(offsetAccessTokenLength, offsetRefreshTokenLength);
                 const refreshTokenLength = Helpers.getShortIntFromByteArray(bytesRefreshTokenLength);
-                const offsetName = offsetRefreshTokenLength + nameLength;
-                const offsetMessage = offsetName + messageLength;
+                const offsetNickName = offsetRefreshTokenLength + nickNameLength;
+                const offsetMessage = offsetNickName + messageLength;
                 const offsetAccessToken = offsetMessage + accessTokenLength;
                 const offsetRefreshToken = offsetAccessToken + refreshTokenLength;
-                const bytesName = bytes.slice(offsetRefreshTokenLength, offsetName);
-                const name = new TextDecoder().decode(bytesName);
-                const bytesMessage = bytes.slice(offsetName, offsetMessage);
+                const bytesNickName = bytes.slice(offsetRefreshTokenLength, offsetNickName);
+                const nickName = new TextDecoder().decode(bytesNickName);
+                const bytesMessage = bytes.slice(offsetNickName, offsetMessage);
                 const message = new TextDecoder().decode(bytesMessage);
                 const bytesAccessToken = bytes.slice(offsetMessage, offsetAccessToken);
                 const accessToken = new TextDecoder().decode(bytesAccessToken);
@@ -281,7 +284,24 @@ export namespace Domains {
                     refreshToken = new TextDecoder().decode(bytesRefreshToken);
                 }
 
-                return new CheckAuthenticationRes(bytes[0], haveProfile, latestActive, name, message, accessToken, refreshToken);
+                return new CheckAuthenticationRes(bytes[0], haveProfile, latestActive, nickName, message, accessToken, refreshToken);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    }
+
+    export class SignInRes {
+        result: Errors.SignIn;
+
+        constructor(result: Errors.SignIn) {
+            this.result = result;
+        }
+
+        static decode(bytes: Uint8Array) {
+            try {
+                return new SignInRes(bytes[0]);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -710,7 +730,7 @@ export namespace Domains {
                 const offsetRoomIds = 4 + (roomCount * 16);
                 const offsetRoomOpenTypes = offsetRoomIds + roomCount;
                 const offsetUserCount = offsetRoomOpenTypes + (4 * roomCount);
-                let offsetUserName = offsetUserCount + roomCount;
+                let offsetRoomName = offsetUserCount + roomCount;
                 const roomIds: string[] = [];
                 const roomOpenTypes: Defines.RoomOpenType[] = [];
                 const userCounts: number[] = [];
@@ -723,13 +743,13 @@ export namespace Domains {
                     let bytesUserCount= bytes.slice(offsetRoomOpenTypes + (i * 4), offsetRoomOpenTypes + ((i + 1) * 4));
                     let userCount = Helpers.getIntFromByteArray(bytesUserCount);
                     let bytesRoomNameLength= bytes[offsetUserCount + i];
-                    let bytesRoomName = bytes.slice(offsetUserName, offsetUserName + bytesRoomNameLength);
+                    let bytesRoomName = bytes.slice(offsetRoomName, offsetRoomName + bytesRoomNameLength);
                     let roomName =  new TextDecoder().decode(bytesRoomName);
                     roomIds.push(roomId);
                     roomOpenTypes.push(roomOpenType);
                     userCounts.push(userCount);
                     roomNames.push(roomName);
-                    offsetUserName += bytesRoomNameLength;
+                    offsetRoomName += bytesRoomNameLength;
                 }
 
                 return new ChatRoomsRes(roomIds, roomOpenTypes, userCounts, roomNames);
@@ -782,13 +802,13 @@ export namespace Domains {
         result: Errors.GetTokenUserInfo;
         userId: string;
         haveProfile: boolean;
-        userName: string;
+        nickName: string;
 
-        constructor(result: Errors.GetTokenUserInfo, userId: string, haveProfile: boolean, userName: string) {
+        constructor(result: Errors.GetTokenUserInfo, userId: string, haveProfile: boolean, nickName: string) {
             this.result = result;
             this.userId = userId;
             this.haveProfile = haveProfile;
-            this.userName = userName;
+            this.nickName = nickName;
         }
 
         static decode(bytes: Uint8Array) {
@@ -796,16 +816,16 @@ export namespace Domains {
                 const offsetResult: number = 1;
                 const offsetUserId = offsetResult + 16;
                 const offsetHaveProfile = offsetUserId + 1;
-                const offsetNameLength = offsetHaveProfile + 1;
-                const nameLength = bytes[offsetHaveProfile];
-                const offsetName = offsetNameLength + nameLength;
+                const offsetNickNameLength = offsetHaveProfile + 1;
+                const nickNameLength = bytes[offsetHaveProfile];
+                const offsetNickName = offsetNickNameLength + nickNameLength;
                 const bytesUserId = bytes.slice(offsetResult, offsetUserId);
                 const userId = Helpers.getUUIDFromByteArray(bytesUserId);
                 const haveProfile: boolean = bytes[offsetUserId] > 0;
-                const bytesName = bytes.slice(offsetNameLength, offsetName);
-                const name = new TextDecoder().decode(bytesName);
+                const bytesNickName = bytes.slice(offsetNickNameLength, offsetNickName);
+                const nickName = new TextDecoder().decode(bytesNickName);
 
-                return new GetTokenUserInfoRes(bytes[0], userId, haveProfile, name);
+                return new GetTokenUserInfoRes(bytes[0], userId, haveProfile, nickName);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1000,13 +1020,13 @@ export namespace Domains {
         }
     }
 
-    export class NoticeUserNameChangedRes {
+    export class NoticeNickNameChangedRes {
         userId: string;
-        userName: string;
+        nickName: string;
 
-        constructor(userId: string, userName: string) {
+        constructor(userId: string, nickName: string) {
             this.userId = userId;
-            this.userName = userName;
+            this.nickName = nickName;
         }
 
         static decode(bytes: Uint8Array) {
@@ -1014,9 +1034,9 @@ export namespace Domains {
                 const offsetUserId = 16;
                 const bytesUserId = bytes.slice(0, offsetUserId);
                 const userId = Helpers.getUUIDFromByteArray(bytesUserId);
-                const bytesUserName = bytes.slice(offsetUserId, bytes.byteLength);
-                const userName = new TextDecoder().decode(bytesUserName);
-                return new NoticeUserNameChangedRes(userId, userName);
+                const bytesNickName = bytes.slice(offsetUserId, bytes.byteLength);
+                const nickName = new TextDecoder().decode(bytesNickName);
+                return new NoticeNickNameChangedRes(userId, nickName);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1028,9 +1048,9 @@ export namespace Domains {
         userId: string;
         userMessage: string;
 
-        constructor(userId: string, userName: string) {
+        constructor(userId: string, userMessage: string) {
             this.userId = userId;
-            this.userMessage = userName;
+            this.userMessage = userMessage;
         }
 
         static decode(bytes: Uint8Array) {
@@ -1123,14 +1143,24 @@ export namespace Domains {
     }
 
     export class SignInProps {
-        token: string;
+        accessToken: string;
         refreshToken: string;
         user: Domains.User;
 
         constructor(token: string, refreshToken: string, user: Domains.User) {
-            this.token = token;
+            this.accessToken = token;
             this.refreshToken = refreshToken;
             this.user = user;
+        }
+    }
+
+    export class SignInReq {
+        userName: string;
+        password: string;
+
+        constructor(userName: string, password: string) {
+            this.userName = userName;
+            this.password = password;
         }
     }
 
@@ -1346,20 +1376,20 @@ export namespace Domains {
 
     export class NoticeEnterChatRoomRes {
         roomId: string;
-        userName: string;
+        nickName: string;
 
-        constructor(roomId: string, userName: string) {
+        constructor(roomId: string, nickName: string) {
             this.roomId = roomId;
-            this.userName = userName;
+            this.nickName = nickName;
         }
 
         static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(0, 16);
-                const bytesUserName = bytes.slice(16, bytes.byteLength);
+                const bytesNickName = bytes.slice(16, bytes.byteLength);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-                const userName= new TextDecoder().decode(bytesUserName);
-                return new NoticeEnterChatRoomRes(roomId, userName);
+                const nickName= new TextDecoder().decode(bytesNickName);
+                return new NoticeEnterChatRoomRes(roomId, nickName);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1369,20 +1399,20 @@ export namespace Domains {
 
     export class NoticeExitChatRoomRes {
         roomId: string;
-        userName: string;
+        nickName: string;
 
-        constructor(roomId: string, userName: string) {
+        constructor(roomId: string, nickName: string) {
             this.roomId = roomId;
-            this.userName = userName;
+            this.nickName = nickName;
         }
 
         static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(0, 16);
-                const bytesUserName = bytes.slice(16, bytes.byteLength);
+                const bytesNickName = bytes.slice(16, bytes.byteLength);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-                const userName= new TextDecoder().decode(bytesUserName);
-                return new NoticeExitChatRoomRes(roomId, userName);
+                const nickName= new TextDecoder().decode(bytesNickName);
+                return new NoticeExitChatRoomRes(roomId, nickName);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1390,27 +1420,27 @@ export namespace Domains {
         }
     }
 
-    export class NoticeChangeNameChatRoomRes {
+    export class NoticeChangeNickNameChatRoomRes {
         roomId: string;
-        oldUserName: string;
-        newUserName: string;
+        oldNickName: string;
+        newNickName: string;
 
-        constructor(roomId: string, oldUserName: string, newUserName: string) {
+        constructor(roomId: string, oldNickName: string, newNickName: string) {
             this.roomId = roomId;
-            this.oldUserName = oldUserName;
-            this.newUserName = newUserName;
+            this.oldNickName = oldNickName;
+            this.newNickName = newNickName;
         }
 
         static decode(bytes: Uint8Array) {
             try {
                 const bytesRoomId = bytes.slice(0, 16);
-                const oldUserNameLength = bytes[16];
-                const bytesOldUserName = bytes.slice(17, 17 + oldUserNameLength);
-                const bytesNewUserName = bytes.slice(17 + oldUserNameLength, bytes.byteLength);
+                const oldNickNameLength = bytes[16];
+                const bytesOldNickName = bytes.slice(17, 17 + oldNickNameLength);
+                const bytesNewNickName = bytes.slice(17 + oldNickNameLength, bytes.byteLength);
                 const roomId = Helpers.getUUIDFromByteArray(bytesRoomId);
-                const oldUserName= new TextDecoder().decode(bytesOldUserName);
-                const newUserName= new TextDecoder().decode(bytesNewUserName);
-                return new NoticeChangeNameChatRoomRes(roomId, oldUserName, newUserName);
+                const oldNickName= new TextDecoder().decode(bytesOldNickName);
+                const newNickName= new TextDecoder().decode(bytesNewNickName);
+                return new NoticeChangeNickNameChatRoomRes(roomId, oldNickName, newNickName);
             } catch (error) {
                 console.error(error);
                 return null;
@@ -1592,6 +1622,52 @@ export namespace Domains {
             this.mime = mime;
             this.base64Large = base64Large;
             this.base64Small = base64Small;
+        }
+    }
+
+    export class SignUpRequest {
+        userName: string;
+        password: string;
+        token: string;
+
+        constructor(userName: string, password: string, token: string) {
+            this.userName = userName;
+            this.password = password;
+            this.token = token;
+        }
+    }
+
+    export class SignUpResponse {
+        result: Errors.SignUp;
+        accessToken: string;
+        refreshToken: string;
+
+        constructor(result: Errors.SignUp, accessToken?: string, refreshToken?: string) {
+            this.result = result;
+            this.accessToken = accessToken ?? "";
+            this.refreshToken = refreshToken ?? "";
+        }
+    }
+
+    export class SignInRequest {
+        userName: string;
+        password: string;
+
+        constructor(userName: string, password: string) {
+            this.userName = userName;
+            this.password = password;
+        }
+    }
+
+    export class SignInResponse {
+        result: Errors.SignIn;
+        accessToken: string;
+        refreshToken: string;
+
+        constructor(result: Errors.SignIn, accessToken: string, refreshToken: string) {
+            this.result = result;
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
         }
     }
 }

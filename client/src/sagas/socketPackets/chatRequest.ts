@@ -128,6 +128,59 @@ export function* callStartGuestReq() {
     }
 }
 
+export function* callSignInReq(action: PayloadAction<Domains.SignInReq>) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`saga - callSignInReq`);
+
+    const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
+
+    if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`saga - callSignInReq: socket is not available.`);
+        return;
+    }
+
+    const userState: UserState = yield select((state: RootState) => state.user);
+
+    if (Defines.AuthStateType.SIGN_IN === userState.authState && !isEmpty(userState.id)) {
+        alert("이미 로그인 상태입니다.");
+        return;
+    }
+    
+    if (isEmpty(action.payload.userName.trim())) {
+        alert("계정이름을 입력해 주세요.");
+        return;
+    }
+
+    if (10 < action.payload.userName.trim().length) {
+        alert("계정이름은 10글자 이하로 입력해 주세요.");
+        return;
+    }
+
+    if (isEmpty(action.payload.password.trim())) {
+        alert("비밀번호를 입력해 주세요.");
+        return;
+    }
+
+    if (20 < action.payload.userName.trim().length) {
+        alert("비밀번호는 20글자 이하로 입력해 주세요.");
+        return;
+    }
+
+    try {
+        const flag = new Uint8Array([Defines.ReqType.REQ_SIGN_IN]);
+        const bytesUserName = new Uint8Array(Buffer.from(action.payload.userName.trim(), 'utf-8'));
+        console.log("userName: " + action.payload.userName);
+        console.log("bytesUserName: " + bytesUserName);
+        const bytesUserNameLength = new Uint8Array([bytesUserName.byteLength]);
+        const bytesPassword = new Uint8Array(Buffer.from(action.payload.password.trim(), 'utf-8'));
+        const reqPacket = Helpers.mergeBytesPacket([flag, bytesUserNameLength, bytesUserName, bytesPassword]);
+        webSocketState.socket.send(reqPacket);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 export function* callSignOutReq() {
     if ('production' !== process.env.NODE_ENV)
         console.log(`saga - callSignOutReq`);
@@ -141,7 +194,7 @@ export function* callSignOutReq() {
     }
 
     const userState: UserState = yield select((state: RootState) => state.user);
-    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos)
+    const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos);
 
     if (Defines.AuthStateType.SIGN_IN != userState.authState || isEmpty(userState.id)) {
         alert("로그인 상태가 아닙니다.");
@@ -388,15 +441,15 @@ export function* callStartChatReq(action: PayloadAction<Domains.User>) {
     webSocketState.socket.send(packet);
 }
 
-export function* callSaveUserNameReq() {
+export function* callSaveNickNameReq() {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - callSaveUserNameReq`);
+        console.log(`saga - callSaveNickNameReq`);
 
     const webSocketState: WebSocketState = yield select((state: RootState) => state.webSocket);
 
     if (!webSocketState.socket || WebSocket.OPEN != webSocketState.socket.readyState) {
         if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserNameReq: socket is not available.`);
+            console.log(`saga - callSaveNickNameReq: socket is not available.`);
         return;
     }
 
@@ -405,22 +458,22 @@ export function* callSaveUserNameReq() {
 
     if (!userState.id) {
         if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserNameReq: not found user id.`);
+            console.log(`saga - callSaveNickNameReq: not found user id.`);
         return;
     }
 
-    if (2 > userInfo.userName.length || 10 < userInfo.userName.length) {
+    if (2 > userInfo.nickName.length || 10 < userInfo.nickName.length) {
         if ('production' !== process.env.NODE_ENV)
-            console.log(`saga - callSaveUserNameReq: not suitable user name length.`);
+            console.log(`saga - callSaveNickNameReq: not suitable user nick name length.`);
 
         alert('대화명은 2 글자 이상, 10글자 이하로 입력해주세요.');
         return;
     }
 
-    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_USER_NAME]);
+    const flag = new Uint8Array([Defines.ReqType.REQ_CHANGE_NICK_NAME]);
     const bytesUserId = Helpers.getByteArrayFromUUID(userState.id.trim());
-    const bytesUserName = new Uint8Array(Buffer.from(userInfo.userName.trim(), 'utf8'));
-    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesUserName]);
+    const bytesNickName = new Uint8Array(Buffer.from(userInfo.nickName.trim(), 'utf8'));
+    const packet = Helpers.mergeBytesPacket([flag, bytesUserId, bytesNickName]);
     webSocketState.socket.send(packet);
 }
 

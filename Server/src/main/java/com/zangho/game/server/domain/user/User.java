@@ -9,17 +9,20 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
 @Data
 @NoArgsConstructor
 @RequiredArgsConstructor
-public class User implements UserInterface {
+public class User implements UserInterface, UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = 36)
@@ -32,8 +35,22 @@ public class User implements UserInterface {
 
     @NonNull
     @ColumnDefault("''")
+    @Column(nullable = false, unique = true, length = 20)
+    private String userName;
+
+    @NonNull
+    @ColumnDefault("''")
     @Column(nullable = false, length = 20)
     private String name;
+
+    @NonNull
+    @ColumnDefault("''")
+    @Column(nullable = false, length = 20)
+    private String nickName;
+
+    @ColumnDefault("''")
+    @Column(nullable = false)
+    private String password = "";
 
     @ColumnDefault("''")
     @Column(nullable = false, length = 128)
@@ -86,5 +103,40 @@ public class User implements UserInterface {
     @Transient
     public UserRoom getUserRoom(String roomId) {
         return new UserRoom(this.id, roomId);
+    }
+
+    @Transient
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<SimpleGrantedAuthority> list = new ArrayList<>();
+        list.add(new SimpleGrantedAuthority("ROLE_USER"));
+        list.add(new SimpleGrantedAuthority("ROLE_" + this.accountType.name() + "_USER"));
+        return list;
+    }
+
+    @Transient
+    @Override
+    public String getUsername() {
+        return this.userName;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return false;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return false;
     }
 }

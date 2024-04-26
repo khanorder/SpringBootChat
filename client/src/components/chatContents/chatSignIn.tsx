@@ -16,7 +16,7 @@ import titleLogo03 from "public/images/logo03.jpg";
 import titleLogo04 from "public/images/logo04.jpg";
 import useCurrentUser from "@/components/common/useCurrentUser";
 import ChangeIcon from "public/images/change.svg";
-import {setIsActiveChangeUser} from "@/stores/reducers/ui";
+import {setIsActiveChangeUser, setIsActiveSignIn, setIsActiveSignUp} from "@/stores/reducers/ui";
 import useUserInfos from "@/components/common/useUserInfos";
 
 export default function ChatSignIn() {
@@ -36,46 +36,43 @@ export default function ChatSignIn() {
     //#endregion
 
     const checkAuthentication = useCallback(() => {
-        if (isEmpty(currentUser.accessToken) || isEmpty(currentUser.userName)) {
+        if (isEmpty(currentUser.accessToken) || isEmpty(currentUser.nickName)) {
             if (isEmpty(currentUser.refreshToken)) {
                 alert("기존 계정 정보가 없습니다.");
                 return;
             }
         }
 
-        if (!confirm(`${currentUser.userName} 계정으로 다시 로그인 하시겠습니까?`))
+        if (!confirm(`${currentUser.nickName} 계정으로 다시 로그인 하시겠습니까?`))
             return;
 
         dispatch(checkAuthenticationReq());
     }, [dispatch, currentUser]);
 
     const changeUser = useCallback(() => {
-        console.log(currentUser.accessToken)
-        console.log(currentUser.refreshToken)
-        console.log(currentUser.userName)
-        if (isEmpty(currentUser.accessToken) || isEmpty(currentUser.userName)) {
-            if (isEmpty(currentUser.refreshToken)) {
-                alert("기존 계정 정보가 없습니다.");
-                return;
-            }
-        }
-        
         dispatch(setIsActiveChangeUser(true));
-
-    }, [dispatch, currentUser]);
+    }, [dispatch]);
 
     const startGuest = useCallback(() => {
         dispatch(startGuestReq());
     }, [dispatch]);
 
+    const signIn = useCallback(() => {
+        dispatch(setIsActiveSignIn(true));
+    }, [dispatch]);
+
+    const signUp = useCallback(() => {
+        dispatch(setIsActiveSignUp(true));
+    }, [dispatch]);
+
     const signInButtons = useCallback(() => {
         const buttons: ReactElement[] = [];
-        if (0 < userInfos.size) {
-            if (isEmpty(currentUser.userName))
-                dispatch(getTokenUserInfoReq(isEmpty(currentUser.accessToken) ? currentUser.refreshToken : currentUser.accessToken));
+        if (0 < userInfos.size && !isEmpty(currentUser.nickName)) {
+            // if (isEmpty(currentUser.nickName))
+            //     dispatch(getTokenUserInfoReq(isEmpty(currentUser.accessToken) ? currentUser.refreshToken : currentUser.accessToken));
 
             buttons.push(
-                <div className={styles.buttonWrapper} key={'existsTokenProfile'}>
+                <div className={`${styles.buttonWrapper} ${styles.profileButtonWrapper}`} key={'existsTokenProfile'}>
                     {
                         1 < userInfos.size
                             ?
@@ -85,35 +82,51 @@ export default function ChatSignIn() {
                             :
                             <></>
                     }
-                    <button className={`${styles.button} ${styles.existsToken}`} onClick={checkAuthentication} title={`${currentUser.userName} 계정으로 시작`}>
-                        <img className={styles.profile} src={currentUser.profileImageUrl} alt={currentUser.userName} title={currentUser.userName}/>
+                    <button className={`${styles.button} ${styles.existsToken}`} onClick={checkAuthentication} title={`${currentUser.nickName} 계정으로 시작`}>
+                        <img className={styles.profile} src={currentUser.profileImageUrl} alt={currentUser.nickName} title={currentUser.nickName}/>
                     </button>
                 </div>
             );
 
             buttons.push(
                 <div className={styles.buttonWrapper} key={'existsTokenName'}>
-                    <button className={`${styles.button} ${styles.existsToken} ${stylesCommon.button}`} onClick={checkAuthentication} title={`${currentUser.userName} 계정으로 시작`}>
-                        <span className={styles.name}>{currentUser.userName}</span>
+                    <button className={`${styles.button} ${styles.existsToken} ${stylesCommon.button}`}
+                            onClick={checkAuthentication} title={`${currentUser.nickName} 계정으로 시작`}>
+                        <span className={styles.name}>{currentUser.nickName}</span>
+                        <span className={styles.startText}>으로 시작</span>
                     </button>
                 </div>
             );
 
-            if (1 < userInfos.size) {
-                buttons.push(
-                    <div className={styles.buttonWrapper} key={'changeUser'}>
-                        <button className={`${styles.button} ${stylesCommon.button}`} onClick={changeUser} title="계정변경">
-                            <span className={styles.name}>계정변경</span>
-                        </button>
-                    </div>
-                );
-            }
+            buttons.push(
+                <div className={styles.buttonWrapper} key={'changeUser'}>
+                    <button className={`${styles.button} ${stylesCommon.button}`} onClick={changeUser} title="계정변경">
+                        <span className={styles.name}>계정변경</span>
+                    </button>
+                </div>
+            );
+        } else {
+            buttons.push(
+                <div className={styles.buttonWrapper} key={'startGuest'}>
+                    <button className={`${styles.button} ${styles.createTempButton} ${stylesCommon.button}`} onClick={startGuest} title="Guest 시작">
+                        Guest 시작
+                    </button>
+                </div>
+            );
         }
 
         buttons.push(
-            <div className={styles.buttonWrapper} key={'startGuest'}>
-                <button className={`${styles.button} ${styles.createTempButton} ${stylesCommon.button}`} onClick={startGuest}>
-                    Guest 시작
+            <div className={styles.buttonWrapper} key={'signIn'}>
+                <button className={`${styles.button} ${styles.signInButton} ${stylesCommon.button} ${stylesCommon.primaryButton}`} onClick={signIn} title="로그인">
+                    로그인
+                </button>
+            </div>
+        );
+
+        buttons.push(
+            <div className={styles.buttonWrapper} key={'signUp'}>
+                <button className={`${styles.button} ${styles.signUpButton} ${stylesCommon.button}`} onClick={signUp} title="계정생성">
+                    계정생성
                 </button>
             </div>
         );

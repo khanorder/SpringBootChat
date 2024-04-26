@@ -55,10 +55,16 @@
 
             .buttonWrapper
                 position: relative
+                display: flex
+                justify-content: center
+                align-items: center
                 margin-top: 10px
+                padding: 0 20px
+                width: 100%
 
                 .button
                     padding: 5px 10px
+                    width: 100%
 
                     &.existsToken
                         display: flex
@@ -82,6 +88,11 @@
 
                         .profile
                             box-shadow: 0 0 10px #696969
+
+
+                &.profileButtonWrapper
+                    padding: 0
+                    width: 80px
 
                 &:first-child
                     margin-top: 0
@@ -107,9 +118,9 @@
                     &:hover
                         cursor: pointer
 
-                &:hover
-                    .changeUser
-                        display: block
+                //&:hover
+                //    .changeUser
+                //        display: block
 
 
     &.dev

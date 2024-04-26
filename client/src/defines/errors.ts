@@ -10,6 +10,31 @@ export namespace Errors {
         FAILED_TO_AUTH = 7,
     }
 
+    export enum SignUp {
+        NONE = 0,
+        UPGRADE_EXISTS_ACCOUNT = 1,
+        USER_NAME_REQUIRED = 2,
+        USER_NAME_TOO_SHORT = 3,
+        ALREADY_USED_USER_NAME = 4,
+        PASSWORD_REQUIRED = 5,
+        PASSWORD_TOO_SHORT = 6,
+        NOT_SUITABLE_PASSWORD = 7,
+        NOT_VALID_ACCESS_TOKEN = 8,
+        NOT_VALID_TOKEN_USER = 9,
+        NOT_VALID_ACCOUNT_TYPE = 10,
+        NOT_FOUND_TEMP_USER = 11,
+        FAILED_TO_ISSUE_TOKEN = 12,
+        FAILED_TO_SIGN_UP = 13,
+    }
+
+    export enum SignIn {
+        NONE = 0,
+        USER_NAME_REQUIRED = 1,
+        PASSWORD_REQUIRED = 2,
+        ALREADY_SIGN_IN = 3,
+        FAILED_TO_SIGN_IN = 4,
+    }
+
     export enum SignOut {
         NONE = 0,
         AUTH_REQUIRED = 1,

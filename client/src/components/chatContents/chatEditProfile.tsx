@@ -4,8 +4,8 @@ import styles from "@/styles/chatDialogEditProfile.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import Image from "next/image";
 import RemoveIcon from "public/images/close-circle.svg";
-import {setUserMessage, setUserName} from "@/stores/reducers/user";
-import {removeUserProfileReq, saveUserMessageReq, saveUserNameReq, signOutReq} from "@/stores/reducers/webSocket";
+import {setUserMessage, setNickName} from "@/stores/reducers/user";
+import {removeUserProfileReq, saveUserMessageReq, saveNickNameReq, signOutReq} from "@/stores/reducers/webSocket";
 import isEmpty from "lodash/isEmpty";
 import {Helpers} from "@/helpers";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
@@ -19,7 +19,7 @@ export default function ChatEditProfile() {
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
     const [currentUser] = useCurrentUser();
-    const [newUserName, setNewUserName] = useState<string>('');
+    const [newNickName, setNewNickName] = useState<string>('');
     const [newUserMessage, setNewUserMessage] = useState<string>('');
     const nameInputRef = createRef<HTMLInputElement>();
     const messageInputRef = createRef<HTMLInputElement>();
@@ -37,31 +37,31 @@ export default function ChatEditProfile() {
     }, [firstRender]);
     //#endregion
 
-    const onSaveUserName = useCallback(() => {
-        if (!newUserName.trim() || 2 > newUserName.trim().length) {
+    const onSaveNickName = useCallback(() => {
+        if (!newNickName.trim() || 2 > newNickName.trim().length) {
             alert('대화명은 2글자 이상으로 입력해주세요.');
             return;
         }
 
-        if (10 < newUserName.trim().length) {
+        if (10 < newNickName.trim().length) {
             alert('대화명은 10글자 이하로 입력해 주세요.');
             return;
         }
 
-        if (newUserName.trim() != currentUser.userName) {
-            dispatch(setUserName(newUserName.trim()))
-            dispatch(saveUserNameReq());
+        if (newNickName.trim() != currentUser.nickName) {
+            dispatch(setNickName(newNickName.trim()))
+            dispatch(saveNickNameReq());
         }
-    }, [dispatch, currentUser, newUserName]);
+    }, [dispatch, currentUser, newNickName]);
 
-    const onKeyUpUserName = useCallback((e: any) => {
+    const onKeyUpNickName = useCallback((e: any) => {
         if (e.key == 'Enter')
             nameInputRef.current?.blur();
     }, [nameInputRef]);
 
-    const onChangeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        setNewUserName(e.target.value);
-    }, [setNewUserName]);
+    const onChangeNickName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setNewNickName(e.target.value);
+    }, [setNewNickName]);
 
     const onSaveUserMessage = useCallback(() => {
         if (128 < newUserMessage.trim().length) {
@@ -167,15 +167,15 @@ export default function ChatEditProfile() {
 
             </div>
             <div className={styles.userInfo}>
-                <div className={styles.userName}>
-                    <div className={styles.currentUserName}>{currentUser.userName}</div>
-                    <div className={styles.userNameInputWrapper}>
-                        <input className={styles.userNameInput} value={newUserName} ref={nameInputRef}
-                               onKeyUp={e => onKeyUpUserName(e)}
-                               onChange={e => onChangeUserName(e)}
-                               onBlur={onSaveUserName}
+                <div className={styles.nickName}>
+                    <div className={styles.currentNickName}>{currentUser.nickName}</div>
+                    <div className={styles.nickNameInputWrapper}>
+                        <input className={styles.nickNameInput} value={newNickName} ref={nameInputRef}
+                               onKeyUp={e => onKeyUpNickName(e)}
+                               onChange={e => onChangeNickName(e)}
+                               onBlur={onSaveNickName}
                                onFocus={e => {
-                                   setNewUserName(currentUser.userName)
+                                   setNewNickName(currentUser.nickName)
                                }}
                                placeholder={appConfigs.isProd ? '대화명' : ''}/>
                     </div>

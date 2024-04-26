@@ -66,7 +66,7 @@ export default function ChatSearch() {
                         <Image className={styles.userThumbIcon} src={UserIcon} alt='유저 프로필' fill={true} priority={true} />
                     </div>
                     <div className={styles.userInfo}>
-                        <div className={styles.userName}>{connectedUser.userName}</div>
+                        <div className={styles.nickName}>{connectedUser.nickName}</div>
                         <div className={styles.userMessage}>★</div>
                     </div>
                 </li>

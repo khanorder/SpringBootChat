@@ -1,5 +1,6 @@
 import {Domains} from "@/domains";
 import {Helpers} from "@/helpers";
+import isEmpty from "lodash/isEmpty";
 
 export namespace ChatAPI {
 
@@ -8,10 +9,18 @@ export namespace ChatAPI {
         const url = (serverHost.startsWith("localhost") || serverHost.startsWith("192.168") ? 'http://' : 'https://') + serverHost + "/api/uploadChatImage";
         let result = false;
 
+        const userInfo = Helpers.getCurrentUserInfoCookie();
+        if (null == userInfo || isEmpty(userInfo.accessToken))
+            return result;
+
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userInfo.accessToken}`,
+                },
+                credentials: 'include',
                 body: JSON.stringify(uploadChatImageReq)
             });
 

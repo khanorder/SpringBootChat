@@ -11,7 +11,7 @@ import {
     enterChatRoomReq,
     exitChatRoomReq,
     sendMessageReq,
-    saveUserNameReq,
+    saveNickNameReq,
     connectedUsersReq,
     followReq,
     unfollowReq,
@@ -27,7 +27,7 @@ import {
     startGuestReq,
     signOutReq,
     checkAuthenticationReq,
-    getOthersUserInfoReq, getTokenUserInfoReq
+    getOthersUserInfoReq, getTokenUserInfoReq, signInReq
 } from '@/stores/reducers/webSocket';
 import { RootState } from '@/stores/reducers';
 import {PayloadAction} from "@reduxjs/toolkit";
@@ -64,7 +64,7 @@ import {
     notificationRes,
     checkNotificationRes,
     removeNotificationRes,
-    noticeUserNameChangedRes,
+    noticeNickNameChangedRes,
     noticeUserMessageChangedRes,
     changeUserProfileRes,
     noticeUserProfileChangedRes,
@@ -81,7 +81,7 @@ import {
     getTokenUserInfoRes,
     demandRefreshTokenRes,
     accessTokenExpiredRes,
-    refreshTokenExpiredRes
+    refreshTokenExpiredRes, signInRes
 } from "@/sagas/socketPackets/chatResponse";
 import {
     callConnectedUsersReq,
@@ -89,7 +89,7 @@ import {
     callEnterChatRoomReq,
     callExitChatRoomReq,
     callFollowReq,
-    callSaveUserNameReq,
+    callSaveNickNameReq,
     callSendMessageReq,
     callUnfollowReq,
     callCheckConnectionReq,
@@ -104,9 +104,8 @@ import {
     callRemoveChatRoomReq,
     callGetOthersUserInfoReq,
     callAddUserChatRoomReq,
-    callStartGuestReq, callSignOutReq, callCheckAuthenticationOnOpenReq, callGetTokenUserInfoReq
+    callStartGuestReq, callSignOutReq, callCheckAuthenticationOnOpenReq, callGetTokenUserInfoReq, callSignInReq
 } from "@/sagas/socketPackets/chatRequest";
-import isEmpty from "lodash/isEmpty";
 
 function createConnectionStateChannel (socket: WebSocket): EventChannel<number> {
     return eventChannel<number>(emit => {
@@ -317,6 +316,10 @@ function* onMessage (socket: WebSocket) {
                             yield call(checkAuthenticationRes, packetData);
                             break;
 
+                        case Defines.ResType.RES_SIGN_IN:
+                            yield call(signInRes, packetData);
+                            break;
+
                         case Defines.ResType.RES_SIGN_OUT:
                             yield call(signOutRes, packetData);
                             break;
@@ -413,8 +416,8 @@ function* onMessage (socket: WebSocket) {
                             yield call(openPreparedChatRoomRes, packetData);
                             break;
 
-                        case Defines.ResType.RES_NOTICE_USER_NAME_CHANGED:
-                            yield call(noticeUserNameChangedRes, packetData);
+                        case Defines.ResType.RES_NOTICE_NICK_NAME_CHANGED:
+                            yield call(noticeNickNameChangedRes, packetData);
                             break;
 
                         case Defines.ResType.RES_NOTICE_USER_MESSAGE_CHANGED:
@@ -477,7 +480,7 @@ function* onMessage (socket: WebSocket) {
                             yield call(noticeExitChatRoomRes, packetData);
                             break;
 
-                        case Defines.ResType.RES_NOTICE_CHANGE_NAME_CHAT_ROOM:
+                        case Defines.ResType.RES_NOTICE_CHANGE_NICK_NAME_CHAT_ROOM:
                             yield call(noticeChangeNameChatRoomRes, packetData);
                             break;
 
@@ -557,6 +560,7 @@ export function* watchWebSocket() {
     yield takeLatest(checkAuthenticationReq, callCheckAuthenticationReq);
     yield takeLatest(connectedUsersReq, callConnectedUsersReq);
     yield takeLatest(startGuestReq, callStartGuestReq);
+    yield takeLatest(signInReq, callSignInReq);
     yield takeLatest(signOutReq, callSignOutReq);
     yield takeLatest(getTokenUserInfoReq, callGetTokenUserInfoReq);
     yield takeLatest(getOthersUserInfoReq, callGetOthersUserInfoReq);
@@ -569,7 +573,7 @@ export function* watchWebSocket() {
     yield takeLatest(enterChatRoomReq, callEnterChatRoomReq);
     yield takeLatest(exitChatRoomReq, callExitChatRoomReq);
     yield takeLatest(sendMessageReq, callSendMessageReq);
-    yield takeLatest(saveUserNameReq, callSaveUserNameReq);
+    yield takeLatest(saveNickNameReq, callSaveNickNameReq);
     yield takeLatest(saveUserMessageReq, callSaveUserMessageReq);
     yield takeLatest(saveUserProfileReq, callSaveUserProfileReq);
     yield takeLatest(removeUserProfileReq, callRemoveUserProfileReq);

@@ -1,7 +1,11 @@
 package com.zangho.game.server.error;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.zangho.game.server.define.Types;
 import lombok.Getter;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 @Getter
 public enum ErrorHistoryChatRoom implements Types {
@@ -14,16 +18,22 @@ public enum ErrorHistoryChatRoom implements Types {
     FAILED_TO_GET_HISTORY(6);
 
     private final int number;
+
     ErrorHistoryChatRoom(int number) {
         this.number = number;
     }
 
+    @JsonValue
     public int getNumber() {
         return number;
     }
 
     public byte getByte() {
         return (byte)number;
+    }
+
+    public static Optional<ErrorHistoryChatRoom> getType(int number) {
+        return Arrays.stream(values()).filter(no -> no.number == number).findFirst();
     }
 }
 

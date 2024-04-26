@@ -1,6 +1,10 @@
 package com.zangho.game.server.error;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.zangho.game.server.define.Types;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 public enum ErrorChangeUserMessage implements Types {
     NONE(0),
@@ -12,16 +16,22 @@ public enum ErrorChangeUserMessage implements Types {
     FAILED_TO_CHANGE(6);
 
     private final int number;
-    private ErrorChangeUserMessage(int number) {
+
+    ErrorChangeUserMessage(int number) {
         this.number = number;
     }
 
+    @JsonValue
     public int getNumber() {
         return number;
     }
 
     public byte getByte() {
         return (byte)number;
+    }
+
+    public static Optional<ErrorChangeUserMessage> getType(int number) {
+        return Arrays.stream(values()).filter(no -> no.number == number).findFirst();
     }
 }
 

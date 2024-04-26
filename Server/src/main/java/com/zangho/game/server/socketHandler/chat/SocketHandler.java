@@ -82,6 +82,10 @@ public class SocketHandler extends TextWebSocketHandler {
                     reqHandler.onCheckAuthentication(session, connectedUser, packet);
                     break;
 
+                case REQ_SIGN_IN:
+                    reqHandler.onSignIn(session, connectedUser, packet);
+                    break;
+
                 case REQ_SIGN_OUT:
                     reqHandler.onSignOut(session, connectedUser, packet);
                     break;
@@ -119,7 +123,7 @@ public class SocketHandler extends TextWebSocketHandler {
                     break;
 
                 case REQ_CHANGE_USER_NAME:
-                    reqHandler.onChangeUserName(session, connectedUser, packet);
+                    reqHandler.onChangeNickName(session, connectedUser, packet);
                     break;
 
                 case REQ_CHANGE_USER_MESSAGE:

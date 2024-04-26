@@ -38,6 +38,17 @@ const userSlice = createSlice({
 
             state.userInfos = Helpers.mapToObject(Helpers.mergeUserInfoCookie(action.payload));
         },
+        removeUserInfo: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - removeUserInfo: ${action.payload}`);
+
+            const userInfos = Helpers.objectToMap(state.userInfos);
+            if (userInfos.has(action.payload)) {
+                userInfos.delete(action.payload);
+                Helpers.setUserInfosCookie(userInfos);
+                state.userInfos = Helpers.mapToObject(userInfos);
+            }
+        },
         setUserInfos: (state, action: PayloadAction<Map<string, Domains.UserInfo>>) => {
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - setUserInfos: ${JSON.stringify(action.payload, Helpers.replacer)}`);
@@ -49,7 +60,7 @@ const userSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - signIn: ${action.payload}`);
 
-            if (isEmpty(action.payload.token)) {
+            if (isEmpty(action.payload.accessToken)) {
                 if ('production' !== process.env.NODE_ENV)
                     console.log(`reducer - signIn: token is empty`);
                 return;
@@ -57,10 +68,10 @@ const userSlice = createSlice({
 
             const userTokenInfo: Domains.UserInfo = {
                 userId: action.payload.user.userId,
-                accessToken: action.payload.token,
+                accessToken: action.payload.accessToken,
                 refreshToken: action.payload.refreshToken,
                 accountType: action.payload.user.accountType,
-                userName: action.payload.user.userName,
+                nickName: action.payload.user.nickName,
                 message: action.payload.user.message,
                 haveProfile: action.payload.user.haveProfile,
                 latestActiveAt: action.payload.user.latestActive,
@@ -82,7 +93,7 @@ const userSlice = createSlice({
             if ('production' !== process.env.NODE_ENV)
                 console.log(`reducer - updateSignIn: ${JSON.stringify(action.payload)}`);
 
-            if (isEmpty(action.payload.token)) {
+            if (isEmpty(action.payload.accessToken)) {
                 if ('production' !== process.env.NODE_ENV)
                     console.log(`reducer - updateSignIn: token is empty`);
                 return;
@@ -90,10 +101,10 @@ const userSlice = createSlice({
 
             const userTokenInfo: Domains.UserInfo = {
                 userId: action.payload.user.userId,
-                accessToken: action.payload.token,
+                accessToken: action.payload.accessToken,
                 refreshToken: action.payload.refreshToken,
                 accountType: action.payload.user.accountType,
-                userName: action.payload.user.userName,
+                nickName: action.payload.user.nickName,
                 message: action.payload.user.message,
                 haveProfile: action.payload.user.haveProfile,
                 latestActiveAt: action.payload.user.latestActive,
@@ -179,9 +190,9 @@ const userSlice = createSlice({
             if (null != userInfos)
                 state.userInfos = Helpers.mapToObject(userInfos);
         },
-        setUserName: (state, action: PayloadAction<string>) => {
+        setNickName: (state, action: PayloadAction<string>) => {
             if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setUserName: ${action.payload}`);
+                console.log(`reducer - setNickName: ${action.payload}`);
 
             if (isEmpty(state.id)) {
                 alert(`선택된 사용자가 없습니다.`);
@@ -193,7 +204,7 @@ const userSlice = createSlice({
                 return;
             }
 
-            const userInfos = Helpers.setUserNameCookie(state.id, action.payload.trim());
+            const userInfos = Helpers.setNickNameCookie(state.id, action.payload.trim());
             if (null != userInfos)
                 state.userInfos = Helpers.mapToObject(userInfos);
         },
@@ -458,7 +469,7 @@ const userSlice = createSlice({
                 return;
             }
 
-            if ('name' != action.payload.dataType && 'message' != action.payload.dataType && 'profile' != action.payload.dataType) {
+            if ('nickName' != action.payload.dataType && 'message' != action.payload.dataType && 'profile' != action.payload.dataType) {
                 console.log(`reducer - updateUsersData: not suitable dataType.`);
                 return;
             }
@@ -468,17 +479,17 @@ const userSlice = createSlice({
                 return;
             }
 
-            if ('name' == action.payload.dataType && isEmpty(action.payload.userData)) {
-                console.log(`reducer - updateUsersData: userName can not be empty.`);
+            if ('nickName' == action.payload.dataType && isEmpty(action.payload.userData)) {
+                console.log(`reducer - updateUsersData: nickName can not be empty.`);
                 return;
             }
 
             const other = state.others.find(_ => _.userId == action.payload.userId);
 
             switch (action.payload.dataType) {
-                case "name":
+                case "nickName":
                     if (null != other) {
-                        other.userName = action.payload.userData;
+                        other.nickName = action.payload.userData;
                         state.others = deepmerge([], state.others);
                     }
                     break;
@@ -510,7 +521,7 @@ const userSlice = createSlice({
 });
 
 export interface UpdateUsersDataProps {
-    dataType: 'name'|'message'|'profile'
+    dataType: 'nickName'|'message'|'profile'
     userId: string;
     userData: string;
 }
@@ -519,6 +530,8 @@ export type { UserState };
 export const {
     // setToken,
     // setRefreshToken,
+    setUserInfo,
+    removeUserInfo,
     setUserInfos,
     signIn,
     updateSignIn,
@@ -527,7 +540,7 @@ export const {
     expireRefreshToken,
     setUserId,
     setUserAccountType,
-    setUserName,
+    setNickName,
     setUserMessage,
     setHaveProfile,
     setLatestActive,
@@ -536,6 +549,7 @@ export const {
     setOthers,
     loadOthers,
     addOthers,
+    removeOthers,
     setLatestActiveUsers,
     setConnectedUsers,
     addConnectedUser,

@@ -1,5 +1,6 @@
 package com.zangho.game.server.define;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -16,6 +17,7 @@ public enum RelationState implements Types {
         this.number = number;
     }
 
+    @JsonValue
     public int getNumber() {
         return number;
     }

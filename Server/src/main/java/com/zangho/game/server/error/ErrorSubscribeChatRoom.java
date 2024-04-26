@@ -1,6 +1,10 @@
 package com.zangho.game.server.error;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.zangho.game.server.define.Types;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 public enum ErrorSubscribeChatRoom implements Types {
     NONE(0),
@@ -12,16 +16,22 @@ public enum ErrorSubscribeChatRoom implements Types {
     ALREADY_SUBSCRIBE_ROOM(6);
 
     private final int number;
-    private ErrorSubscribeChatRoom(int number) {
+
+    ErrorSubscribeChatRoom(int number) {
         this.number = number;
     }
 
+    @JsonValue
     public int getNumber() {
         return number;
     }
 
     public byte getByte() {
         return (byte)number;
+    }
+
+    public static Optional<ErrorSubscribeChatRoom> getType(int number) {
+        return Arrays.stream(values()).filter(no -> no.number == number).findFirst();
     }
 }
 

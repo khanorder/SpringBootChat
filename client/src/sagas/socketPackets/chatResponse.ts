@@ -25,7 +25,7 @@ import {
     setFollows,
     setUserMessage,
     setUserId,
-    setUserName,
+    setNickName,
     setHaveProfile,
     setLatestActive,
     updateUsersData,
@@ -110,12 +110,12 @@ export function* checkAuthenticationRes(data: Uint8Array) {
                     return;
                 }
 
-                checkedUser.userName = response.userName;
+                checkedUser.nickName = response.nickName;
                 checkedUser.message = response.userMessage;
                 checkedUser.haveProfile = response.haveProfile;
                 checkedUser.latestActive = response.latestActive;
 
-                yield put(updateSignIn({ token: response.token, refreshToken: response.refreshToken, user: checkedUser }));
+                yield put(updateSignIn({ accessToken: response.token, refreshToken: response.refreshToken, user: checkedUser }));
 
             } catch (error) {
                 if ('production' !== process.env.NODE_ENV)
@@ -132,13 +132,14 @@ export function* checkAuthenticationRes(data: Uint8Array) {
             break;
 
         case Errors.CheckAuth.AUTH_EXPIRED:
-            alert('인증이 만료되었습니다.');
+            alert("사용자 인증이 만료되었습니다.");
             yield put(setUserId(""));
             break;
 
         case Errors.CheckAuth.ALREADY_SIGN_IN_USER:
-            yield put(setAuthState(Defines.AuthStateType.ALREADY_SIGN_IN));
-            alert('다른 창으로 로그인 중입니다.');
+            //yield put(setAuthState(Defines.AuthStateType.ALREADY_SIGN_IN));
+            yield put(setUserId(""));
+            alert('로그인 중인 계정입니다.');
             break;
 
         case Errors.CheckAuth.FAILED_TO_CREATE_USER:
@@ -147,6 +148,39 @@ export function* checkAuthenticationRes(data: Uint8Array) {
 
         case Errors.CheckAuth.FAILED_TO_ISSUE_TOKEN:
             alert('인증정보 생성 실패.');
+            break;
+    }
+
+    return response;
+}
+
+export function* signInRes(data: Uint8Array) {
+    if ('production' !== process.env.NODE_ENV)
+        console.log(`packet - signInRes`);
+
+    const response = Domains.SignInRes.decode(data);
+
+    if (null == response) {
+        if ('production' !== process.env.NODE_ENV)
+            console.log(`packet - signInRes: response is null.`);
+        return null;
+    }
+
+    switch (response.result) {
+        case Errors.SignIn.USER_NAME_REQUIRED:
+            alert("계정이름을 입력해 주세요.");
+            break;
+
+        case Errors.SignIn.PASSWORD_REQUIRED:
+            alert("비밀번호를 입력해 주세요.");
+            break;
+
+        case Errors.SignIn.ALREADY_SIGN_IN:
+            alert("이미 로그인 중입니다.");
+            break;
+
+        default:
+            alert("로그인 실패.");
             break;
     }
 
@@ -437,7 +471,7 @@ export function* getTokenUserInfoRes(data: Uint8Array) {
                 const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
                 const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
                 const profileImage = response.haveProfile ? imagePath + `${response.userId}?${(new Date()).getTime()}` : "";
-                yield put(setUserName(response.userName));
+                yield put(setNickName(response.nickName));
                 yield put(setHaveProfile(response.haveProfile));
                 yield put(setProfileImageUrl(profileImage));
             } catch (error) {
@@ -724,19 +758,19 @@ export function* openPreparedChatRoomRes(data: Uint8Array) {
     return response;
 }
 
-export function* noticeUserNameChangedRes(data: Uint8Array) {
+export function* noticeNickNameChangedRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
-        console.log(`packet - noticeUserNameChangedRes`);
+        console.log(`packet - noticeNickNameChangedRes`);
 
-    const response = Domains.NoticeUserNameChangedRes.decode(data);
+    const response = Domains.NoticeNickNameChangedRes.decode(data);
 
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
-            console.log(`packet - noticeUserNameChangedRes: response is null.`);
+            console.log(`packet - noticeNickNameChangedRes: response is null.`);
         return null;
     }
 
-    yield put(updateUsersData({ dataType: "name", userId: response.userId, userData: response.userName }));
+    yield put(updateUsersData({ dataType: "nickName", userId: response.userId, userData: response.nickName }));
     return response;
 }
 
@@ -1080,7 +1114,7 @@ export function* noticeEnterChatRoomRes(data: Uint8Array) {
         return null;
     }
 
-    const enterNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.userName}'님이 입장했습니다.`);
+    const enterNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.nickName}'님이 입장했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: enterNotice}));
     return response;
 }
@@ -1097,7 +1131,7 @@ export function* noticeExitChatRoomRes(data: Uint8Array) {
         return null;
     }
 
-    const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.userName}'님이 퇴장했습니다.`);
+    const exitNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.nickName}'님이 퇴장했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: exitNotice}));
     return response;
 }
@@ -1106,7 +1140,7 @@ export function* noticeChangeNameChatRoomRes(data: Uint8Array) {
     if ('production' !== process.env.NODE_ENV)
         console.log(`packet - noticeChangeNameChatRoomRes`);
 
-    const response = Domains.NoticeChangeNameChatRoomRes.decode(data);
+    const response = Domains.NoticeChangeNickNameChatRoomRes.decode(data);
 
     if (null == response) {
         if ('production' !== process.env.NODE_ENV)
@@ -1114,7 +1148,7 @@ export function* noticeChangeNameChatRoomRes(data: Uint8Array) {
         return null;
     }
 
-    const changeNameNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.oldUserName}'님이 '${response?.newUserName}'으로 대화명을 변경했습니다.`);
+    const changeNameNotice = new Domains.Chat(Defines.ChatType.NOTICE, response?.roomId ?? '', uuid(), uuid(), new Date().getTime(), `'${response?.oldNickName}'님이 '${response?.newNickName}'으로 대화명을 변경했습니다.`);
     yield put(addChatData({roomId: response?.roomId ?? '', chatData: changeNameNotice}));
     return response;
 }

@@ -12,6 +12,7 @@ import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -32,6 +33,7 @@ public class ReqHandler {
     private final MessageService messageService;
     private final NotificationService notificationService;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${client.version.main}")
     private int clientVersionMain;
@@ -40,7 +42,7 @@ public class ReqHandler {
     @Value("${client.version.maintenance}")
     private int clientVersionMaintenance;
 
-    public ReqHandler(SessionHandler sessionHandler, ResHandler resHandler, UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService, JwtService jwtService) {
+    public ReqHandler(SessionHandler sessionHandler, ResHandler resHandler, UserService userService, ChatRoomService chatRoomService, LineNotifyService lineNotifyService, MessageService messageService, NotificationService notificationService, JwtService jwtService, PasswordEncoder passwordEncoder) {
         var config = System.getProperty("Config");
         isDevelopment = null == config || !config.equals("production");
         this.sessionHandler = sessionHandler;
@@ -51,6 +53,7 @@ public class ReqHandler {
         this.messageService = messageService;
         this.notificationService = notificationService;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public void onAfterConnectionEstablished(@NonNull WebSocketSession session) {
@@ -181,7 +184,12 @@ public class ReqHandler {
                         return;
                 }
 
+
                 var token = verifiedResult.getRight().get();
+                if (userService.isConnectedUser(token.getUserId())) {
+                    resHandler.resCheckAuthentication(session, ErrorCheckAuth.ALREADY_SIGN_IN_USER);
+                    return;
+                }
 
                 var authenticatedUserInfo = userService.authenticateUser(token.getUserId(), session);
                 optUser = authenticatedUserInfo.getLeft();
@@ -195,7 +203,7 @@ public class ReqHandler {
                 // 인증확인 토큰이 리프레쉬 토크인 경우 토큰을 재 발행한다
                 var optTokenType = TokenType.getType(token.getTokenType().getNumber());
                 if (optTokenType.isPresent() && optTokenType.get().equals(TokenType.REFRESH)) {
-                    var resultIssueToken = jwtService.issueAccessToken(optUser.get());
+                    var resultIssueToken = jwtService.issueAccessTokenWithRefresh(optUser.get());
                     if (resultIssueToken.getLeft().equals(ErrorIssueJWT.FAILED_TO_ISSUE)) {
                         // 토큰 재발행이 실패한 경우 메모리에서 인증 상태를 다시 제거한다.
                         userService.removeConnectedUser(optUser.get());
@@ -215,7 +223,7 @@ public class ReqHandler {
                     return;
                 }
 
-                var resultIssueToken = jwtService.issueAccessToken(optUser.get());
+                var resultIssueToken = jwtService.issueAccessTokenWithRefresh(optUser.get());
                 if (resultIssueToken.getLeft().equals(ErrorIssueJWT.FAILED_TO_ISSUE)) {
                     resHandler.resCheckAuthentication(session, ErrorCheckAuth.FAILED_TO_ISSUE_TOKEN);
                     return;
@@ -244,6 +252,74 @@ public class ReqHandler {
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
+    }
+
+    public void onSignIn(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+        if (connectedUser.isPresent()) {
+            resHandler.resSignIn(session, ErrorSignIn.ALREADY_SIGN_IN);
+            return;
+        }
+
+        var userNameLength = packet[1];
+        var offsetUserNameLength = 2;
+        var bytesUserName = Arrays.copyOfRange(packet, offsetUserNameLength, offsetUserNameLength + userNameLength);
+        var userName = (new String(bytesUserName)).trim();
+        var bytesPassword = Arrays.copyOfRange(packet, offsetUserNameLength + userNameLength, packet.length);
+        var password = (new String(bytesPassword)).trim();
+
+        if (userName.isEmpty()) {
+            resHandler.resSignIn(session, ErrorSignIn.USER_NAME_REQUIRED);
+            return;
+        }
+
+        if (password.isEmpty()) {
+            resHandler.resSignIn(session, ErrorSignIn.PASSWORD_REQUIRED);
+            return;
+        }
+
+        var optUser = userService.findByUserName(userName);
+        if (optUser.isEmpty()) {
+            if (isDevelopment)
+                logger.info("SignIn : Not Found User '" + userName + "'.");
+
+            resHandler.resSignIn(session, ErrorSignIn.FAILED_TO_SIGN_IN);
+            return;
+        }
+
+        if (!AccountType.NORMAL.equals(optUser.get().getAccountType())) {
+            if (isDevelopment)
+                logger.info("SignIn : '" + userName + "' account is not normal type.");
+
+            resHandler.resSignIn(session, ErrorSignIn.FAILED_TO_SIGN_IN);
+            return;
+        }
+
+        if (!passwordEncoder.matches(password, optUser.get().getPassword())) {
+            if (isDevelopment)
+                logger.info("SignIn : '" + userName + "' password was wrong.");
+
+            resHandler.resSignIn(session, ErrorSignIn.FAILED_TO_SIGN_IN);
+            return;
+        }
+
+        if (userService.isConnectedUser(optUser.get())) {
+            if (isDevelopment)
+                logger.info("SignIn : Already Sign in User '" + userName + "'.");
+
+            resHandler.resSignIn(session, ErrorSignIn.ALREADY_SIGN_IN);
+            return;
+        }
+
+        var resultIssueToken = jwtService.issueAccessTokenWithRefresh(optUser.get());
+        if (!ErrorIssueJWT.NONE.equals(resultIssueToken.getLeft()) || resultIssueToken.getRight().getLeft().isEmpty() || resultIssueToken.getRight().getRight().isEmpty()) {
+            if (isDevelopment)
+                logger.info("SignIn : '" + userName + "' failed to issue token.");
+
+            resHandler.resSignIn(session, ErrorSignIn.FAILED_TO_SIGN_IN);
+            return;
+        }
+
+        resHandler.resCheckAuthentication(session, optUser.get(), resultIssueToken.getRight().getLeft(), resultIssueToken.getRight().getRight());
     }
 
     public void onSignOut(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
@@ -402,7 +478,7 @@ public class ReqHandler {
 
             var token = verifiedResult.getRight().get();
 
-            var optUser = userService.findUser(token.getUserId());
+            var optUser = userService.findUserById(token.getUserId());
             if (optUser.isEmpty()) {
                 resHandler.resGetTokenUserInfo(session, ErrorGetTokenUserInfo.NOT_FOUND_USER);
                 return;
@@ -425,7 +501,7 @@ public class ReqHandler {
             var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
             var userId = Helpers.getUUIDFromByteArray(bytesUserId);
 
-            var optUser = userService.findUser(userId);
+            var optUser = userService.findUserById(userId);
             if (optUser.isEmpty()) {
                 resHandler.resGetOthersUserInfo(session, ErrorGetOthersUserInfo.NOT_FOUND_USER);
                 return;
@@ -452,7 +528,7 @@ public class ReqHandler {
             if (resHandler.resIsTokenExpired(session, connectedUser.get(), tokenString))
                 return;
 
-            var targetUser = userService.findUser(userId);
+            var targetUser = userService.findUserById(userId);
             if (targetUser.isEmpty()) {
                 resHandler.resFollow(session, ErrorFollow.NOT_FOUND_USER);
                 return;
@@ -498,7 +574,7 @@ public class ReqHandler {
             if (resHandler.resIsTokenExpired(session, connectedUser.get(), tokenString))
                 return;
 
-            var targetUser = userService.findUser(userId);
+            var targetUser = userService.findUserById(userId);
             if (targetUser.isEmpty()) {
                 resHandler.resUnfollow(session, ErrorUnfollow.NOT_FOUND_USER);
                 return;
@@ -537,7 +613,7 @@ public class ReqHandler {
 
             var bytesTargetUserId = Arrays.copyOfRange(packet, 1, 17);
             var targetUserId = Helpers.getUUIDFromByteArray(bytesTargetUserId);
-            var targetUser = userService.findUser(targetUserId);
+            var targetUser = userService.findUserById(targetUserId);
             if (targetUser.isEmpty()) {
                 resHandler.resStartChat(session, ErrorStartChat.NOT_FOUND_TARGET_USER);
                 return;
@@ -559,25 +635,25 @@ public class ReqHandler {
         }
     }
 
-    public void onChangeUserName(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
+    public void onChangeNickName(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
             var userId = Helpers.getUUIDFromByteArray(bytesUserId);
             if (connectedUser.isEmpty() || !connectedUser.get().getId().equals(userId))
                 return;
 
-            var bytesUserName = Arrays.copyOfRange(packet, 17, packet.length);
-            var newUserName = new String(bytesUserName);
+            var bytesNickName = Arrays.copyOfRange(packet, 17, packet.length);
+            var newNickName = new String(bytesNickName);
 
-            var oldUserName =  connectedUser.get().getName();
-            connectedUser.get().setName(newUserName);
-            var result = userService.updateUser(connectedUser.get());
+            var oldNickName =  connectedUser.get().getNickName();
+            connectedUser.get().setNickName(newNickName);
+            var result = userService.saveUser(connectedUser.get());
 
             if (!result)
                 return;
             
             // 다른 사용자들에게 대화명 변경 알림
-            resHandler.noticeUserNameChanged(session, connectedUser.get(), newUserName);
+            resHandler.noticeNickNameChanged(session, connectedUser.get(), newNickName);
 
             // 입장중인 채팅방이 있는지 확인
             if (connectedUser.get().getCurrentChatRoom().isEmpty())
@@ -589,7 +665,7 @@ public class ReqHandler {
                 return;
             
             // 채팅방 입장 중이면 입장한 유저들에게 대화명 변경 알림
-            resHandler.noticeRoomUserNameChanged(currentChatRoom.get(), oldUserName, newUserName);
+            resHandler.noticeRoomNickNameChanged(currentChatRoom.get(), oldNickName, newNickName);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -605,7 +681,7 @@ public class ReqHandler {
             var bytesUserMessage = Arrays.copyOfRange(packet, 17, packet.length);
             var newUserMessage = new String(bytesUserMessage);
             connectedUser.get().setMessage(newUserMessage);
-            var result = userService.updateUser(connectedUser.get());
+            var result = userService.saveUser(connectedUser.get());
             if (result)
                 resHandler.noticeUserMessageChanged(session, connectedUser.get(), newUserMessage);
         } catch (Exception ex) {
@@ -670,7 +746,7 @@ public class ReqHandler {
 
             connectedUser.get().setProfileMime(optMime.get());
             connectedUser.get().setProfileImage(fileName);
-            var result = userService.updateUser(connectedUser.get());
+            var result = userService.saveUser(connectedUser.get());
             if (!result) {
                 resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.FAILED_TO_CHANGE);
                 return;
@@ -719,7 +795,7 @@ public class ReqHandler {
         try {
             connectedUser.get().setProfileMime(AllowedImageType.NONE);
             connectedUser.get().setProfileImage("");
-            var result = userService.updateUser(connectedUser.get());
+            var result = userService.saveUser(connectedUser.get());
             if (!result) {
                 resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.FAILED_TO_REMOVE);
                 return;
@@ -761,7 +837,7 @@ public class ReqHandler {
                 var bytesRoomName = Arrays.copyOfRange(packet, offsetUserId, packet.length);
                 roomName = new String(bytesRoomName);
             } else {
-                roomName = connectedUser.get().getName();
+                roomName = connectedUser.get().getNickName();
                 if (0 < userCount) {
                     roomName += " 외 " + userCount + "명";
                 } else {
@@ -789,12 +865,12 @@ public class ReqHandler {
             }
 
             if (isDevelopment)
-                logger.info(chatRoom.get().getOpenType().getNumber() + ", " + chatRoom.get().getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName());
+                logger.info(chatRoom.get().getOpenType().getNumber() + ", " + chatRoom.get().getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getNickName());
 
             resHandler.resAddChatRoom(session, chatRoom.get());
             resHandler.resCreateChatRoom(session, chatRoom.get());
             resHandler.resUpdateChatRoom(session, chatRoom.get());
-            lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+            lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -907,8 +983,8 @@ public class ReqHandler {
             resHandler.noticeEnterChatRoom(existsRoom.get(), connectedUser.get());
             resHandler.noticeAddChatRoomUser(existsRoom.get(), connectedUser.get());
 
-            messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 입장", "'" + connectedUser.get().getName() + "'님이 대화방에 입장했습니다.");
-            lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + connectedUser.get().getId() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+            messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 입장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 입장했습니다.");
+            lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -939,8 +1015,8 @@ public class ReqHandler {
             connectedUser.ifPresent(old -> old.setCurrentChatRoom(Optional.empty()));
             resHandler.resExitChatRoom(session, ErrorExitChatRoom.NONE);
 
-            messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 퇴장", "'" + connectedUser.get().getName() + "'님이 대화방에 퇴장했습니다.");
-            lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", userName:" + connectedUser.get().getName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+            messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 퇴장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 퇴장했습니다.");
+            lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -992,7 +1068,7 @@ public class ReqHandler {
             var sendAt = new Date();
             var chat = new Chat(chatId, roomId, connectedUser.get().getId(), chatType, chatMessage, sendAt);
             if (isDevelopment && ChatType.IMAGE != chatType)
-                logger.info(chatType + ", " + roomId + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getName() + ", " + chatMessage + ", " + sendAt + ", " + chatId);
+                logger.info(chatType + ", " + roomId + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getNickName() + ", " + chatMessage + ", " + sendAt + ", " + chatId);
 
             // 비공개 채팅방 개설(준비중 상태) 후 첫 채팅 시작할 때
             // 공개범위를 PREPARED에서 PRIVATE로 전환하여 저장하고
@@ -1005,7 +1081,7 @@ public class ReqHandler {
             }
 
             resHandler.noticeTalkChatRoom(existsRoom.get(), chat);
-            messageService.notifyBrowserUserInRoom(existsRoom.get(), connectedUser.get().getName(), chatMessage);
+            messageService.notifyBrowserUserInRoom(existsRoom.get(), connectedUser.get().getNickName(), chatMessage);
             chatRoomService.addChatToRoom(chat);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

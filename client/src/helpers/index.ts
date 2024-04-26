@@ -546,12 +546,12 @@ export namespace Helpers {
         return mergeUserInfoCookie(userInfo);
     }
 
-    export function setUserNameCookie(id: string, name: string): Map<string, Domains.UserInfo>|null {
+    export function setNickNameCookie(id: string, nickName: string): Map<string, Domains.UserInfo>|null {
         const userInfo = getUserInfoCookie(id);
         if (!userInfo)
             return null;
 
-        userInfo.userName = name;
+        userInfo.nickName = nickName;
         return mergeUserInfoCookie(userInfo);
     }
 
@@ -628,13 +628,24 @@ export namespace Helpers {
         return result;
     }
 
+    export function getCurrentUserInfoCookie(): Domains.UserInfo|null {
+        const userInfos = getUserInfosCookie();
+        let result: Domains.UserInfo|null = null;
+        try {
+            result = userInfos.get(getUserIdCookie()) ?? null;
+        } catch (error) {
+            console.error(error);
+        }
+        return result;
+    }
+
     export function getUserInfo(id: string, userInfos: {[p: string]: Domains.UserInfo}): Domains.UserInfo {
         const empty: Domains.UserInfo = {
             userId: "",
             accessToken: "",
             refreshToken: "",
             accountType: Defines.AccountType.NONE,
-            userName: "",
+            nickName: "",
             message: "",
             haveProfile: false,
             latestActiveAt: 0,
@@ -650,14 +661,22 @@ export namespace Helpers {
             if ("undefined" !== id && !isEmpty(id))
                 userInfo = userInfosMap.get(id);
 
-            if (userInfo && !isEmpty(userInfo.userId) && !isEmpty(userInfo.userName) && !isEmpty(userInfo.refreshToken))
+            if (userInfo && !isEmpty(userInfo.userId) && !isEmpty(userInfo.nickName) && !isEmpty(userInfo.refreshToken))
                 return userInfo;
 
             if (0 < userInfosMap.size) {
                 const userInfosIterator = userInfosMap.entries();
-                while (!userInfosIterator.next().done) {
-                    const [userId, userInfo] = userInfosIterator.next().value;
-                    if (!isEmpty(userInfo.userId) && !isEmpty(userInfo.userName) && !isEmpty(userInfo.refreshToken))
+                if (!userInfosIterator)
+                    return empty;
+
+                do {
+                    const [userId, userInfo] = userInfosIterator?.next()?.value;
+                    if (!isEmpty(userInfo.userId) && !isEmpty(userInfo.nickName) && !isEmpty(userInfo.refreshToken))
+                        return userInfo;
+
+                } while (!userInfosIterator.next().done) {
+                    const [userId, userInfo] = userInfosIterator?.next()?.value;
+                    if (!isEmpty(userInfo.userId) && !isEmpty(userInfo.nickName) && !isEmpty(userInfo.refreshToken))
                         return userInfo;
                 }
             }

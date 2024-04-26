@@ -1,6 +1,6 @@
 package com.zangho.game.server.repository.visit;
 
-import com.zangho.game.server.domain.Visit;
+import com.zangho.game.server.domain.request.ReqVisit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,7 +19,7 @@ public class VisitRepository {
         this.visitDataSource = visitDataSource;
     }
 
-    public boolean save(Visit visit) {
+    public boolean save(ReqVisit reqVisit) {
         var sql = "call x_saveVisit(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         Connection conn = null;
@@ -30,25 +30,25 @@ public class VisitRepository {
             conn = getConnection();
             pstmt = conn.prepareCall(sql);
 
-            pstmt.setString(1, visit.getSession());
-            pstmt.setLong(2, visit.getFp());
-            pstmt.setString(3, visit.getDeviceType());
-            pstmt.setString(4, visit.getDeviceVendor());
-            pstmt.setString(5, visit.getDeviceModel());
-            pstmt.setString(6, visit.getAgent());
-            pstmt.setString(7, visit.getBrowser());
-            pstmt.setString(8, visit.getBrowserVersion());
-            pstmt.setString(9, visit.getEngine());
-            pstmt.setString(10, visit.getEngineVersion());
-            pstmt.setString(11, visit.getOs());
-            pstmt.setString(12, visit.getOsVersion());
-            pstmt.setString(13, visit.getHost());
-            pstmt.setString(14, visit.getIp());
-            pstmt.setString(15, visit.getParameter());
-            pstmt.setString(16, visit.getPath());
-            pstmt.setInt(17, visit.getScheme());
-            pstmt.setString(18, visit.getTitle());
-            pstmt.setTimestamp(19, new Timestamp(visit.getLocalTime().getTime()));
+            pstmt.setString(1, reqVisit.getSession());
+            pstmt.setLong(2, reqVisit.getFp());
+            pstmt.setString(3, reqVisit.getDeviceType());
+            pstmt.setString(4, reqVisit.getDeviceVendor());
+            pstmt.setString(5, reqVisit.getDeviceModel());
+            pstmt.setString(6, reqVisit.getAgent());
+            pstmt.setString(7, reqVisit.getBrowser());
+            pstmt.setString(8, reqVisit.getBrowserVersion());
+            pstmt.setString(9, reqVisit.getEngine());
+            pstmt.setString(10, reqVisit.getEngineVersion());
+            pstmt.setString(11, reqVisit.getOs());
+            pstmt.setString(12, reqVisit.getOsVersion());
+            pstmt.setString(13, reqVisit.getHost());
+            pstmt.setString(14, reqVisit.getIp());
+            pstmt.setString(15, reqVisit.getParameter());
+            pstmt.setString(16, reqVisit.getPath());
+            pstmt.setInt(17, reqVisit.getScheme());
+            pstmt.setString(18, reqVisit.getTitle());
+            pstmt.setTimestamp(19, new Timestamp(reqVisit.getLocalTime().getTime()));
 
             pstmt.execute();
             rs = pstmt.getResultSet();

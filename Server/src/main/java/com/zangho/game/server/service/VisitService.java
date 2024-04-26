@@ -1,6 +1,6 @@
 package com.zangho.game.server.service;
 
-import com.zangho.game.server.domain.Visit;
+import com.zangho.game.server.domain.request.ReqVisit;
 import com.zangho.game.server.repository.visit.VisitRepository;
 
 public class VisitService {
@@ -11,8 +11,8 @@ public class VisitService {
         this.visitRepository = visitRepository;
     }
 
-    public boolean saveVisit(Visit visit) {
-        return visitRepository.save(visit);
+    public boolean saveVisit(ReqVisit reqVisit) {
+        return visitRepository.save(reqVisit);
     }
 
 }

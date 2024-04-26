@@ -60,15 +60,15 @@ export default function ChatNotifications() {
                 let message = "";
                 switch (notification.type) {
                     case Defines.NotificationType.FOLLOWER:
-                        message = `'${userInfo.userName}'님이 당신을 팔로우 합니다.`;
+                        message = `'${userInfo.nickName}'님이 당신을 팔로우 합니다.`;
                         break;
 
                     case Defines.NotificationType.START_CHAT:
-                        message = `'${userInfo.userName}'님이 보낸 메세지가 있습니다.`;
+                        message = `'${userInfo.nickName}'님이 보낸 메세지가 있습니다.`;
                         break;
 
                     case Defines.NotificationType.ADD_USER_CHAT_ROOM:
-                        message = `'${userInfo.userName}'님이 당신을 채팅방에 초대했습니다.`;
+                        message = `'${userInfo.nickName}'님이 당신을 채팅방에 초대했습니다.`;
                         break;
                 }
 

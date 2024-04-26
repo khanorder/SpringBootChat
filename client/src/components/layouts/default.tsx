@@ -16,7 +16,7 @@ export default function DefaultLayout({children}: { children: ReactNode }) {
     return (
         <>
             <Head>
-                <title>{title}</title>
+                <title>{title ?? "채팅 샘플"}</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
                 <meta name="title" content={title}/>
                 <meta name="subject" content={subject}/>

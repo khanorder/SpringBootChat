@@ -121,7 +121,7 @@ export default function DialogCreateChatRoom() {
             for (let i = 0; i < selectedUsers.length; i++) {
                 const selectedUserId = selectedUsers[i];
                 const userInfo = getOthersUserInfo(selectedUserId);
-                list.push(<div key={i} className={stylesCommon.chip} onClick={e => onSelectUser(selectedUserId)}>{userInfo.userName}</div>);
+                list.push(<div key={i} className={stylesCommon.chip} onClick={e => onSelectUser(selectedUserId)}>{userInfo.nickName}</div>);
             }
         }
 

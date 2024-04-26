@@ -13,6 +13,8 @@ interface UIState {
     isActiveChatImageInput: boolean;
     isActiveChatImageDetail: boolean;
     isActiveChangeUser: boolean;
+    isActiveSignUp: boolean;
+    isActiveSignIn: boolean;
 }
 
 const initialState: UIState = {
@@ -25,7 +27,9 @@ const initialState: UIState = {
     isActiveAddUser: false,
     isActiveChatImageInput: false,
     isActiveChatImageDetail: false,
-    isActiveChangeUser: false
+    isActiveChangeUser: false,
+    isActiveSignUp: false,
+    isActiveSignIn: false
 }
 
 const uiSlice = createSlice({
@@ -43,6 +47,8 @@ const uiSlice = createSlice({
             state.isActiveChatImageInput = false;
             state.isActiveChatImageDetail = false;
             state.isActiveChangeUser = false;
+            state.isActiveSignUp = false;
+            state.isActiveSignIn = false;
         },
         setActiveTab: (state, action: PayloadAction<Defines.TabType>) => {
             state.activeTab = action.payload;
@@ -74,6 +80,12 @@ const uiSlice = createSlice({
         setIsActiveChangeUser: (state, action: PayloadAction<boolean>) => {
             state.isActiveChangeUser = action.payload;
         },
+        setIsActiveSignUp: (state, action: PayloadAction<boolean>) => {
+            state.isActiveSignUp = action.payload;
+        },
+        setIsActiveSignIn: (state, action: PayloadAction<boolean>) => {
+            state.isActiveSignIn = action.payload;
+        },
         toggleIsActiveProfile: (state) => {
             state.isActiveProfile = !state.isActiveProfile;
         },
@@ -101,6 +113,12 @@ const uiSlice = createSlice({
         toggleIsActiveChangeUser: (state) => {
             state.isActiveChangeUser = !state.isActiveChangeUser;
         },
+        toggleIsActiveSignUp: (state) => {
+            state.isActiveSignUp = !state.isActiveSignUp;
+        },
+        toggleIsActiveSignIn: (state) => {
+            state.isActiveSignIn = !state.isActiveSignIn;
+        },
     }
 });
 
@@ -117,6 +135,8 @@ export const {
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
     setIsActiveChangeUser,
+    setIsActiveSignUp,
+    setIsActiveSignIn,
     toggleIsActiveNotification,
     toggleIsActiveProfile,
     toggleIsActiveProfileImageInput,
@@ -126,6 +146,8 @@ export const {
     toggleIsActiveChatImageInput,
     toggleIsActiveChatImageDetail,
     toggleIsActiveChangeUser,
+    toggleIsActiveSignUp,
+    toggleIsActiveSignIn,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;
