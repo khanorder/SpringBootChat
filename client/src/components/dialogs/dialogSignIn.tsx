@@ -1,4 +1,4 @@
-import {ChangeEvent, ReactElement, useCallback, useEffect, useRef, useState} from "react";
+import {ChangeEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useRef, useState} from "react";
 import styles from "@/styles/chatDialogSignIn.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
 import {Defines} from "@/defines";
@@ -50,8 +50,9 @@ export default function DialogSignUp() {
 
     const onChangeUserName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         let inputText = e.target?.value ? e.target.value.trim() : "";
-        if (inputText.matchAll(/[^a-zA-Z0-9_\-]/g).next().value) {
-            alert("계정명은 영문, 숫자, 특수문자 '_', '-' 만 사용가능합니다.");
+        const inValidText = inputText.matchAll(/[^a-zA-Z0-9_\-]/g)?.next()?.value;
+        if (inValidText) {
+            alert(`'${inValidText}'는 계정이름에 상용할 수없는 문자입니다.\n계정이름은 영문, 숫자, 특수문자 '_', '-' 만 사용가능합니다.`);
             inputText = inputText.replaceAll(/[^a-zA-Z0-9_\-]+/g, '');
         }
 
@@ -131,18 +132,26 @@ export default function DialogSignUp() {
         }
     }, [userName, password, dispatch, hideDialog]);
 
+    const onKeyUp = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            onSignIn();
+        } else if (e.key === "Escape") {
+            hideDialog();
+        }
+    }, [onSignIn, hideDialog]);
+
     const inputForm = useCallback(() => {
         return (
             <div className={styles.inputForm}>
                 <div className={`${styles.inputWrapper} ${styles.inputUserName}`}>
-                    <input type="text" className={styles.input} value={userName} onChange={(e) => onChangeUserName(e)}/>
+                    <input type="text" className={styles.input} value={userName} onKeyUp={e => onKeyUp(e)} onChange={(e) => onChangeUserName(e)}/>
                 </div>
                 <div className={`${styles.inputWrapper} ${styles.inputPassword}`}>
-                    <input type="password" className={styles.input} value={password} onChange={(e) => onChangePassword(e)}/>
+                    <input type="password" className={styles.input} value={password} onKeyUp={e => onKeyUp(e)} onChange={(e) => onChangePassword(e)}/>
                 </div>
             </div>
         );
-    }, [userName, password, onChangeUserName, onChangePassword]);
+    }, [userName, password, onChangeUserName, onChangePassword, onKeyUp]);
 
     const dialog = useCallback(() => {
         return (

@@ -1,7 +1,7 @@
 .dialogWrapper
     transition: transform 0.5s
-    position: absolute
-    top: 0
+    position: fixed
+    bottom: 0
     left: 0
     width: 100%
     height: 100%
@@ -16,6 +16,7 @@
         border-right: 1px solid #d9d9d9
         width: 100vw
         height: 100vh
+        max-width: 24rem
         background: #ffffff
         z-index: 1002
         box-shadow: 0 0 100vw #00000000
@@ -58,6 +59,7 @@
             flex: 1 1 auto
             overflow-x: hidden
             overflow-y: auto
+            max-width: 24rem
 
             &::-webkit-scrollbar
                 display: block
@@ -82,6 +84,7 @@
             padding: 10px 0
             border-top: 1px solid #d9d9d9
             background: #ffffff
+            max-width: 24rem
 
             .dialogButton
                 margin-left: 10px
@@ -113,21 +116,17 @@
 @media (max-width: 700px)
     .dialogWrapper
         .dialog
+            width: 100%
+            border-right: 0
+
             .dialogContent
+                position: fixed
+                width: 100%
+                bottom: 52px
                 flex: 1 1 auto
-                max-height: calc(100% - 98px)
+                height: calc(100% - 108px)
 
             .dialogButtons
                 width: 100%
                 position: fixed
                 bottom: 0
-
-@media (min-width: 640px)
-    .dialogWrapper
-
-        .dialog
-            max-width: 24rem
-
-            .dialogButtons
-                position: unset
-                bottom: unset

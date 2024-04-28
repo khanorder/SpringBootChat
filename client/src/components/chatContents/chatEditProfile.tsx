@@ -12,6 +12,8 @@ import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
 import dynamic from "next/dynamic";
 import {Defines} from "@/defines";
 import useCurrentUser from "@/components/common/useCurrentUser";
+import {Domains} from "@/domains";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
 const DialogProfileImageInput = dynamic(() => import("@/components/dialogs/dialogProfileImageInput"), { ssr: false });
 
 export default function ChatEditProfile() {
@@ -131,9 +133,9 @@ export default function ChatEditProfile() {
 
     const userProfileImage = useCallback(() => {
         return (
-            <img className={styles.userThumbImage} src={currentUser.profileImageUrl} alt='내 프로필'/>
+            <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}?${(new Date()).getTime()}`} alt='내 프로필'/>
         );
-    }, [currentUser]);
+    }, [appConfigs, currentUser]);
 
     const removeUserProfile = useCallback(() => {
         if (!currentUser.haveProfile || isEmpty(currentUser.profileImageUrl)) {

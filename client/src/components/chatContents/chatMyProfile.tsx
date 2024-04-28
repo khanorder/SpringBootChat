@@ -8,6 +8,8 @@ import {setIsActiveProfile, setIsActiveSignUp} from "@/stores/reducers/ui";
 import isEmpty from "lodash/isEmpty";
 import useCurrentUser from "@/components/common/useCurrentUser";
 import {Defines} from "@/defines";
+import {Domains} from "@/domains";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
 
 export default function ChatMyProfile() {
     const firstRender = useRef(true);
@@ -34,9 +36,9 @@ export default function ChatMyProfile() {
 
     const userProfileImage = useCallback(() => {
         return (
-            <img className={styles.userThumbImage} src={currentUser.profileImageUrl} alt='내 프로필'/>
+            <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}?${(new Date()).getTime()}`} alt='내 프로필'/>
         );
-    }, [currentUser]);
+    }, [appConfigs, currentUser]);
 
     return (
         <div className={`${styles.myProfileWrapper}${Defines.AccountType.TEMP === currentUser.accountType ? ` ${styles.tempUser}` : ''}`}>

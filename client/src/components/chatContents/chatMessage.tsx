@@ -10,6 +10,7 @@ import {setIsActiveChatImageDetail} from "@/stores/reducers/ui";
 import {setChatDetailImageId} from "@/stores/reducers/chat";
 import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import chatImageSmallUrlPrefix = Domains.chatImageSmallUrlPrefix;
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
 export interface ChatMessageProps {
@@ -48,10 +49,10 @@ export default function ChatMessage({data}: ChatMessageProps) {
 
         return (
             <div className={styles.chatUserProfileWrapper}>
-                <img className={styles.chatUserProfile} src={userInfo.profileImageUrl} title={userInfo.nickName} alt={userInfo.nickName} />
+                <img className={styles.chatUserProfile} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`} title={userInfo.nickName} alt={userInfo.nickName} />
             </div>
         );
-    }, [getOthersUserInfo, user, data]);
+    }, [appConfigs, getOthersUserInfo, user, data]);
 
     const nickName = useCallback(() => {
         const isMine = user.id == data.userId;

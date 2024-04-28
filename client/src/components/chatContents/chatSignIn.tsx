@@ -18,6 +18,7 @@ import useCurrentUser from "@/components/common/useCurrentUser";
 import ChangeIcon from "public/images/change.svg";
 import {setIsActiveChangeUser, setIsActiveSignIn, setIsActiveSignUp} from "@/stores/reducers/ui";
 import useUserInfos from "@/components/common/useUserInfos";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
 
 export default function ChatSignIn() {
     const firstRender = useRef(true);
@@ -68,8 +69,6 @@ export default function ChatSignIn() {
     const signInButtons = useCallback(() => {
         const buttons: ReactElement[] = [];
         if (0 < userInfos.size && !isEmpty(currentUser.nickName)) {
-            // if (isEmpty(currentUser.nickName))
-            //     dispatch(getTokenUserInfoReq(isEmpty(currentUser.accessToken) ? currentUser.refreshToken : currentUser.accessToken));
 
             buttons.push(
                 <div className={`${styles.buttonWrapper} ${styles.profileButtonWrapper}`} key={'existsTokenProfile'}>
@@ -83,7 +82,7 @@ export default function ChatSignIn() {
                             <></>
                     }
                     <button className={`${styles.button} ${styles.existsToken}`} onClick={checkAuthentication} title={`${currentUser.nickName} 계정으로 시작`}>
-                        <img className={styles.profile} src={currentUser.profileImageUrl} alt={currentUser.nickName} title={currentUser.nickName}/>
+                        <img className={styles.profile} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}?${(new Date()).getTime()}`} alt={currentUser.nickName} title={currentUser.nickName}/>
                     </button>
                 </div>
             );
@@ -132,7 +131,7 @@ export default function ChatSignIn() {
         );
 
         return buttons;
-    }, [currentUser, userInfos, dispatch, changeUser, checkAuthentication, startGuest]);
+    }, [appConfigs, currentUser, userInfos, dispatch, changeUser, checkAuthentication, startGuest]);
 
     return (
         <div className={`${styles.chatSignInWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>

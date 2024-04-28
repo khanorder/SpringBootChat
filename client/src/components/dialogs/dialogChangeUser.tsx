@@ -11,6 +11,7 @@ import {Domains} from "@/domains";
 import useUserInfos from "@/components/common/useUserInfos";
 import Image from "next/image";
 import {removeUserInfo, setUserId} from "@/stores/reducers/user";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
 const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 
 export default function DialogChangeUser() {
@@ -75,7 +76,7 @@ export default function DialogChangeUser() {
                 list.push(
                     <div key={i} className={userAccountWrapperClass} onClick={(e) => changeUser(userInfo)}>
                         <div className={styles.userProfileWrapper}>
-                            <img className={styles.userProfileImage} src={userInfo.profileImageUrl} alt={userInfo.nickName} />
+                            <img className={styles.userProfileImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`} alt={userInfo.nickName} />
                         </div>
                         <div className={styles.userInfoWrapper}>
                             <div className={styles.nickName}>{userInfo.nickName}</div>
@@ -89,7 +90,7 @@ export default function DialogChangeUser() {
         }
 
         return list;
-    }, [userInfos, changeUser, removeUser]);
+    }, [appConfigs, userInfos, changeUser, removeUser]);
 
     const dialog = useCallback(() => {
         return (

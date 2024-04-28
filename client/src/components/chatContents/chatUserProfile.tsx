@@ -4,6 +4,9 @@ import {useAppSelector} from "@/hooks";
 import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import {dayjs} from "@/helpers/localizedDayjs";
 import useCurrentUser from "@/components/common/useCurrentUser";
+import appConfigs from "@/stores/reducers/appConfigs";
+import {Domains} from "@/domains";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
 
 export interface ChatUserProfileProps {
     userId: string;
@@ -11,6 +14,7 @@ export interface ChatUserProfileProps {
 
 export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
     const firstRender = useRef(true);
+    const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
     const [currentUser] = useCurrentUser();
     const [getOthersUserInfo] = useOthersUserInfo();
@@ -30,7 +34,7 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
         return (
             <div className={styles.userThumbWrapper}>
                 <div className={styles.userThumb}>
-                    <img className={styles.userThumbImage} src={userInfo.profileImageUrl} alt='프로필'/>
+                    <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`} alt='프로필'/>
                 </div>
                 {
                     userInfo.online
@@ -41,7 +45,7 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
                 }
             </div>
         );
-    }, [getOthersUserInfo, userId]);
+    }, [appConfigs, getOthersUserInfo, userId]);
 
     const nickName = useCallback(() => {
         const isMine = user.id == userId;

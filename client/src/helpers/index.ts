@@ -670,13 +670,13 @@ export namespace Helpers {
                     return empty;
 
                 do {
-                    const [userId, userInfo] = userInfosIterator?.next()?.value;
-                    if (!isEmpty(userInfo.userId) && !isEmpty(userInfo.nickName) && !isEmpty(userInfo.refreshToken))
+                    const [userId, userInfo] = userInfosIterator?.next()?.value ?? [];
+                    if (userInfo && !isEmpty(userInfo.userId) && !isEmpty(userInfo.nickName) && !isEmpty(userInfo.refreshToken))
                         return userInfo;
 
                 } while (!userInfosIterator.next().done) {
-                    const [userId, userInfo] = userInfosIterator?.next()?.value;
-                    if (!isEmpty(userInfo.userId) && !isEmpty(userInfo.nickName) && !isEmpty(userInfo.refreshToken))
+                    const [userId, userInfo] = userInfosIterator?.next()?.value ?? [];
+                    if (userInfo && !isEmpty(userInfo.userId) && !isEmpty(userInfo.nickName) && !isEmpty(userInfo.refreshToken))
                         return userInfo;
                 }
             }

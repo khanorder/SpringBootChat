@@ -149,9 +149,16 @@ public class ImageController {
                 return ResponseEntity.notFound().build();
 
             var user = optUser.get();
+            var currentPath = System.getProperty("user.dir");
+            var resourcePath = Paths.get(currentPath, "resources", "images");
 
-            if (user.getProfileImage().isEmpty())
-                return ResponseEntity.notFound().build();
+            if (user.getProfileImage().isEmpty()) {
+                var imagePath = Paths.get(resourcePath.toString(), "user-circle.svg");
+                if (!Files.exists(imagePath))
+                    return ResponseEntity.notFound().build();
+
+                return ResponseEntity.ok().header("Content-Type", "image/svg+xml").body(Files.readAllBytes(imagePath));
+            }
 
             if (AllowedImageType.NONE.equals(user.getProfileMime()))
                 return ResponseEntity.notFound().build();
@@ -159,8 +166,6 @@ public class ImageController {
             var extension = Helpers.getImageExtension(user.getProfileMime());
             if (extension.isEmpty())
                 return ResponseEntity.notFound().build();
-
-            var currentPath = System.getProperty("user.dir");
 
             var largePath = Paths.get(currentPath, "images", "profiles", "large");
             var smallPath = Paths.get(currentPath, "images", "profiles", "small");
