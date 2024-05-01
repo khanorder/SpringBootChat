@@ -18,6 +18,7 @@ const DialogAddUserChatRoom = dynamic(() => import("@/components/dialogs/dialogA
 const DialogChatRoomInfo = dynamic(() => import("@/components/dialogs/dialogChatRoomInfo"), {ssr: false});
 const DialogChatImageInput = dynamic(() => import("@/components/dialogs/dialogChatImageInput"), { ssr: false });
 const DialogChatDetailImage = dynamic(() => import("@/components/dialogs/dialogChatDetailImage"), { ssr: false });
+const DialogImojiInput = dynamic(() => import("@/components/dialogs/dialogImojiInput"), { ssr: false });
 
 interface ChatRoomProps {
     isProd: boolean;
@@ -68,7 +69,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
         return (
             <div className={styles.chatRoomEnterWrapper}>
                 <div className={styles.chatRoomInputNotice}>
-                    {isProd ? `'${currentChatRoom.roomName}' 채팅방에 입장하시겠습니까?` : ''}
+                    {`'${currentChatRoom.roomName}' 채팅방에 입장하시겠습니까?`}
                 </div>
                 <div className={styles.enterChatRoomButtonWrapper}>
                     <button className={`${styles.enterChatRoomButton} ${stylesCommon.button}`} onClick={enterChatRoom}>입장</button>
@@ -92,6 +93,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
         return (
             <>
                 <ChatContents />
+                <DialogImojiInput chatMessageInputRef={chatMessageInputRef} message={message} setMessage={setMessage} />
                 <ChatInput
                     chatImageInputRef={chatImageInputRef}
                     chatMessageInputRef={chatMessageInputRef}

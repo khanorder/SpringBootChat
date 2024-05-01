@@ -1,69 +1,31 @@
-.dialogWrapper
-    display: none
-    position: absolute
-    top: 0
-    left: 0
+.chatImageInputWrapper
     width: 100%
     height: 100%
-    background: #00000066
-    z-index: 1000
 
-    .dialog
-        position: absolute
-        top: calc(50% - 35vh)
-        left: 5%
-        display: flex
-        flex-direction: column
-        border: 1px solid #d9d9d9
-        border-radius: 8px
-        padding: 10px
-        width: 90%
-        height: 70vh
-        background: #ffffff
-        z-index: 1002
-
-        .dialogContent
-            position: relative
-            display: flex
-            justify-content: center
-            align-items: center
-            flex: 1 1 auto
-            overflow: hidden
-
-            .chatImageThumb
-                position: unset !important
-                display: block
-                max-width: 1024px
-                max-height: 1024px
-                width: 100%
-                height: 100%
-                object-fit: contain
-
-        .dialogButtons
-            display: flex
-            justify-content: center
-            align-items: flex-start
-            flex: 1 1 auto
-            margin-top: 10px
-
-            .dialogButton
-                margin-left: 10px
-                border: 1px solid #d9d9d9
-                border-radius: 8px
-                padding: 5px
-                width: 70px
-                background: #ffffff
-
-                &:hover
-                    cursor: pointer
-
-                &:first-child
-                    margin-left: 0
-
-    .dialogPane
+    .inputForm
         width: 100%
         height: 100%
-        z-index: 1001
+        padding: 10px
+        display: flex
+        justify-content: center
+        align-items: center
 
-    &.active
-        display: block
+        .chatImageThumb
+            position: unset !important
+            display: block
+            max-width: 512px
+            max-height: 512px
+            width: 100%
+            height: 100%
+            object-fit: contain
+
+.button
+    margin-left: 10px
+    padding: 5px
+    width: 70px
+
+    &:first-child
+        margin-left: 0
+
+    &:hover
+        cursor: pointer

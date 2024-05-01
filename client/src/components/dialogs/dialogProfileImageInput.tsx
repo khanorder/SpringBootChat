@@ -7,6 +7,9 @@ import {saveUserProfileReq} from "@/stores/reducers/webSocket";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
 import {Helpers} from "@/helpers";
 import {Defines} from "@/defines";
+import stylesCommon from "@/styles/common.module.sass";
+import dynamic from "next/dynamic";
+const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 
 export interface ChatImageInputDialogProps {
     profileImageInputRef: RefObject<HTMLInputElement>;
@@ -94,9 +97,21 @@ export default function DialogProfileImageInput({profileImageInputRef, profileIm
 
     const dialog = useCallback(() =>  {
         return (
-            <div className={dialogWrapperClass}>
-                <div className={styles.dialog}>
-                    <div className={styles.dialogContent}>
+            <LayoutCenterDialog
+                type={Defines.CenterDialogType.PROFILE_IMAGE_INPUT}
+                size={Defines.CenterDialogSize.MEDIUM}
+                buttons={
+                    <>
+                        <button className={`${styles.button} ${stylesCommon.button} ${stylesCommon.primaryButton}`}
+                                onClick={onSendImage} title="전송">전송
+                        </button>
+                        <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog}
+                                title="취소">취소
+                        </button>
+                    </>
+                }>
+                <div className={styles.chatImageInputWrapper}>
+                    <div className={styles.inputForm}>
                         {
                             profileLargeImage
                                 ?
@@ -105,13 +120,8 @@ export default function DialogProfileImageInput({profileImageInputRef, profileIm
                                 <></>
                         }
                     </div>
-                    <div className={styles.dialogButtons}>
-                        <button className={styles.dialogButton} onClick={onSendImage}>전송</button>
-                        <button className={styles.dialogButton} onClick={hideDialog}>취소</button>
-                    </div>
                 </div>
-                <div className={styles.dialogPane} onClick={hideDialog}></div>
-            </div>
+            </LayoutCenterDialog>
         );
     }, [dialogWrapperClass, profileLargeImage, hideDialog, onSendImage]);
 

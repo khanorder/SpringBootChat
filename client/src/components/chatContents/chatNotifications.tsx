@@ -104,7 +104,7 @@ export default function ChatNotifications() {
     }, [notificationState, getOthersUserInfo, checkNotification, removeNotification]);
 
     return (
-            <div className={styles.chatNotificationsWrapper}>
+        <div className={styles.chatNotificationsWrapper}>
             <ul className={styles.chatNotifications}>
                 {notifications()}
             </ul>

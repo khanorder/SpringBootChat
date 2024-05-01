@@ -109,7 +109,7 @@ export default function ChatSelectUsers({selectedUsers, onSelectUser}: ChatSelec
     }, [user, userListGroup]);
 
     return (
-        <div className={`${styles.usersWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={styles.usersWrapper}>
             <div className={styles.userSections}>
                 {users()}
             </div>

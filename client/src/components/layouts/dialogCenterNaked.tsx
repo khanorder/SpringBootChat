@@ -1,7 +1,7 @@
 import {ReactNode, useCallback, useEffect, useRef} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {Defines} from "@/defines";
-import styles from "@/styles/chatDialogCenter.module.sass";
+import styles from "@/styles/chatDialogCenterNaked.module.sass";
 import Image from "next/image";
 import CloseIcon from "public/images/close.svg";
 import stylesCommon from "@/styles/common.module.sass";
@@ -16,10 +16,9 @@ export interface LayoutDialogCenterProps {
     type: Defines.CenterDialogType;
     size?: Defines.CenterDialogSize;
     children: ReactNode;
-    buttons?: ReactNode;
 }
 
-export default function LayoutDialogCenter({ type, size, children, buttons }: LayoutDialogCenterProps) {
+export default function LayoutDialogCenterNaked({ type, size, children }: LayoutDialogCenterProps) {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
@@ -146,31 +145,19 @@ export default function LayoutDialogCenter({ type, size, children, buttons }: La
         return (
             <div className={dialogWrapperClass}>
                 <div className={styles.dialog}>
-                    <div className={styles.dialogHeader}>
-                        <div className={styles.dialogTitle}>{title}</div>
-                        <div className={styles.rightButtons}>
+                    <div className={styles.dialogContent}>
+                        <div className={styles.closeButtonWrapper}>
                             <button className={styles.closeButton} onClick={hideDialog} title='닫기'>
                                 <Image className={styles.closeButtonIcon} src={CloseIcon} alt='닫기' fill={true} priority={true}/>
                             </button>
                         </div>
-                    </div>
-                    <div className={styles.dialogContent}>
                         {children}
                     </div>
-                    {
-                        "undefined" === typeof buttons
-                            ?
-                                <></>
-                            :
-                                <div className={styles.dialogButtons}>
-                                    {buttons}
-                                </div>
-                    }
                 </div>
                 <div className={styles.dialogPane} onClick={hideDialog}></div>
             </div>
         );
-    }, [type, size, appConfigs, hideDialog, children, buttons, ui, user]);
+    }, [type, size, appConfigs, hideDialog, children, ui, user]);
 
     return dialogLayout();
 }

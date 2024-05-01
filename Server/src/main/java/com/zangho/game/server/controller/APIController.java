@@ -21,50 +21,12 @@ import java.util.HashMap;
 public class APIController {
 
     private final Logger logger = LoggerFactory.getLogger(APIController.class);
-    private final ChatRoomService chatRoomService;
-    private final UserService userService;
-    private final ChatService chatService;
     private final ChatImageService chatImageService;
-    private final MessageService messageService;
 
     public APIController(
-            ChatRoomService chatRoomService,
-            UserService userService,
-            ChatService chatService,
-            ChatImageService chatImageService,
-            MessageService messageService
+            ChatImageService chatImageService
     ) {
-        this.chatRoomService = chatRoomService;
-        this.userService = userService;
-        this.chatService = chatService;
         this.chatImageService = chatImageService;
-        this.messageService = messageService;
-    }
-
-    @PostMapping(value = "/api/getPublicKey")
-    @ResponseBody
-    public String getPublicKey(HttpServletRequest request) throws Exception {
-        var response = new HashMap<String, Object>();
-        response.put("publicKey", messageService.getPublicKey());
-
-        return (new ObjectMapper()).writeValueAsString(response);
-    }
-
-    @PostMapping(value = "/api/subscription")
-    @ResponseBody
-    public String subscription(@RequestBody ReqSubscription reqSubscription) throws Exception {
-        var response = new HashMap<String, Object>();
-        chatRoomService.subscribeUserRoom(reqSubscription.getSubscription(), reqSubscription.getRoomId(), reqSubscription.getUserId());
-        var result = messageService.subscribeChatRoom(reqSubscription.getSubscription(), reqSubscription.getRoomId(), reqSubscription.getUserId());
-        response.put("result", result.getNumber());
-
-        return (new ObjectMapper()).writeValueAsString(response);
-    }
-
-    @PostMapping(value = "/api/unsubscription")
-    @ResponseBody
-    public void unsubscription(@RequestBody String endpoint) throws Exception {
-        messageService.unsubscribe(endpoint);
     }
 
     @PostMapping(value = "/api/uploadChatImage")

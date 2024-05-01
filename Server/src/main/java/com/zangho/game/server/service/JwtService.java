@@ -270,6 +270,7 @@ public class JwtService {
             if (ErrorVerifyJWT.NONE.equals(resultVerified.getLeft()) && resultVerified.getRight().isPresent()) {
                 var authedUser = resultVerified.getRight().get();
                 var user = new User(authedUser.getAccountType(), authedUser.getUserName(), authedUser.getName(), authedUser.getNickName());
+                user.setId(authedUser.getUserId());
                 return Optional.of(new UsernamePasswordAuthenticationToken(user, "", user.getAuthorities()));
             } else {
                 return Optional.empty();

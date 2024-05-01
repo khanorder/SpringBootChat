@@ -100,7 +100,7 @@ export default function ChatSearch() {
     }, [handleItemClick]);
 
     return (
-        <div className={`${styles.searchWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={styles.searchWrapper}>
             <div className={styles.sectionWrapper}>
                 <div className={`${styles.sectionName} ${styles.follow}`}>접속중</div>
                 <ul className={styles.userList}>

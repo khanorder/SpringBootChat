@@ -1,4 +1,14 @@
-import {ChangeEvent, createRef, useCallback, useEffect, useRef, useState} from "react";
+import {
+    ChangeEvent,
+    createRef,
+    Dispatch,
+    RefObject,
+    SetStateAction,
+    useCallback,
+    useEffect,
+    useRef,
+    useState
+} from "react";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import styles from "@/styles/chatDialogEditProfile.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
@@ -9,14 +19,22 @@ import {removeUserProfileReq, saveUserMessageReq, saveNickNameReq, signOutReq} f
 import isEmpty from "lodash/isEmpty";
 import {Helpers} from "@/helpers";
 import {setIsActiveProfileImageInput} from "@/stores/reducers/ui";
-import dynamic from "next/dynamic";
 import {Defines} from "@/defines";
 import useCurrentUser from "@/components/common/useCurrentUser";
 import {Domains} from "@/domains";
 import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
-const DialogProfileImageInput = dynamic(() => import("@/components/dialogs/dialogProfileImageInput"), { ssr: false });
 
-export default function ChatEditProfile() {
+export interface ChatEditProfileProps {
+    profileImageInputRef: RefObject<HTMLInputElement>;
+    setProfileImageMime: Dispatch<SetStateAction<Defines.AllowedImageType>>;
+    setProfileSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
+    setProfileLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
+    profileImageMime: Defines.AllowedImageType;
+    profileSmallImage: string|ArrayBuffer|null;
+    profileLargeImage: string|ArrayBuffer|null;
+}
+
+export default function ChatEditProfile({profileImageInputRef, profileImageMime, profileSmallImage, profileLargeImage, setProfileImageMime, setProfileSmallImage, setProfileLargeImage }: ChatEditProfileProps) {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
@@ -25,10 +43,8 @@ export default function ChatEditProfile() {
     const [newUserMessage, setNewUserMessage] = useState<string>('');
     const nameInputRef = createRef<HTMLInputElement>();
     const messageInputRef = createRef<HTMLInputElement>();
-    const profileImageInputRef = createRef<HTMLInputElement>();
-    const [profileImageMime, setProfileImageMime] = useState<Defines.AllowedImageType>(Defines.AllowedImageType.NONE);
-    const [profileLargeImage, setProfileLargeImage] = useState<string|ArrayBuffer|null>(null);
-    const [profileSmallImage, setProfileSmallImage] = useState<string|ArrayBuffer|null>(null);
+
+
     const dispatch = useAppDispatch();
 
     //#region OnRender
@@ -158,7 +174,6 @@ export default function ChatEditProfile() {
 
     return (
         <div className={styles.editProfileWrapper}>
-            <DialogProfileImageInput profileImageInputRef={profileImageInputRef} setProfileImageMime={setProfileImageMime} setProfileSmallImage={setProfileSmallImage} setProfileLargeImage={setProfileLargeImage} profileImageMime={profileImageMime} profileSmallImage={profileSmallImage} profileLargeImage={profileLargeImage}/>
             <div className={styles.userThumb}>
                 <button className={styles.removeProfile}><Image src={RemoveIcon} alt="프로필 삭제" fill={true} priority={true} onClick={removeUserProfile} /></button>
                 <label className={styles.profileImageInputLabel} htmlFor='profileImageInput' title='프로필 등록'>

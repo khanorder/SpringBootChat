@@ -72,7 +72,7 @@ export default function ChatGNB() {
     }, [ui, onChangeTab, router]);
 
     return (
-        <div className={`${styles.chatGNBWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={styles.chatGNBWrapper}>
             <div className={styles.buttonWrapperEmpty}></div>
             {gnbTabButton(Defines.TabType.FOLLOW)}
             {gnbTabButton(Defines.TabType.CHAT)}

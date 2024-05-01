@@ -7,10 +7,12 @@ import com.zangho.game.server.domain.chat.*;
 import com.zangho.game.server.domain.user.Relation;
 import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.domain.user.UserInterface;
+import com.zangho.game.server.error.ErrorSubscribeNotification;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
 import com.zangho.game.server.repository.user.RelationRepository;
 import com.zangho.game.server.repository.user.UserRepository;
+import nl.martijndwars.webpush.Subscription;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,6 +214,15 @@ public class UserService implements UserDetailsService {
         optExistsUser.get().setLatestActiveAt(new Date());
         var existsUser = userRepository.save(optExistsUser.get());
         return null != existsUser;
+    }
+
+    public ErrorSubscribeNotification updateUserSubscribe(String userId, Subscription subscription) {
+        var optExistsUser = userRepository.findById(userId);
+        if (optExistsUser.isEmpty())
+            return ErrorSubscribeNotification.NOT_FOUND_USER;
+
+        var existsUser = userRepository.save(optExistsUser.get());
+        return null == existsUser ? ErrorSubscribeNotification.FAILED_SUBSCRIBE : ErrorSubscribeNotification.NONE;
     }
 
     public Optional<Relation> followUser(User user, User target) {

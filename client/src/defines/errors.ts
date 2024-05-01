@@ -185,4 +185,12 @@ export namespace Errors {
         NOT_FOUND_USER_IN_ROOM = 5,
         ALREADY_SUBSCRIBE_ROOM = 6,
     }
+
+    export enum SubscribeNotification {
+        NONE = 0,
+        REQUIRED_USER_ID = 1,
+        NOT_FOUND_USER = 2,
+        ALREADY_SUBSCRIBE = 3,
+        FAILED_SUBSCRIBE = 4,
+    }
 }

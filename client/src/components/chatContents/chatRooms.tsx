@@ -107,7 +107,7 @@ export default function ChatRooms() {
     return (
         <>
             <DialogCreateChatRoom />
-            <div className={`${styles.chatRoomListWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+            <div className={styles.chatRoomListWrapper}>
                 <ul className={styles.chatRoomList}>
                     {list()}
                 </ul>

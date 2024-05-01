@@ -66,9 +66,6 @@ export default function LayoutDialogSlide({ type, children }: LayoutDialogSlideP
                 break;
         }
 
-        if (!appConfigs.isProd)
-            dialogWrapperClass += ` ${styles.dev}`;
-
         return (
             <div className={dialogWrapperClass}>
                 <div className={styles.dialog}>

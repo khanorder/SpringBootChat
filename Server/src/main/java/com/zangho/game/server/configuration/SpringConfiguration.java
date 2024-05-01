@@ -71,7 +71,7 @@ public class SpringConfiguration {
 
     @Bean
     public MessageService messageService() {
-        return new MessageService(chatRoomService(), userRoomRepository);
+        return new MessageService(userService(), chatRoomService(), userRoomRepository);
     }
 
     @Bean

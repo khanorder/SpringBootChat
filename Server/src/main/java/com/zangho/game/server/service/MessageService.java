@@ -7,6 +7,7 @@ import java.util.HashMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.domain.chat.ChatRoom;
 import com.zangho.game.server.error.ErrorSubscribeChatRoom;
+import com.zangho.game.server.error.ErrorSubscribeNotification;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
 import lombok.Getter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -29,9 +30,11 @@ public class MessageService {
 
     private Logger logger = LoggerFactory.getLogger(MessageService.class);
     private PushService pushService;
+    private final UserService userService;
     private final ChatRoomService chatRoomService;
     private final UserRoomRepository userRoomRepository;
-    public MessageService(ChatRoomService chatRoomService, UserRoomRepository userRoomRepository) {
+    public MessageService(UserService userService, ChatRoomService chatRoomService, UserRoomRepository userRoomRepository) {
+        this.userService = userService;
         this.chatRoomService = chatRoomService;
         this.userRoomRepository = userRoomRepository;
     }
@@ -40,11 +43,6 @@ public class MessageService {
     private void init() throws GeneralSecurityException {
         Security.addProvider(new BouncyCastleProvider());
         pushService = new PushService(publicKey, privateKey);
-    }
-
-    public void subscribe(Subscription subscription) {
-        logger.info("Subscribed to " + subscription.endpoint);
-//        this.subscriptions.add(subscription);
     }
 
     public ErrorSubscribeChatRoom subscribeChatRoom(Subscription subscription, String roomId, String userId) throws Exception {
@@ -85,11 +83,13 @@ public class MessageService {
 //        subscriptions = subscriptions.stream().filter(s -> !endpoint.equals(s.endpoint)).collect(Collectors.toList());
     }
 
-    public void sendNotification(Subscription subscription, String title, String body) {
+    public void sendNotification(Subscription subscription, String title, String body, String icon) {
         try {
             var result = new HashMap<String, Object>();
             result.put("title", title);
             result.put("body", body);
+            if (!icon.isEmpty())
+                result.put("icon", icon);
             sendNotificationJson(subscription, (new ObjectMapper()).writeValueAsString(result));
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -109,7 +109,7 @@ public class MessageService {
             if (null == userInRoom.getSubscription())
                 return;
 
-            sendNotification(userInRoom.getSubscription(), title, body);
+            sendNotification(userInRoom.getSubscription(), title, body, "");
         });
     }
 }

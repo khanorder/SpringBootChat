@@ -1599,13 +1599,9 @@ export namespace Domains {
 
     export class SubscriptionRequest {
         subscription: PushSubscription;
-        roomId: string;
-        userId: string;
 
-        constructor(subscription: PushSubscription, roomId: string, userId: string) {
+        constructor(subscription: PushSubscription) {
             this.subscription = subscription;
-            this.roomId = roomId;
-            this.userId = userId;
         }
     }
 

@@ -9,9 +9,7 @@ import {sendMessageReq} from "@/stores/reducers/webSocket";
 import {v4 as uuid} from "uuid";
 import {Defines} from "@/defines";
 import {useAppDispatch, useAppSelector} from "@/hooks";
-import {setIsActiveChatImageInput} from "@/stores/reducers/ui";
-import dynamic from "next/dynamic";
-const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
+import {setIsActiveChatImageInput, toggleIsActiveImojiInput} from "@/stores/reducers/ui";
 
 
 export interface ChatInputProps {
@@ -61,7 +59,8 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
         }
         dispatch(sendMessageReq({id: uuid(), type: Defines.ChatType.TALK, roomId: chat.currentChatRoomId, message: message}));
         setMessage('');
-    }, [chat, webSocket, user, message, setMessage, dispatch]);
+        chatMessageInputRef.current?.focus();
+    }, [chat, webSocket, user, message, setMessage, chatMessageInputRef, dispatch]);
 
     const changeMessage = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(prev => {
@@ -83,8 +82,8 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
     }, [sendMessage]);
 
     const toggleEmojiPicker = useCallback(() => {
-        setEmojiPickerState(prev => { return !prev; });
-    }, [setEmojiPickerState]);
+        dispatch(toggleIsActiveImojiInput());
+    }, [dispatch]);
 
     const addEmoji = useCallback((emoji: string) => {
         setMessage(prev => prev + emoji);
@@ -136,7 +135,7 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
     
     const inputContents = useCallback(() => {
         return (
-            <div className={`${styles.chatMessageInputArea}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+            <div className={styles.chatMessageInputArea}>
                 <div className={styles.chatMessageInputTopWrapper}>
                     <div className={styles.chatMessageLength}>{message.length}/300</div>
                     <div className={styles.chatImageButtonWrapper}>
@@ -148,13 +147,13 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
                     </div>
                     <div className={styles.emojiWrapper}>
                         <button className={`${styles.emojiToggleButton} ${stylesCommon.button}` + (emojiPickerState ? ' ' + styles.active : '')} onClick={toggleEmojiPicker}>😊</button>
-                        <EmojiPicker
-                            className={styles.emojiPicker}
-                            open={emojiPickerState}
-                            width={320}
-                            height={300}
-                            onEmojiClick={(emoji, event) => addEmoji(emoji.emoji)}
-                        />
+                        {/*<EmojiPicker*/}
+                        {/*    className={styles.emojiPicker}*/}
+                        {/*    open={emojiPickerState}*/}
+                        {/*    width={320}*/}
+                        {/*    height={300}*/}
+                        {/*    onEmojiClick={(emoji, event) => addEmoji(emoji.emoji)}*/}
+                        {/*/>*/}
                     </div>
                 </div>
                 <div className={styles.chatMessageInputWrapper}>

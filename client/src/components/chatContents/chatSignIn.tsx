@@ -134,7 +134,7 @@ export default function ChatSignIn() {
     }, [appConfigs, currentUser, userInfos, dispatch, changeUser, checkAuthentication, startGuest]);
 
     return (
-        <div className={`${styles.chatSignInWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={styles.chatSignInWrapper}>
             <div className={styles.chatSignIn}>
                 <div className={styles.signinEmpty}></div>
                 <div className={styles.title}>

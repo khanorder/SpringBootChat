@@ -63,7 +63,7 @@ export default function ChatHeader() {
             return;
         }
 
-        await CommonAPI.SubscribeChatRoom(chat.currentChatRoomId ?? '', user.id);
+        //await CommonAPI.SubscribeChatRoom(chat.currentChatRoomId ?? '', user.id);
     }, [chat, user]);
 
     const title = useCallback(() => {
@@ -172,7 +172,7 @@ export default function ChatHeader() {
     }, [ui, toggleChatRoomInfo]);
 
     return (
-        <div className={`${styles.chatHeaderWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={styles.chatHeaderWrapper}>
             <div className={styles.titleWrapper}>
                 {leftButtons()}
                 {title()}

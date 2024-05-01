@@ -18,7 +18,7 @@ export namespace ChatAPI {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userInfo.accessToken}`,
+                    'Authorization': `Bearer ${userInfo.accessToken}`
                 },
                 credentials: 'include',
                 body: JSON.stringify(uploadChatImageReq)

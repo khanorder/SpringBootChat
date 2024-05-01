@@ -1,11 +1,12 @@
-import {createRef, ReactNode, useCallback, useEffect, useRef} from "react";
+import {createRef, ReactNode, useCallback, useEffect, useRef, useState} from "react";
 import {useAppSelector} from "@/hooks";
-import style from "@/styles/layout.module.sass";
+import styles from "@/styles/layout.module.sass";
 import {Defines} from "@/defines";
 import dynamic from "next/dynamic";
 import isEmpty from "lodash/isEmpty";
 import {Helpers} from "@/helpers";
 import useCurrentUser from "@/components/common/useCurrentUser";
+import {CommonAPI} from "@/apis/commonAPI";
 
 const ChatDisconnected = dynamic(() => import("@/components/chatContents/chatDisconnected"), {ssr: false});
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
@@ -21,17 +22,29 @@ const ChatSignIn = dynamic(() => import("@/components/chatContents/chatSignIn"),
 
 export default function Layout({children}: { children: ReactNode }) {
     const firstRender = useRef(true);
+    const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
     const webSocket = useAppSelector(state => state.webSocket);
     const user = useAppSelector(state => state.user);
     const [currentUser] = useCurrentUser();
     const mainWrapper = createRef<HTMLDivElement>();
+    const [isCheckSubscription, setIsCheckSubscription] = useState<boolean>(false);
 
     const handleResize = useCallback(() => {
         if (mainWrapper.current)
             mainWrapper.current.style.height = `${window.innerHeight}px`;
 
     }, [mainWrapper]);
+
+    // useEffect(() => {
+    //     if (!firstRender.current && !isCheckSubscription) {
+    //         if (Defines.AuthStateType.SIGN_IN == user.authState && !isEmpty(user.id) || !isEmpty(currentUser.accessToken)) {
+    //             CommonAPI.SubscribeNotification();
+    //             setIsCheckSubscription(true);
+    //         }
+    //     }
+    //
+    // }, [firstRender, user, currentUser, isCheckSubscription, setIsCheckSubscription]);
 
     //#region OnRender
     useEffect(() => {
@@ -94,7 +107,7 @@ export default function Layout({children}: { children: ReactNode }) {
     }, [children, webSocket, chat, user, currentUser]);
 
     return (
-        <main className={style.main} ref={mainWrapper}>
+        <main className={`${styles.main}${appConfigs.isProd ? '' : ` ${styles.dev}`}`} ref={mainWrapper}>
             {layout()}
         </main>
     );

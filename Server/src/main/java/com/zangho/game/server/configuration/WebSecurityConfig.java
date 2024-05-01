@@ -72,14 +72,12 @@ public class WebSecurityConfig {
         }));
 
         http.authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
-//            authorizationManagerRequestMatcherRegistry.requestMatchers("/").permitAll();
-//            authorizationManagerRequestMatcherRegistry.requestMatchers("/").hasRole("USER");
             authorizationManagerRequestMatcherRegistry.requestMatchers("/auth/signIn").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/auth/signUp").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/tracking/visit").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/images/**").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/ws/game").permitAll();
-//            authorizationManagerRequestMatcherRegistry.requestMatchers("/api/**").permitAll();
+            authorizationManagerRequestMatcherRegistry.requestMatchers("/notify/**").hasRole("USER");
             authorizationManagerRequestMatcherRegistry.requestMatchers("/api/**").hasRole("USER");
             authorizationManagerRequestMatcherRegistry.anyRequest().authenticated();
         }));

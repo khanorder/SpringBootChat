@@ -146,7 +146,7 @@ const chatSlice = createSlice({
             if (0 <= chatRoom.chatDatas.findIndex(_ => _.id == action.payload.chatData.id))
                 return;
 
-            chatRoom.chatDatas.push(action.payload.chatData);
+            chatRoom.chatDatas.unshift(action.payload.chatData);
             state.chatRooms = deepmerge([], state.chatRooms);
         },
         setChatDatas: (state, action: PayloadAction<SetChatDatasProps>) => {
@@ -160,7 +160,7 @@ const chatSlice = createSlice({
             if (!chatRoom)
                 return;
 
-            chatRoom.chatDatas = action.payload.chatDatas;
+            chatRoom.chatDatas = action.payload.chatDatas.sort((a, b) => b.time - a.time);
             state.chatRooms = deepmerge([], state.chatRooms);
         },
         setChatDetailImageId: (state, action: PayloadAction<string>) => {

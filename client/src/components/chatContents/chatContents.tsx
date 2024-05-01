@@ -62,7 +62,7 @@ export default function ChatContents() {
     }, [appConfigs, chat, chatContentsRef]);
 
     return (
-        <div className={`${styles.chatContentsWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={styles.chatContentsWrapper}>
             {list()}
         </div>
     );

@@ -11,6 +11,9 @@ public class SubscriptionConverter implements AttributeConverter<Subscription, S
     @Override
     public String convertToDatabaseColumn(Subscription subscription) {
         try {
+            if (null == subscription)
+                return "";
+
             return objectMapper.writeValueAsString(subscription);
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex.getMessage(), ex);
@@ -20,6 +23,9 @@ public class SubscriptionConverter implements AttributeConverter<Subscription, S
     @Override
     public Subscription convertToEntityAttribute(String dbData) {
         try {
+            if (dbData.isEmpty())
+                return new Subscription();
+
             return objectMapper.readValue(dbData, Subscription.class);
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex.getMessage(), ex);

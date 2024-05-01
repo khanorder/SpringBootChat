@@ -1,3 +1,5 @@
+@import "defines.module"
+
 .main
     display: flex
     flex-direction: column
@@ -29,6 +31,9 @@
             -webkit-mask-composite: source-out
             mask-composite: subtract
             animation: l3 1s infinite linear
+
+    &.dev
+        opacity: $devOpacity
 
 @media (min-width: 640px)
     .main

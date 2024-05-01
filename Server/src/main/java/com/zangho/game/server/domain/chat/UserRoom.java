@@ -28,7 +28,6 @@ public class UserRoom {
     @Column(length = 36, nullable = false)
     private String roomId;
 
-
     @Convert(converter = SubscriptionConverter.class)
     @ColumnDefault("''")
     @Column(length = 1023)

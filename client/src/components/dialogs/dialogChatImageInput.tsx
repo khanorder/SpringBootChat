@@ -9,7 +9,9 @@ import {sendMessageReq} from "@/stores/reducers/webSocket";
 import {Defines} from "@/defines";
 import {setIsActiveChatImageInput} from "@/stores/reducers/ui";
 import {Helpers} from "@/helpers";
-import roomId from "@/pages/chat/[roomId]";
+import stylesCommon from "@/styles/common.module.sass";
+import dynamic from "next/dynamic";
+const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 
 export interface DialogChatImageInputProps {
     chatImageInputRef: RefObject<HTMLInputElement>;
@@ -100,9 +102,17 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
 
     const dialog = useCallback(() =>  {
         return (
-            <div className={dialogWrapperClass}>
-                <div className={styles.dialog}>
-                    <div className={styles.dialogContent}>
+            <LayoutCenterDialog
+                type={Defines.CenterDialogType.CHAT_IMAGE_INPUT}
+                size={Defines.CenterDialogSize.MEDIUM}
+                buttons={
+                    <>
+                        <button className={`${styles.button} ${stylesCommon.button} ${stylesCommon.primaryButton}`} onClick={onSendImage} title="전송">전송</button>
+                        <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog} title="취소">취소</button>
+                    </>
+                }>
+                <div className={styles.chatImageInputWrapper}>
+                    <div className={styles.inputForm}>
                         {
                             chatLargeImage
                                 ?
@@ -111,15 +121,10 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
                                 <></>
                         }
                     </div>
-                    <div className={styles.dialogButtons}>
-                        <button className={styles.dialogButton} onClick={onSendImage} title="전송">전송</button>
-                        <button className={styles.dialogButton} onClick={hideDialog} title="취소">취소</button>
-                    </div>
                 </div>
-                <div className={styles.dialogPane} onClick={hideDialog}></div>
-            </div>
+            </LayoutCenterDialog>
         );
-    }, [dialogWrapperClass, chatLargeImage, hideDialog, onSendImage]);
+    }, [chatLargeImage, hideDialog, onSendImage]);
 
     return dialog();
 }

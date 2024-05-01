@@ -222,7 +222,7 @@ export default function ChatUsers() {
     }, [handleItemClick]);
 
     return (
-        <div className={`${styles.usersWrapper}${appConfigs.isProd ? '' : ` ${styles.dev}`}`}>
+        <div className={styles.usersWrapper}>
             <ChatMyProfile />
             <div className={styles.userSections}>
                 {users()}
