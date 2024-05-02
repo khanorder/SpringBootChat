@@ -2,13 +2,9 @@ package com.zangho.game.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.domain.request.ReqSubscription;
-import com.zangho.game.server.domain.request.ReqUploadChatImage;
 import com.zangho.game.server.domain.response.ResSubscription;
 import com.zangho.game.server.domain.user.User;
-import com.zangho.game.server.error.ErrorSubscribeNotification;
-import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.*;
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.FileOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.HashMap;
 
 @Controller
@@ -62,7 +54,7 @@ public class NotifyController {
             logger.info(ex.getMessage(), ex);
         }
 
-        //response.setResult(userService.updateUserSubscribe(userId, reqSubscription.getSubscription()));
+        response.setResult(userService.saveUserSubscription(userId, reqSubscription.getSubscription()));
         return objectMapper.writeValueAsString(response);
     }
 

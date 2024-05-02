@@ -36,15 +36,15 @@ export default function Layout({children}: { children: ReactNode }) {
 
     }, [mainWrapper]);
 
-    // useEffect(() => {
-    //     if (!firstRender.current && !isCheckSubscription) {
-    //         if (Defines.AuthStateType.SIGN_IN == user.authState && !isEmpty(user.id) || !isEmpty(currentUser.accessToken)) {
-    //             CommonAPI.SubscribeNotification();
-    //             setIsCheckSubscription(true);
-    //         }
-    //     }
-    //
-    // }, [firstRender, user, currentUser, isCheckSubscription, setIsCheckSubscription]);
+    useEffect(() => {
+        if (!firstRender.current && !isCheckSubscription) {
+            if (Defines.AuthStateType.SIGN_IN == user.authState && !isEmpty(user.id) || !isEmpty(currentUser.accessToken)) {
+                CommonAPI.SubscribeNotification();
+                setIsCheckSubscription(true);
+            }
+        }
+
+    }, [firstRender, user, currentUser, isCheckSubscription, setIsCheckSubscription]);
 
     //#region OnRender
     useEffect(() => {

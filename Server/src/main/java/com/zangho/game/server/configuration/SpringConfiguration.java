@@ -4,10 +4,7 @@ import com.zangho.game.server.repository.chat.ChatImageRepository;
 import com.zangho.game.server.repository.chat.ChatRepository;
 import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
-import com.zangho.game.server.repository.user.DisposedTokenRepository;
-import com.zangho.game.server.repository.user.NotificationRepository;
-import com.zangho.game.server.repository.user.RelationRepository;
-import com.zangho.game.server.repository.user.UserRepository;
+import com.zangho.game.server.repository.user.*;
 import com.zangho.game.server.service.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +20,7 @@ public class SpringConfiguration {
     private final RelationRepository relationRepository;
     private final NotificationRepository notificationRepository;
     private final DisposedTokenRepository disposedTokenRepository;
+    private final UserSubscriptionRepository userSubscriptionRepository;
 
     public SpringConfiguration(
         UserRepository userRepository,
@@ -32,7 +30,8 @@ public class SpringConfiguration {
         UserRoomRepository userRoomRepository,
         RelationRepository relationRepository,
         NotificationRepository notificationRepository,
-        DisposedTokenRepository disposedTokenRepository
+        DisposedTokenRepository disposedTokenRepository,
+        UserSubscriptionRepository userSubscriptionRepository
     ) {
         this.userRepository = userRepository;
         this.chatRoomRepository = chatRoomRepository;
@@ -42,6 +41,7 @@ public class SpringConfiguration {
         this.relationRepository = relationRepository;
         this.notificationRepository = notificationRepository;
         this.disposedTokenRepository = disposedTokenRepository;
+        this.userSubscriptionRepository = userSubscriptionRepository;
     }
 
     @Bean
@@ -51,7 +51,7 @@ public class SpringConfiguration {
 
     @Bean
     public UserService userService() {
-        return new UserService(userRepository, chatRoomRepository, userRoomRepository, relationRepository);
+        return new UserService(userRepository, chatRoomRepository, userRoomRepository, relationRepository, userSubscriptionRepository);
     }
 
     @Bean

@@ -14,7 +14,6 @@ import org.hibernate.annotations.ColumnDefault;
 @Table(name = "user_rooms")
 @Data
 @AllArgsConstructor
-@RequiredArgsConstructor
 @IdClass(UserRoomId.class)
 public class UserRoom {
 
@@ -28,15 +27,9 @@ public class UserRoom {
     @Column(length = 36, nullable = false)
     private String roomId;
 
-    @Convert(converter = SubscriptionConverter.class)
-    @ColumnDefault("''")
-    @Column(length = 1023)
-    private Subscription subscription;
-
     public UserRoom() {
         this.userId = "";
         this.roomId = "";
-        this.subscription = null;
     }
 
 }

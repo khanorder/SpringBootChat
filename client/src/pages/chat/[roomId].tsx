@@ -101,8 +101,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
                     setMessage={setMessage}
                     setChatImageMime={setChatImageMime}
                     setChatSmallImage={setChatSmallImage}
-                    setChatLargeImage={setChatLargeImage}
-                />
+                    setChatLargeImage={setChatLargeImage} />
             </>
         );
     }, [chat, enterUser, roomId, chatImageInputRef, chatMessageInputRef, message]);

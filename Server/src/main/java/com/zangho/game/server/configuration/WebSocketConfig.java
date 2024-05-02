@@ -42,7 +42,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public ResHandler resHandler() {
-        return new ResHandler(sessionHandler(), userService, notificationService, jwtService);
+        return new ResHandler(sessionHandler(), userService, notificationService, jwtService, messageService);
     }
 
     @Bean

@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @RequiredArgsConstructor
 public class UserSubscription {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @NonNull
     @Column(length = 36)
     private String id;
 
@@ -37,5 +37,5 @@ public class UserSubscription {
     @ColumnDefault(value = "current_timestamp(6)")
     @CreationTimestamp
     @Column(length = 6, nullable = false)
-    Date createAt;
+    Date createAt = new Date();
 }

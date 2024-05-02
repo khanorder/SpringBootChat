@@ -3,7 +3,6 @@ import {Defines} from "@/defines";
 import {Domains} from "@/domains";
 import {jwtDecode} from "jwt-decode";
 import isEmpty from "lodash/isEmpty";
-import AccountType = Defines.AccountType;
 
 const base62 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
 const base64 = base('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/');

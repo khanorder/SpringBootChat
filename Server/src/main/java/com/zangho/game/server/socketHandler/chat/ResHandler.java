@@ -13,6 +13,7 @@ import com.zangho.game.server.domain.user.UserInterface;
 import com.zangho.game.server.error.*;
 import com.zangho.game.server.helper.Helpers;
 import com.zangho.game.server.service.JwtService;
+import com.zangho.game.server.service.MessageService;
 import com.zangho.game.server.service.NotificationService;
 import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class ResHandler {
     private final SessionHandler sessionHandler;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final MessageService messageService;
     private final JwtService jwtService;
 
     @Value("${server.version.main}")
@@ -40,13 +42,14 @@ public class ResHandler {
     @Value("${server.version.maintenance}")
     private int serverVersionMaintenance;
 
-    public ResHandler(SessionHandler sessionHandler, UserService userService, NotificationService notificationService, JwtService jwtService) {
+    public ResHandler(SessionHandler sessionHandler, UserService userService, NotificationService notificationService, JwtService jwtService, MessageService messageService) {
         var config = System.getProperty("Config");
         isDevelopment = null == config || !config.equals("production");
         this.sessionHandler = sessionHandler;
         this.userService = userService;
         this.notificationService = notificationService;
         this.jwtService = jwtService;
+        this.messageService = messageService;
     }
 
     public Optional<WebSocketSession> getSessionByUserId(String userId) {
@@ -279,7 +282,7 @@ public class ResHandler {
             if (chatRoom.getUsers().isEmpty())
                 return;
 
-            for (UserRoom userRoom : chatRoom.getUsers().values()) {
+            for (var userRoom : chatRoom.getUsers().values()) {
                 if (userRoom.getUserId().equals(startUser.getId()))
                     continue;
 

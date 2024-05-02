@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.domain.chat.ChatRoom;
+import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.error.ErrorSubscribeChatRoom;
 import com.zangho.game.server.error.ErrorSubscribeNotification;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
@@ -33,6 +34,10 @@ public class MessageService {
     private final UserService userService;
     private final ChatRoomService chatRoomService;
     private final UserRoomRepository userRoomRepository;
+
+    @Value("${server.hostname}")
+    private String serverHostName;
+
     public MessageService(UserService userService, ChatRoomService chatRoomService, UserRoomRepository userRoomRepository) {
         this.userService = userService;
         this.chatRoomService = chatRoomService;
@@ -45,34 +50,6 @@ public class MessageService {
         pushService = new PushService(publicKey, privateKey);
     }
 
-    public ErrorSubscribeChatRoom subscribeChatRoom(Subscription subscription, String roomId, String userId) throws Exception {
-
-        if (roomId.isEmpty())
-            return ErrorSubscribeChatRoom.REQUIRED_ROOM_ID;
-
-        if (userId.isEmpty())
-            return ErrorSubscribeChatRoom.REQUIRED_USER_ID;
-
-        var chatRoom = chatRoomService.findRoomById(roomId);
-        if (chatRoom.isEmpty())
-            return ErrorSubscribeChatRoom.NOT_FOUND_CHAT_ROOM;
-
-        if (chatRoom.get().getUsers().isEmpty())
-            return ErrorSubscribeChatRoom.EMPTY_USER_IN_ROOM;
-
-        var userRoom = chatRoom.get().getUsers().get(userId);
-
-        if (null == userRoom)
-            return ErrorSubscribeChatRoom.NOT_FOUND_USER_IN_ROOM;
-
-        if (null != userRoom.getSubscription())
-            return ErrorSubscribeChatRoom.ALREADY_SUBSCRIBE_ROOM;
-
-        userRoom.setSubscription(subscription);
-        userRoomRepository.save(userRoom);
-        return ErrorSubscribeChatRoom.NONE;
-    }
-
     public void unsubscribe(String endpoint) {
         logger.info("Unsubscribed from " + endpoint);
 //        subscriptions = subscriptions.stream().filter(s -> !endpoint.equals(s.endpoint)).collect(Collectors.toList());
@@ -83,13 +60,43 @@ public class MessageService {
 //        subscriptions = subscriptions.stream().filter(s -> !endpoint.equals(s.endpoint)).collect(Collectors.toList());
     }
 
+    public void sendNotificationChat(Subscription subscription, String title, String body, String path, String icon) {
+        try {
+            var result = new HashMap<String, Object>();
+            result.put("title", title);
+            result.put("body", body);
+            result.put("tag", "chat");
+            result.put("data", path);
+            if (!icon.isEmpty())
+                result.put("icon", serverHostName + icon);
+            sendNotificationJson(subscription, (new ObjectMapper()).writeValueAsString(result));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    public void sendNotificationWithLink(Subscription subscription, String title, String body, String path, String icon) {
+        try {
+            var result = new HashMap<String, Object>();
+            result.put("title", title);
+            result.put("body", body);
+            result.put("tag", "link");
+            result.put("data", path);
+            if (!icon.isEmpty())
+                result.put("icon", serverHostName + icon);
+            sendNotificationJson(subscription, (new ObjectMapper()).writeValueAsString(result));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
     public void sendNotification(Subscription subscription, String title, String body, String icon) {
         try {
             var result = new HashMap<String, Object>();
             result.put("title", title);
             result.put("body", body);
             if (!icon.isEmpty())
-                result.put("icon", icon);
+                result.put("icon", serverHostName + icon);
             sendNotificationJson(subscription, (new ObjectMapper()).writeValueAsString(result));
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -106,10 +113,26 @@ public class MessageService {
 
     public void notifyBrowserUserInRoom(ChatRoom chatRoom, String title, String body) {
         chatRoom.getUsers().values().forEach(userInRoom -> {
-            if (null == userInRoom.getSubscription())
+            var userSubscriptions = userService.findUserSubscriptionsByUserId(userInRoom.getUserId());
+            if (userSubscriptions.isEmpty())
                 return;
 
-            sendNotification(userInRoom.getSubscription(), title, body, "");
+            for (var userSubscription : userSubscriptions)
+                sendNotification(userSubscription.getSubscription(), title, body, "/images/profile/small/" + userInRoom.getUserId());
+        });
+    }
+
+    public void notifyBrowserSendMessage(ChatRoom chatRoom, User sendUser, String message) {
+        chatRoom.getUsers().values().forEach(userInRoom -> {
+            if (userInRoom.getUserId().equals(sendUser.getId()))
+                return;
+
+            var userSubscriptions = userService.findUserSubscriptionsByUserId(userInRoom.getUserId());
+            if (userSubscriptions.isEmpty())
+                return;
+
+            for (var userSubscription : userSubscriptions)
+                sendNotificationChat(userSubscription.getSubscription(), chatRoom.getRoomName(), sendUser.getNickName() + ": " + message, chatRoom.getRoomId(), "/images/profile/small/" + sendUser.getId());
         });
     }
 }

@@ -308,15 +308,4 @@ public class ChatRoomService {
         }
     }
 
-    public void subscribeUserRoom(Subscription subscription, String userId, String roomId) {
-        var userRoom = userRoomRepository.findById(new UserRoomId(userId, roomId));
-        if (userRoom.isEmpty()) {
-            userRoom = Optional.of(new UserRoom(userId, roomId, subscription));
-        } else {
-            userRoom.get().setSubscription(subscription);
-        }
-
-        userRoomRepository.save(userRoom.get());
-    }
-
 }

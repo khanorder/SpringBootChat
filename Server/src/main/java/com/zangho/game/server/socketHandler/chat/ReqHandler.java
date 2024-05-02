@@ -554,6 +554,12 @@ public class ReqHandler {
             resHandler.resFollow(session, targetUser.get());
             resHandler.resFollower(targetUser.get(), connectedUser.get());
             resHandler.resNotificationFollower(connectedUser.get(), targetUser.get());
+
+            var userSubscriptions = userService.findUserSubscriptionsByUserId(targetUser.get().getId());
+            if (!userSubscriptions.isEmpty()) {
+                for (var userSubscription : userSubscriptions)
+                    messageService.sendNotificationWithLink(userSubscription.getSubscription(), "새로운 팔로워", "'" + connectedUser.get().getNickName() + "'님이 당신을 팔로우 합니다.", "", "/images/profile/small/" + connectedUser.get().getId());
+            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -983,7 +989,7 @@ public class ReqHandler {
             resHandler.noticeEnterChatRoom(existsRoom.get(), connectedUser.get());
             resHandler.noticeAddChatRoomUser(existsRoom.get(), connectedUser.get());
 
-            messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 입장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 입장했습니다.");
+            //messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 입장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 입장했습니다.");
             lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -1015,7 +1021,7 @@ public class ReqHandler {
             connectedUser.ifPresent(old -> old.setCurrentChatRoom(Optional.empty()));
             resHandler.resExitChatRoom(session, ErrorExitChatRoom.NONE);
 
-            messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 퇴장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 퇴장했습니다.");
+            //messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 퇴장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 퇴장했습니다.");
             lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -1081,7 +1087,7 @@ public class ReqHandler {
             }
 
             resHandler.noticeTalkChatRoom(existsRoom.get(), chat);
-            messageService.notifyBrowserUserInRoom(existsRoom.get(), connectedUser.get().getNickName(), chatMessage);
+            messageService.notifyBrowserSendMessage(existsRoom.get(), connectedUser.get(), chatMessage);
             chatRoomService.addChatToRoom(chat);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

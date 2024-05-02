@@ -127,7 +127,7 @@ export namespace CommonAPI {
 
         const registration = await navigator.serviceWorker.register('/sw.js');
         await registration.update();
-        console.log(registration);
+
         const subscribeOptions = {
             userVisibleOnly: true,
             applicationServerKey: publicKey,
@@ -136,7 +136,6 @@ export namespace CommonAPI {
         let pushSubscription: PushSubscription|null = null;
         try {
             pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
-            console.log(pushSubscription);
         } catch (subscriptionError) {
             console.error(subscriptionError);
         }
@@ -165,15 +164,14 @@ export namespace CommonAPI {
                     return true;
 
                 case Errors.SubscribeNotification.REQUIRED_USER_ID:
-                    alert('사용자 정보가 필요합니다.');
+                    alert('알림설정을 할 사용자 정보가 필요합니다.');
                     break;
 
                 case Errors.SubscribeNotification.NOT_FOUND_USER:
-                    alert('사용자가 없습니다.');
+                    alert('알림설정을 할 사용자가 없습니다.');
                     break;
 
                 case Errors.SubscribeNotification.ALREADY_SUBSCRIBE:
-                    alert('이미 알림설정을 했습니다.');
                     break;
 
                 default:
