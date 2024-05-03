@@ -58,7 +58,9 @@ public class SessionHandler {
 
             consoleLogPackets(packet, "sendToOne");
 
-            session.sendMessage(new BinaryMessage(packet));
+            synchronized (session) {
+                session.sendMessage(new BinaryMessage(packet));
+            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -84,7 +86,9 @@ public class SessionHandler {
                 return;
 
             try {
-                session.sendMessage(new BinaryMessage(packet));
+                synchronized (session) {
+                    session.sendMessage(new BinaryMessage(packet));
+                }
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
             }
@@ -123,7 +127,9 @@ public class SessionHandler {
                     return;
                 }
 
-                session.sendMessage(new BinaryMessage(packet));
+                synchronized (session) {
+                    session.sendMessage(new BinaryMessage(packet));
+                }
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
             }
@@ -149,7 +155,9 @@ public class SessionHandler {
                 if (session.getId().equals(mineSession.getId()))
                     return;
 
-                session.sendMessage(new BinaryMessage(packet));
+                synchronized (session) {
+                    session.sendMessage(new BinaryMessage(packet));
+                }
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
             }

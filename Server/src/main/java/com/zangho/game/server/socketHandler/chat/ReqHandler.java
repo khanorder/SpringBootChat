@@ -891,10 +891,12 @@ public class ReqHandler {
             if (isDevelopment)
                 logger.info(chatRoom.get().getOpenType().getNumber() + ", " + chatRoom.get().getRoomId() + ", " + roomName + ", " + connectedUser.get().getId() + ", " + connectedUser.get().getNickName());
 
-            resHandler.resAddChatRoom(session, chatRoom.get());
-            resHandler.resCreateChatRoom(session, chatRoom.get());
-            resHandler.resUpdateChatRoom(session, chatRoom.get());
-            lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+            var resultAddChatRoom = resHandler.resAddChatRoom(session, chatRoom.get());
+            if (resultAddChatRoom.get()) {
+                resHandler.resCreateChatRoom(session, chatRoom.get());
+                resHandler.resUpdateChatRoom(session, chatRoom.get());
+                lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -936,9 +938,11 @@ public class ReqHandler {
                 chatRoomService.addUserToRoom(userId, optChatRoom.get());
             }
 
-            resHandler.resAddChatRoom(session, optChatRoom.get());
-            resHandler.resUpdateChatRoom(session, optChatRoom.get());
-            resHandler.resNotificationAddUserChatRoom(connectedUser.get(), optChatRoom.get(), userIds);
+            var resultAddChatRoom = resHandler.resAddChatRoom(session, optChatRoom.get());
+            if (resultAddChatRoom.get()) {
+                resHandler.resUpdateChatRoom(session, optChatRoom.get());
+                resHandler.resNotificationAddUserChatRoom(connectedUser.get(), optChatRoom.get(), userIds);
+            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -1003,12 +1007,14 @@ public class ReqHandler {
 
             var existsRoom = result.getRight();
 
-            resHandler.resAddChatRoom(session, existsRoom.get());
-            resHandler.resUpdateChatRoom(session, existsRoom.get());
-            resHandler.resEnterChatRoom(session, existsRoom.get());
-            resHandler.resHistoryChatRoom(session, existsRoom.get());
-            resHandler.noticeEnterChatRoom(existsRoom.get(), connectedUser.get());
-            resHandler.noticeAddChatRoomUser(existsRoom.get(), connectedUser.get());
+            var resultAddChatRoom = resHandler.resAddChatRoom(session, existsRoom.get());
+            if (resultAddChatRoom.get()) {
+                resHandler.resUpdateChatRoom(session, existsRoom.get());
+                resHandler.resEnterChatRoom(session, existsRoom.get());
+                resHandler.resHistoryChatRoom(session, existsRoom.get());
+                resHandler.noticeEnterChatRoom(existsRoom.get(), connectedUser.get());
+                resHandler.noticeAddChatRoomUser(existsRoom.get(), connectedUser.get());
+            }
 
             //messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 입장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 입장했습니다.");
             lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
@@ -1104,9 +1110,11 @@ public class ReqHandler {
             // 참여 인원에게 채팅방 정보 전송
             if (existsRoom.get().getChats().isEmpty() && existsRoom.get().getOpenType().equals(RoomOpenType.PREPARED)) {
                 chatRoomService.startPreparedChatRoom(existsRoom.get());
-                resHandler.resAddChatRoom(session, existsRoom.get());
-                resHandler.resOpenPreparedChatRoom(session, existsRoom.get());
-                resHandler.resNotificationStartChat(connectedUser.get(), existsRoom.get());
+                var resultAddChatRoom = resHandler.resAddChatRoom(session, existsRoom.get());
+                if (resultAddChatRoom.get()) {
+                    resHandler.resOpenPreparedChatRoom(session, existsRoom.get());
+                    resHandler.resNotificationStartChat(connectedUser.get(), existsRoom.get());
+                }
             }
 
             resHandler.noticeTalkChatRoom(existsRoom.get(), chat);

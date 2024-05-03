@@ -6,7 +6,6 @@ import com.zangho.game.server.define.RoomOpenType;
 import com.zangho.game.server.domain.chat.Chat;
 import com.zangho.game.server.domain.chat.ChatRoom;
 import com.zangho.game.server.domain.chat.ChatRoomInfoInterface;
-import com.zangho.game.server.domain.chat.UserRoom;
 import com.zangho.game.server.domain.user.Notification;
 import com.zangho.game.server.domain.user.User;
 import com.zangho.game.server.domain.user.UserInterface;
@@ -24,6 +23,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ResHandler {
@@ -850,7 +850,7 @@ public class ResHandler {
     }
 
     @Async
-    public void resAddChatRoom(WebSocketSession session, ChatRoom chatRoom) {
+    public CompletableFuture<Boolean> resAddChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var resPacket = getAddChatRoomPackets(chatRoom);
             switch (chatRoom.getOpenType()) {
@@ -860,7 +860,7 @@ public class ResHandler {
 
                 case PRIVATE:
                     if (chatRoom.getUsers().isEmpty())
-                        return;
+                        return CompletableFuture.completedFuture(false);
 
                     sessionHandler.sendEachSessionInRoom(chatRoom, resPacket);
                     break;
@@ -871,7 +871,9 @@ public class ResHandler {
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
+            return CompletableFuture.completedFuture(false);
         }
+        return CompletableFuture.completedFuture(true);
     }
 
     private byte[] getAddChatRoomPackets(ChatRoom chatRoom) throws Exception {

@@ -214,14 +214,14 @@ public class UserService implements UserDetailsService {
     }
 
     @Async
-    public boolean updateActiveUser(User user) {
+    public void updateActiveUser(User user) {
         var optExistsUser = userRepository.findById(user.getId());
         if (optExistsUser.isEmpty())
-            return false;
+            return;
 
         optExistsUser.get().setLatestActiveAt(new Date());
         var existsUser = userRepository.save(optExistsUser.get());
-        return null != existsUser;
+        //return null != existsUser;
     }
 
     public ErrorSubscribeNotification saveUserSubscription(String userId, Subscription subscription) {
