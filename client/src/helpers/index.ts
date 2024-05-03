@@ -496,7 +496,6 @@ export namespace Helpers {
             }
 
             result = getUserInfosCookie() as Map<string, Domains.UserInfo>;
-            console.log(`Helpers - mergeUserInfoCookie: ${JSON.stringify(result, replacer)}`);
             if ("undefined" === typeof userInfo.accessToken || isEmpty(userInfo.accessToken) || "undefined" === typeof userInfo.refreshToken || isEmpty(userInfo.refreshToken)) {
                 console.log(`Helpers - mergeUserInfoCookie: both tokens are required to generate token user info.`);
                 return result;

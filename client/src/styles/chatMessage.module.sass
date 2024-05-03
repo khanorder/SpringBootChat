@@ -25,10 +25,13 @@
         width: 40px
         height: 40px
         overflow: hidden
-        background: #dfdfdf
+        background: #ffffff
+        box-shadow: 0 0 10px #acacac
+        object-fit: cover
 
         .chatUserProfile
             width: 40px
+            object-fit: cover
 
     &.mine
         justify-content: flex-end
@@ -60,9 +63,9 @@
                 color: #ffffff
 
             &.chatMessageImage
+                position: relative
                 border: 0
-                max-width: 150px
-                max-height: 150px
+                width: 150px
                 padding: 0
                 background: none
                 overflow: hidden

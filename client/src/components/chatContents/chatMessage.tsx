@@ -11,6 +11,7 @@ import {setChatDetailImageId} from "@/stores/reducers/chat";
 import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import chatImageSmallUrlPrefix = Domains.chatImageSmallUrlPrefix;
 import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
+import Image from "next/image";
 const NL2BR = dynamic(() => import("@/components/common/NL2BR"), { ssr: false });
 
 export interface ChatMessageProps {
@@ -49,7 +50,12 @@ export default function ChatMessage({data}: ChatMessageProps) {
 
         return (
             <div className={styles.chatUserProfileWrapper}>
-                <img className={styles.chatUserProfile} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} title={userInfo.nickName} alt={userInfo.nickName} />
+                <Image className={styles.chatUserProfile}
+                       src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`}
+                       title={userInfo.nickName}
+                       alt={userInfo.nickName}
+                       width={40}
+                       height={40}/>
             </div>
         );
     }, [appConfigs, getOthersUserInfo, user, data]);
@@ -98,10 +104,11 @@ export default function ChatMessage({data}: ChatMessageProps) {
                         <div className={styles.chatWrapper}>
                             {nickName()}
                             <div className={chatMessageClass}>
-                                <img className={styles.chatImage}
+                                <Image className={styles.chatImage}
                                      src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${chatImageSmallUrlPrefix}${data.id}`}
+                                     title={data.id + ' 이미지'}
                                      alt={data.id + ' 이미지'}
-                                     onClick={e => openChatImageDetailDialog(data.id)}/>
+                                     onClick={e => openChatImageDetailDialog(data.id)} width={150} height={150} />
                             </div>
                             <div className={styles.chatTime}>{dayjs(data.time).fromNow(true)}</div>
                         </div>

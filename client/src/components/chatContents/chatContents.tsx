@@ -17,8 +17,6 @@ export default function ChatContents() {
     const chatContentsRef = createRef<HTMLUListElement>();
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
-    const user = useAppSelector(state => state.user);
-    const dispatch = useAppDispatch();
 
     //#region OnRender
     useEffect(() => {
@@ -29,12 +27,13 @@ export default function ChatContents() {
     //#endregion
 
     useEffect(() => {
-        if (!firstRender.current) {
-            if (chatContentsRef.current?.scrollHeight)
-                chatContentsRef.current.scrollTop = chatContentsRef.current.scrollHeight;
-        }
+        if (firstRender.current)
+            return;
 
-    }, [firstRender, chat]);
+        if (chatContentsRef.current?.scrollHeight)
+            chatContentsRef.current.scrollTop = chatContentsRef.current.scrollHeight;
+
+    }, [firstRender, chatContentsRef]);
 
     const list = useCallback(() => {
         let chatDatas: Domains.Chat[] = [];

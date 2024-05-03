@@ -7,6 +7,7 @@ import useCurrentUser from "@/components/common/useCurrentUser";
 import appConfigs from "@/stores/reducers/appConfigs";
 import {Domains} from "@/domains";
 import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
+import Image from "next/image";
 
 export interface ChatUserProfileProps {
     userId: string;
@@ -34,7 +35,7 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
         return (
             <div className={styles.userThumbWrapper}>
                 <div className={styles.userThumb}>
-                    <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} alt='프로필'/>
+                    <Image className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} alt='프로필' width={40} height={40}/>
                 </div>
                 {
                     userInfo.online

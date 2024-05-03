@@ -1,4 +1,5 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {FingerPrint} from "@/helpers/fingerPrint";
 
 interface AppConfigsState {
     isProd: boolean;
@@ -17,6 +18,7 @@ interface AppConfigsState {
     copyright: string;
     url: string;
     ogImage: string;
+    fingerPrint: FingerPrint;
 }
 
 const initialState: AppConfigsState = {
@@ -35,7 +37,8 @@ const initialState: AppConfigsState = {
     author: 'baejangho.com',
     copyright: 'baejangho.com',
     url: 'chat.baejangho.com',
-    ogImage: '/images/logo-m3_gmbaejangho.gif'
+    ogImage: '/images/logo-m3_gmbaejangho.gif',
+    fingerPrint: new FingerPrint()
 }
 
 const appConfigsSlice = createSlice({

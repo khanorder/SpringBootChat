@@ -6,6 +6,7 @@ import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -28,10 +29,12 @@ public class SessionHandler {
         this.connectedSessions = new ConcurrentHashMap<>();
     }
 
+    @Async
     public void addSession(WebSocketSession session) {
         connectedSessions.put(session.getId(), session);
     }
 
+    @Async
     public void removeSession(WebSocketSession session) {
         connectedSessions.remove(session.getId());
     }
@@ -40,6 +43,7 @@ public class SessionHandler {
         return Optional.ofNullable(connectedSessions.get(sessionId));
     }
 
+    @Async
     public void sendOneSession(WebSocketSession session, byte[] packet) {
         try {
             if (null == session) {
@@ -60,6 +64,7 @@ public class SessionHandler {
         }
     }
 
+    @Async
     public void sendEachSession(Set<String> sessionIds, byte[] packet) {
         if (sessionIds.isEmpty())
             return;
@@ -86,6 +91,7 @@ public class SessionHandler {
         });
     }
 
+    @Async
     public void sendEachSessionInRoom(ChatRoom chatRoom, byte[] packet) {
         if (chatRoom.getUsers().isEmpty())
             return;
@@ -101,6 +107,7 @@ public class SessionHandler {
         sendEachSession(sessionIds, packet);
     }
 
+    @Async
     public void sendAll(byte[] packet) throws Exception {
         consoleLogPackets(packet, "sendToAll");
 
@@ -123,6 +130,7 @@ public class SessionHandler {
         });
     }
 
+    @Async
     public void sendOthers(WebSocketSession mineSession, byte[] packet) throws Exception {
         consoleLogPackets(packet, "sendToOthers");
 
@@ -148,6 +156,7 @@ public class SessionHandler {
         });
     }
 
+    @Async
     public void consoleLogPackets(byte[] packet, String name) throws Exception {
         if (!isDevelopment)
             return;
@@ -163,6 +172,7 @@ public class SessionHandler {
         logger.info(packetString.toString());
     }
 
+    @Async
     public void consoleLogState(String position) {
         if (!isDevelopment)
             return;

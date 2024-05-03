@@ -11,8 +11,8 @@ import {AppConfigsState} from "@/stores/reducers/appConfigs";
 import {ChatState} from "@/stores/reducers/chat";
 
 export function* callCheckConnectionReq(socket: WebSocket) {
-    if ('production' !== process.env.NODE_ENV)
-        console.log(`saga - checkConnectionReq`);
+    // if ('production' !== process.env.NODE_ENV)
+    //     console.log(`saga - checkConnectionReq`);
 
     if (!socket || WebSocket.OPEN != socket.readyState) {
         if ('production' !== process.env.NODE_ENV)

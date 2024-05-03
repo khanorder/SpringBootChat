@@ -178,13 +178,13 @@ export function* checkConnection (socket: WebSocket) {
         while (true) {
             try {
                 const readyState: 0|1|2|3 = yield take(channel);
-                if ('production' !== process.env.NODE_ENV)
-                    console.log(`saga - checkConnection: ${readyState}`);
+                // if ('production' !== process.env.NODE_ENV)
+                //     console.log(`saga - checkConnection: ${readyState}`);
 
                 switch (readyState) {
                     case WebSocket.OPEN:
-                        if ('production' !== process.env.NODE_ENV)
-                            console.log(`saga - checkConnection: websocket connection checked.(${dayjs().format("YYYY-MM-DD HH:mm:ss")})`);
+                        // if ('production' !== process.env.NODE_ENV)
+                        //     console.log(`saga - checkConnection: websocket connection checked.(${dayjs().format("YYYY-MM-DD HH:mm:ss")})`);
 
                         yield setConnectionState(readyState);
                         yield call(callCheckConnectionReq, socket);

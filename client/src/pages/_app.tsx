@@ -5,7 +5,7 @@ import {ReactElement, ReactNode, useEffect, useRef} from "react";
 import wrapper from '@/stores/index';
 import {ConnectedRouter} from "connected-next-router";
 import {useRouter} from "next/router";
-import {useAppDispatch} from "@/hooks";
+import {useAppDispatch, useAppSelector} from "@/hooks";
 import * as webSocketActions from "@/stores/reducers/webSocket";
 import {Helpers} from "@/helpers";
 import { v4 as uuid } from 'uuid';
@@ -13,7 +13,7 @@ import {FingerPrint} from "@/helpers/fingerPrint";
 import isEmpty from "lodash/isEmpty";
 import { dayjs } from '@/helpers/localizedDayjs';
 import {CommonAPI} from "@/apis/commonAPI";
-import {setServerHost, setServerProtocol} from "@/stores/reducers/appConfigs";
+import {setIsProd, setServerHost, setServerProtocol} from "@/stores/reducers/appConfigs";
 import {loadOthers, setUserId, setUserInfos} from "@/stores/reducers/user";
 
 export type NextPageWithLayout = NextPage & {
@@ -25,6 +25,7 @@ export type AppPropsWithLayout = AppProps & {
 }
 
 function App({ Component, pageProps }: AppPropsWithLayout) {
+    const appConfigs = useAppSelector(state => state.appConfigs);
     const getLayout = Component.getLayout ?? ((page) => page);
     const router = useRouter();
     const dispatch = useAppDispatch();
@@ -44,12 +45,12 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 
             firstRender.current = false;
             dispatch(webSocketActions.initSocket(socketURL));
+            dispatch(setIsProd(false));
         }
     }, [firstRender, dispatch]);
 
     useEffect(() => {
         if (!firstRender.current && window) {
-            const fingerPrint = new FingerPrint();
             const sessionName = 'viewer';
             const cookies = document.cookie.split(';');
             const userCookie = cookies.find(cookie => cookie.trim().startsWith(`${sessionName}=`));
@@ -59,20 +60,6 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 
             Helpers.setCookie30Min(sessionName, session);
 
-            const fp = fingerPrint.getFingerprint();
-            if (null == fp)
-                return;
-
-            const deviceType = fingerPrint.getDeviceType();
-            const deviceVendor = fingerPrint.getDeviceVendor();
-            const deviceModel = fingerPrint.getDeviceModel();
-            const agent = fingerPrint.getAgent();
-            const browser = fingerPrint.getBrowser();
-            const browserVersion = fingerPrint.getBrowserVersion();
-            const engine = fingerPrint.getEngine();
-            const engineVersion = fingerPrint.getEngineVersion();
-            const os = fingerPrint.getOS();
-            const osVersion = fingerPrint.getOSVersion();
             const host = location.host;
             const path = location.pathname;
             let parameter = '';
@@ -81,9 +68,17 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
                 parameter = hrefArr[1];
 
             const localTime = dayjs.utc().toDate();
-            CommonAPI.SaveVisitAsync({ session: session, fp: fp, deviceType: deviceType, deviceVendor: deviceVendor, deviceModel: deviceModel, agent: agent, browser: browser, browserVersion: browserVersion, engine: engine, engineVersion: engineVersion, os: os, osVersion: osVersion, host: host, path: path, parameter: parameter, title: document.title, localTime: localTime });
+            CommonAPI.SaveVisitAsync({
+                session: session,
+                fingerPrint: appConfigs.fingerPrint,
+                host: host,
+                path: path,
+                parameter: parameter,
+                title: document.title,
+                localTime: localTime
+            });
         }
-    }, [firstRender, router]);
+    }, [firstRender, router, appConfigs]);
 
     return getLayout(
         <ConnectedRouter>

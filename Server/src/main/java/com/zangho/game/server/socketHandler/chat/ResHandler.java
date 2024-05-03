@@ -19,6 +19,7 @@ import com.zangho.game.server.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
@@ -60,6 +61,7 @@ public class ResHandler {
         return sessionHandler.getSession(connectedOtherUser.get().getSessionId());
     }
 
+    @Async
     public void resCheckConnection(WebSocketSession session, ErrorCheckConnection error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_CONNECTION, error);
@@ -71,6 +73,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resCheckAuthentication(WebSocketSession session, ErrorCheckAuth error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_AUTHENTICATION, error);
@@ -81,6 +84,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resCheckAuthentication(WebSocketSession session, User user, String accessTokenString, String refreshTokenString) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_AUTHENTICATION, ErrorCheckAuth.NONE);
@@ -101,8 +105,7 @@ public class ResHandler {
         }
     }
 
-
-
+    @Async
     public void resSignIn(WebSocketSession session, ErrorSignIn error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_SIGN_IN, error);
@@ -113,6 +116,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resSignOut(WebSocketSession session, ErrorSignOut error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_SIGN_OUT, error);
@@ -123,6 +127,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resDemandRefreshToken(WebSocketSession session, String userId) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_DEMAND_REFRESH_TOKEN);
@@ -168,6 +173,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resAccessTokenExpired(WebSocketSession session, String userId) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_ACCESS_TOKEN_EXPIRED);
@@ -183,6 +189,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resRefreshTokenExpired(WebSocketSession session, String userId) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_REFRESH_TOKEN_EXPIRED);
@@ -198,6 +205,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resCheckNotification(WebSocketSession session, ErrorCheckNotification error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_NOTIFICATION, error);
@@ -208,6 +216,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resCheckNotification(WebSocketSession session, Notification notification) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHECK_NOTIFICATION, ErrorCheckNotification.NONE);
@@ -219,6 +228,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resRemoveNotification(WebSocketSession session, ErrorRemoveNotification error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_NOTIFICATION, error);
@@ -229,6 +239,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resRemoveNotification(WebSocketSession session, String id) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_NOTIFICATION, ErrorRemoveNotification.NONE);
@@ -260,6 +271,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resNotificationFollower(User follower, User follow) {
         try {
             var notification = notificationService.createNotificationFollow(follower, follow);
@@ -277,6 +289,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resNotificationStartChat(User startUser, ChatRoom chatRoom) {
         try {
             if (chatRoom.getUsers().isEmpty())
@@ -302,6 +315,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resNotificationAddUserChatRoom(User sendUser, ChatRoom chatRoom, List<String> addedUserIds) {
         try {
             if (addedUserIds.isEmpty()) {
@@ -335,6 +349,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resNotifications(WebSocketSession session, List<Notification> notifications) {
         try {
             var startChatNotifications = notifications.stream().filter(notification -> notification.getNotificationType().equals(NotificationType.START_CHAT)).toList();
@@ -387,6 +402,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resConnectedUsers(WebSocketSession session) {
         try {
             var resPacket = getConnectedUsersPackets();
@@ -396,6 +412,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeConnectedUsers() {
         try {
             var resPacket = getConnectedUsersPackets();
@@ -423,6 +440,7 @@ public class ResHandler {
         return resPacket;
     }
 
+    @Async
     public void resLatestActiveUsers(WebSocketSession session) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_LATEST_ACTIVE_USERS);
@@ -441,6 +459,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resGetTokenUserInfo(WebSocketSession session, ErrorGetTokenUserInfo error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_TOKEN_USER_INFO, error);
@@ -451,6 +470,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resGetTokenUserInfo(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_TOKEN_USER_INFO, ErrorGetTokenUserInfo.NONE);
@@ -465,6 +485,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resGetOthersUserInfo(WebSocketSession session, ErrorGetOthersUserInfo error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_OTHERS_USER_INFO, error);
@@ -475,6 +496,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resGetOthersUserInfo(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_GET_OTHERS_USER_INFO, ErrorGetOthersUserInfo.NONE);
@@ -493,6 +515,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resFollows(WebSocketSession session, ConcurrentLinkedQueue<UserInterface> follows) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOWS);
@@ -510,6 +533,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resFollowers(WebSocketSession session, ConcurrentLinkedQueue<UserInterface> followers) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOWERS);
@@ -527,6 +551,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resChatRooms(WebSocketSession session, List<ChatRoomInfoInterface> chatRooms) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHAT_ROOMS);
@@ -554,6 +579,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeConnectedUser(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_CONNECTED_USER);
@@ -565,6 +591,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeDisconnectedUser(WebSocketSession closedSession, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_DISCONNECTED_USER);
@@ -576,6 +603,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resFollow(WebSocketSession session, ErrorFollow error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOW, error);
@@ -586,6 +614,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resFollow(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_FOLLOW, ErrorFollow.NONE);
@@ -597,6 +626,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resFollower(User targetUser, User user) {
         try {
             var connectedTargetUser = userService.getConnectedUserByUserId(targetUser.getId());
@@ -616,6 +646,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resUnfollow(WebSocketSession session, ErrorUnfollow error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_UNFOLLOW, error);
@@ -626,6 +657,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resUnfollow(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_UNFOLLOW, ErrorUnfollow.NONE);
@@ -637,6 +669,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resUnfollower(User targetUser, User user) {
         try {
             var connectedTargetUser = userService.getConnectedUserByUserId(targetUser.getId());
@@ -656,6 +689,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resStartChat(WebSocketSession session, ErrorStartChat error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_START_CHAT, error);
@@ -666,6 +700,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resStartChat(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_START_CHAT, ErrorStartChat.NONE);
@@ -681,6 +716,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resOpenPreparedChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_OPEN_PREPARED_CHAT_ROOM);
@@ -692,6 +728,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeNickNameChanged(WebSocketSession session, User user, String newNickName) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_NICK_NAME_CHANGED);
@@ -703,6 +740,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeUserMessageChanged(WebSocketSession session, User user, String newUserMessage) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_USER_MESSAGE_CHANGED);
@@ -714,6 +752,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeRoomNickNameChanged(ChatRoom chatRoom, String oldNickName, String newNickName) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_CHANGE_NICK_NAME_CHAT_ROOM);
@@ -730,6 +769,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resChangeUserProfile(WebSocketSession session, ErrorChangeUserProfile error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CHANGE_USER_PROFILE, error);
@@ -740,6 +780,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeUserProfileChanged(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_USER_PROFILE_CHANGED);
@@ -751,6 +792,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resRemoveUserProfile(WebSocketSession session, ErrorRemoveUserProfile error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_USER_PROFILE, error);
@@ -761,6 +803,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeUserProfileRemoved(WebSocketSession session, User user) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_NOTICE_USER_PROFILE_REMOVED);
@@ -772,6 +815,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resCreateChatRoom(WebSocketSession session, ErrorCreateChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CREATE_CHAT_ROOM, error);
@@ -782,6 +826,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resCreateChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_CREATE_CHAT_ROOM, ErrorCreateChatRoom.NONE);
@@ -793,6 +838,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resAddUserChatRoom(WebSocketSession session, ErrorAddUserChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_ADD_USER_CHAT_ROOM, error);
@@ -803,6 +849,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resAddChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var resPacket = getAddChatRoomPackets(chatRoom);
@@ -843,6 +890,7 @@ public class ResHandler {
         return resPacket;
     }
 
+    @Async
     public void resRemoveChatRoom(WebSocketSession session, ErrorRemoveChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_CHAT_ROOM, error);
@@ -853,6 +901,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resRemoveChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_REMOVE_CHAT_ROOM, ErrorRemoveChatRoom.NONE);
@@ -864,6 +913,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resEnterChatRoom(WebSocketSession session, ErrorEnterChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_ENTER_CHAT_ROOM, error);
@@ -874,6 +924,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resEnterChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_ENTER_CHAT_ROOM, ErrorEnterChatRoom.NONE);
@@ -885,6 +936,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeEnterChatRoom(ChatRoom chatRoom, User user) {
         try {
             if (!chatRoom.getOpenType().equals(RoomOpenType.PUBLIC))
@@ -900,6 +952,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resUpdateChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             if (chatRoom.getUsers().isEmpty())
@@ -925,6 +978,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeAddChatRoomUser(ChatRoom chatRoom, User user) {
         try {
             if (chatRoom.getUsers().isEmpty())
@@ -941,6 +995,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeRemoveChatRoomUser(ChatRoom chatRoom, User user) {
         try {
             if (chatRoom.getUsers().isEmpty())
@@ -957,6 +1012,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resHistoryChatRoom(WebSocketSession session, ChatRoom chatRoom) {
         try {
             if (chatRoom.getChats().isEmpty())
@@ -998,6 +1054,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resExitChatRoom(WebSocketSession session, ErrorExitChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_EXIT_CHAT_ROOM, error);
@@ -1008,6 +1065,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeRoomUserExited(ChatRoom chatRoom, User user) {
         try {
             if (!chatRoom.getOpenType().equals(RoomOpenType.PUBLIC))
@@ -1021,6 +1079,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void resTalkChatRoom(WebSocketSession session, ErrorTalkChatRoom error) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_TALK_CHAT_ROOM, error);
@@ -1031,6 +1090,7 @@ public class ResHandler {
         }
     }
 
+    @Async
     public void noticeTalkChatRoom(ChatRoom chatRoom, Chat chat) {
         try {
             var packetFlag = Helpers.getPacketFlag(ResType.RES_TALK_CHAT_ROOM, ErrorTalkChatRoom.NONE);

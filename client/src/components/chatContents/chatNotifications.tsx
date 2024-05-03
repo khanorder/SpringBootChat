@@ -12,6 +12,7 @@ import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import {useRouter} from "next/router";
 import {Helpers} from "@/helpers";
 import {setIsActiveNotification} from "@/stores/reducers/ui";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
 
 export default function ChatNotifications() {
     const firstRender = useRef(true);
@@ -76,7 +77,7 @@ export default function ChatNotifications() {
                     <li key={i} className={notificationClass}>
                         <div className={styles.iconWrapper} onClick={(e) => checkNotification(notification)}>
                             <div className={styles.iconThumb}>
-                                <img className={styles.iconImage} src={userInfo.profileImageUrl} alt='사용자 프로필'/>
+                                <Image className={styles.iconImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} alt='사용자 프로필' width={40} height={40}/>
                             </div>
                         </div>
                         <div className={styles.infoWrapper} onClick={(e) => checkNotification(notification)}>

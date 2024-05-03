@@ -30,13 +30,10 @@ function Rooms() {
 
     //#region OnRender
     useEffect(() => {
-        if (firstRender.current) {
+        if (firstRender.current)
             firstRender.current = false;
-            dispatch(setIsProd(true));
-            // dispatch(setIsProd(isProd));
-        }
 
-    }, [firstRender, dispatch]);
+    }, [firstRender]);
     //#endregion
 
     return <ChatRooms />;

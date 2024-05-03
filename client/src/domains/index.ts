@@ -3,6 +3,7 @@ import {Errors} from "@/defines/errors";
 import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
 import {JwtPayload} from "jwt-decode";
+import {FingerPrint} from "@/helpers/fingerPrint";
 
 export namespace Domains {
 
@@ -188,6 +189,16 @@ export namespace Domains {
         }
     }
 
+    export class SaveVisitRequest {
+        session: string = '';
+        fingerPrint: FingerPrint|null = null;
+        host: string = '';
+        parameter: string = '';
+        path: string = '';
+        title: string = '';
+        localTime: Date = new Date();
+    }
+
     export class Visit {
         session: string = '';
         fp: number = 0;
@@ -206,6 +217,44 @@ export namespace Domains {
         path: string = '';
         title: string = '';
         localTime: Date = new Date();
+
+        constructor(
+            session: string,
+            fp: number,
+            deviceType: string,
+            deviceVendor: string,
+            deviceModel: string,
+            agent: string,
+            browser: string,
+            browserVersion: string,
+            engine: string,
+            engineVersion: string,
+            os: string,
+            osVersion: string,
+            host: string,
+            parameter: string,
+            path: string,
+            title: string,
+            localTime: Date
+        ) {
+            this.session = session;
+            this.fp = fp;
+            this.deviceType = deviceType;
+            this.deviceVendor = deviceVendor;
+            this.deviceModel = deviceModel;
+            this.agent = agent;
+            this.browser = browser;
+            this.browserVersion = browserVersion;
+            this.engine = engine;
+            this.engineVersion = engineVersion;
+            this.os = os;
+            this.osVersion = osVersion;
+            this.host = host;
+            this.parameter = parameter;
+            this.path = path;
+            this.title = title;
+            this.localTime = localTime;
+        }
     }
 
     export class CheckConnectionRes {

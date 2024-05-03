@@ -18,6 +18,7 @@ import nl.martijndwars.webpush.Subscription;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -62,6 +63,7 @@ public class UserService implements UserDetailsService {
         return Optional.ofNullable(connectedUsers.get(userId));
     }
 
+    @Async
     public void removeConnectedUser(User user) {
         connectedUsers.remove(user.getId());
     }
@@ -91,6 +93,7 @@ public class UserService implements UserDetailsService {
         return currentUser.getCurrentChatRoom();
     }
 
+    @Async
     public void addUserChatRoomInfo(User user, ChatRoom chatRoom) {
         if (user.getId().isEmpty())
             return;
@@ -210,6 +213,7 @@ public class UserService implements UserDetailsService {
         return null != existsUser;
     }
 
+    @Async
     public boolean updateActiveUser(User user) {
         var optExistsUser = userRepository.findById(user.getId());
         if (optExistsUser.isEmpty())

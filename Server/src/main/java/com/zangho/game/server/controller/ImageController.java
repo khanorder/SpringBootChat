@@ -153,7 +153,7 @@ public class ImageController {
             var resourcePath = Paths.get(currentPath, "resources", "images");
 
             if (user.getProfileImage().isEmpty()) {
-                var imagePath = Paths.get(resourcePath.toString(), "user-circle.svg");
+                var imagePath = Paths.get(resourcePath.toString(), "user_icon.png");
                 if (!Files.exists(imagePath))
                     return ResponseEntity.notFound().build();
 

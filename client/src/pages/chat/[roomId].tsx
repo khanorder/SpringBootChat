@@ -7,7 +7,6 @@ import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq} from "@/stores/reducers/webSocket";
 import {Helpers} from "@/helpers";
 import dynamic from "next/dynamic";
-import {setIsProd} from "@/stores/reducers/appConfigs";
 import {Defines} from "@/defines";
 const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
@@ -21,13 +20,12 @@ const DialogChatDetailImage = dynamic(() => import("@/components/dialogs/dialogC
 const DialogImojiInput = dynamic(() => import("@/components/dialogs/dialogImojiInput"), { ssr: false });
 
 interface ChatRoomProps {
-    isProd: boolean;
     roomId: string;
     roomIdBase62: string;
     serverHost: string;
 }
 
-function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
+function ChatRoom({roomId, serverHost}: ChatRoomProps) {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
@@ -42,12 +40,10 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
 
     //#region OnRender
     useEffect(() => {
-        if (firstRender.current) {
+        if (firstRender.current)
             firstRender.current = false;
-            dispatch(setIsProd(isProd));
-        }
 
-    }, [firstRender, dispatch, isProd]);
+    }, [firstRender]);
     //#endregion
 
     const enterChatRoom = useCallback(() => {
@@ -58,7 +54,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
         } else {
             dispatch(enterChatRoomReq(roomId));
         }
-    }, [webSocket, user, dispatch, roomId]);
+    }, [webSocket, dispatch, roomId]);
 
     const enterUser = useCallback(() => {
         const currentChatRoom = chat.chatRooms.find(_ => _.roomId == roomId);
@@ -76,7 +72,7 @@ function ChatRoom({isProd, roomId, serverHost}: ChatRoomProps) {
                 </div>
             </div>
         );
-    }, [isProd, chat, enterChatRoom]);
+    }, [chat, enterChatRoom, roomId]);
 
     const contents = useCallback(() => {
         if (isEmpty(roomId))
@@ -138,7 +134,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     if (!roomId || isEmpty(roomId)) {
         return {
             props: {
-                isProd: isProd,
                 roomId: '',
                 roomName: ''
             }

@@ -12,6 +12,7 @@ import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
@@ -85,6 +86,7 @@ public class ReqHandler {
         lineNotifyService.Notify("채팅샘플 접속종료 (" + Helpers.getSessionIP(closeSession) + ")");
     }
 
+    @Async
     public void onCheckConnection(WebSocketSession session, byte[] packet) {
         try {
             if (4 > packet.length) {
@@ -129,6 +131,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onCheckAuthentication(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isPresent()) {
@@ -254,6 +257,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onSignIn(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         if (connectedUser.isPresent()) {
             resHandler.resSignIn(session, ErrorSignIn.ALREADY_SIGN_IN);
@@ -322,6 +326,7 @@ public class ReqHandler {
         resHandler.resCheckAuthentication(session, optUser.get(), resultIssueToken.getRight().getLeft(), resultIssueToken.getRight().getRight());
     }
 
+    @Async
     public void onSignOut(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         if (connectedUser.isEmpty()) {
             resHandler.resSignOut(session, ErrorSignOut.AUTH_REQUIRED);
@@ -358,6 +363,7 @@ public class ReqHandler {
         resHandler.resSignOut(session, ErrorSignOut.NONE);
     }
 
+    @Async
     public void onCheckNotification(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         if (connectedUser.isEmpty()) {
             resHandler.resCheckNotification(session, ErrorCheckNotification.AUTH_REQUIRED);
@@ -393,6 +399,7 @@ public class ReqHandler {
         resHandler.resCheckNotification(session, result.get());
     }
 
+    @Async
     public void onRemoveNotification(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         if (connectedUser.isEmpty()) {
             resHandler.resRemoveNotification(session, ErrorRemoveNotification.AUTH_REQUIRED);
@@ -423,6 +430,7 @@ public class ReqHandler {
         resHandler.resRemoveNotification(session, id);
     }
 
+    @Async
     public void onConnectedUsers(WebSocketSession session) {
         try {
             resHandler.resConnectedUsers(session);
@@ -431,6 +439,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onGetTokenUserInfo(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             var bytesTokenString = Arrays.copyOfRange(packet, 1, packet.length);
@@ -491,6 +500,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onGetOthersUserInfo(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty()) {
@@ -513,6 +523,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onFollow(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty()) {
@@ -565,6 +576,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onUnfollow(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty()) {
@@ -610,6 +622,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onStartChat(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty()) {
@@ -641,6 +654,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onChangeNickName(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
@@ -677,6 +691,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onChangeUserMessage(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             var bytesUserId = Arrays.copyOfRange(packet, 1, 17);
@@ -695,6 +710,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onChangeUserProfile(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty()) {
@@ -773,6 +789,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onRemoveUserProfile(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         if (connectedUser.isEmpty()) {
             resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.AUTH_REQUIRED);
@@ -814,6 +831,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onCreateChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
@@ -882,6 +900,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onAddUserChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
@@ -925,6 +944,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onRemoveChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
@@ -964,6 +984,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onEnterChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
@@ -996,6 +1017,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onExitChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             var roomIdBytes = Arrays.copyOfRange(packet, 1, packet.length);
@@ -1028,6 +1050,7 @@ public class ReqHandler {
         }
     }
 
+    @Async
     public void onTalkChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {
@@ -1087,13 +1110,14 @@ public class ReqHandler {
             }
 
             resHandler.noticeTalkChatRoom(existsRoom.get(), chat);
-            messageService.notifyBrowserSendMessage(existsRoom.get(), connectedUser.get(), chatMessage);
+            messageService.notifyBrowserSendMessage(existsRoom.get(), connectedUser.get(), ChatType.IMAGE == chatType ? "이미지" : chatMessage);
             chatRoomService.addChatToRoom(chat);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
     }
 
+    @Async
     public void onHistoryChatRoom(WebSocketSession session, Optional<User> connectedUser, byte[] packet) {
         try {
             if (connectedUser.isEmpty() || connectedUser.get().getId().isEmpty()) {

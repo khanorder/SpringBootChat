@@ -16,7 +16,6 @@ const ChatMain = dynamic(() => import("@/components/chatContents/chatMain"), { s
 function Main() {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
-    const user = useAppSelector(state => state.user);
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -27,13 +26,10 @@ function Main() {
 
     //#region OnRender
     useEffect(() => {
-        if (firstRender.current) {
+        if (firstRender.current)
             firstRender.current = false;
-            dispatch(setIsProd(true));
-            // dispatch(setIsProd(isProd));
-        }
 
-    }, [firstRender, dispatch]);
+    }, [firstRender]);
     //#endregion
 
     return (

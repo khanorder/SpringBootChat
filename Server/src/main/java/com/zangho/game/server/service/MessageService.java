@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
+import org.springframework.scheduling.annotation.Async;
 
 public class MessageService {
 
@@ -60,6 +61,7 @@ public class MessageService {
 //        subscriptions = subscriptions.stream().filter(s -> !endpoint.equals(s.endpoint)).collect(Collectors.toList());
     }
 
+    @Async
     public void sendNotificationChat(Subscription subscription, String title, String body, String path, String icon) {
         try {
             var result = new HashMap<String, Object>();
@@ -75,6 +77,7 @@ public class MessageService {
         }
     }
 
+    @Async
     public void sendNotificationWithLink(Subscription subscription, String title, String body, String path, String icon) {
         try {
             var result = new HashMap<String, Object>();
@@ -90,6 +93,7 @@ public class MessageService {
         }
     }
 
+    @Async
     public void sendNotification(Subscription subscription, String title, String body, String icon) {
         try {
             var result = new HashMap<String, Object>();
@@ -103,6 +107,7 @@ public class MessageService {
         }
     }
 
+    @Async
     public void sendNotificationJson(Subscription subscription, String messageJson) {
         try {
             pushService.send(new Notification(subscription, messageJson));
@@ -122,6 +127,7 @@ public class MessageService {
         });
     }
 
+    @Async
     public void notifyBrowserSendMessage(ChatRoom chatRoom, User sendUser, String message) {
         chatRoom.getUsers().values().forEach(userInRoom -> {
             if (userInRoom.getUserId().equals(sendUser.getId()))

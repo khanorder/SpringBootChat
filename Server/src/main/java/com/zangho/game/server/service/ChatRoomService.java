@@ -14,6 +14,7 @@ import nl.martijndwars.webpush.Subscription;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -237,6 +238,7 @@ public class ChatRoomService {
         return Pair.of(ErrorRemoveChatRoom.NONE, existsRoom);
     }
 
+    @Async
     public void addChatRoomMemory(ChatRoom chatRoom) {
         try {
             switch (chatRoom.getOpenType()) {
@@ -257,6 +259,7 @@ public class ChatRoomService {
         }
     }
 
+    @Async
     public void removeChatRoomMemory(RoomOpenType openType, String roomId) {
         try {
             switch (openType) {
@@ -277,6 +280,7 @@ public class ChatRoomService {
         }
     }
 
+    @Async
     public void startPreparedChatRoom(ChatRoom chatRoom) {
         if (!chatRoom.getOpenType().equals(RoomOpenType.PREPARED))
             return;
@@ -287,6 +291,7 @@ public class ChatRoomService {
         chatRoomRepository.save(chatRoom);
     }
 
+    @Async
     public void addChatToRoom(Chat chat) {
         if (chat.getRoomId().isEmpty())
             return;

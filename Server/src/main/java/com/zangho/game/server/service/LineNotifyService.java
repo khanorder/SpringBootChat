@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
@@ -35,17 +36,18 @@ public class LineNotifyService {
         notifyAPIURL = "https://notify-api.line.me/api/notify";
     }
 
-    public boolean Notify(String message, String accessToken) {
+    @Async
+    public void Notify(String message, String accessToken) {
         if (accessToken.isEmpty())
             accessToken = accessTokenMe;
 
         if (clientId.isEmpty() || secretId.isEmpty() || accessToken.isEmpty())
-            return false;
+            return;
 
         var config = System.getProperty("Config");
         if (null == config || !config.equals("production")) {
             logger.info(message);
-            return false;
+            return;
         }
 
         try {
@@ -69,17 +71,16 @@ public class LineNotifyService {
 
             if (200 != statusCode) {
                 logger.error("Error(" + statusCode + "): " + connection.getResponseMessage());
-                return false;
+                return;
             }
             connection.disconnect();
-            return true;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
-            return false;
         }
     }
 
-    public boolean Notify(String message) {
-        return Notify(message, "");
+    @Async
+    public void Notify(String message) {
+        Notify(message, "");
     }
 }

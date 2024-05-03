@@ -37,14 +37,25 @@ export default function Layout({children}: { children: ReactNode }) {
     }, [mainWrapper]);
 
     useEffect(() => {
-        if (!firstRender.current && !isCheckSubscription) {
-            if (Defines.AuthStateType.SIGN_IN == user.authState && !isEmpty(user.id) || !isEmpty(currentUser.accessToken)) {
-                CommonAPI.SubscribeNotification();
-                setIsCheckSubscription(true);
-            }
-        }
+        if (firstRender.current)
+            return;
 
-    }, [firstRender, user, currentUser, isCheckSubscription, setIsCheckSubscription]);
+        if ("iOS" === appConfigs.fingerPrint.getOS())
+            return;
+
+        if (isCheckSubscription)
+            return;
+
+        if (Defines.AuthStateType.SIGN_IN !== user.authState)
+            return;
+
+        if (isEmpty(user.id) && isEmpty(currentUser.accessToken))
+            return;
+
+        CommonAPI.SubscribeNotification();
+        setIsCheckSubscription(true);
+
+    }, [firstRender, appConfigs, user, currentUser, isCheckSubscription, setIsCheckSubscription]);
 
     //#region OnRender
     useEffect(() => {
