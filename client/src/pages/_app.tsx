@@ -45,7 +45,7 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 
             firstRender.current = false;
             dispatch(webSocketActions.initSocket(socketURL));
-            dispatch(setIsProd(false));
+            dispatch(setIsProd(true));
         }
     }, [firstRender, dispatch]);
 
