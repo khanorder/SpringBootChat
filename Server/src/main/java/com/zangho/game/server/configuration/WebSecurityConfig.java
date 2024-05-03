@@ -72,6 +72,7 @@ public class WebSecurityConfig {
         }));
 
         http.authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
+            authorizationManagerRequestMatcherRegistry.requestMatchers("/favicon.ico").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/auth/signIn").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/auth/signUp").permitAll();
             authorizationManagerRequestMatcherRegistry.requestMatchers("/tracking/visit").permitAll();

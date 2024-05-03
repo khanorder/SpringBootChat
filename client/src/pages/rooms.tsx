@@ -3,7 +3,7 @@ import {
     useEffect,
     useRef
 } from "react";
-import {NextPageContext} from "next";
+import {GetStaticProps, NextPageContext} from "next";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsProd} from "@/stores/reducers/appConfigs";
 import dynamic from "next/dynamic";
@@ -17,7 +17,7 @@ interface MainProps {
     isProd: boolean;
 }
 
-function Rooms({isProd}: MainProps) {
+function Rooms() {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const dispatch = useAppDispatch();
@@ -32,10 +32,11 @@ function Rooms({isProd}: MainProps) {
     useEffect(() => {
         if (firstRender.current) {
             firstRender.current = false;
-            dispatch(setIsProd(isProd))
+            dispatch(setIsProd(true));
+            // dispatch(setIsProd(isProd));
         }
 
-    }, [firstRender, dispatch, isProd]);
+    }, [firstRender, dispatch]);
     //#endregion
 
     return <ChatRooms />;
@@ -49,8 +50,14 @@ Rooms.getLayout = function getLayout(page: ReactElement) {
     );
 }
 
-Rooms.getInitialProps = ({res, err}: NextPageContext) => {
-    return {isProd: ("production" === process.env.NODE_ENV)};
+export const getStaticProps: GetStaticProps = async (context) => {
+    return {
+        props: {}
+    };
 }
+
+// Rooms.getInitialProps = ({res, err}: NextPageContext) => {
+//     return {isProd: ("production" === process.env.NODE_ENV)};
+// }
 
 export default Rooms;

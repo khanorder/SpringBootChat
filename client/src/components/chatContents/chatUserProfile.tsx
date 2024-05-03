@@ -34,7 +34,7 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
         return (
             <div className={styles.userThumbWrapper}>
                 <div className={styles.userThumb}>
-                    <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`} alt='프로필'/>
+                    <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} alt='프로필'/>
                 </div>
                 {
                     userInfo.online

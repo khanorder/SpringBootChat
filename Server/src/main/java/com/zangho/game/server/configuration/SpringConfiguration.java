@@ -6,8 +6,15 @@ import com.zangho.game.server.repository.chat.ChatRoomRepository;
 import com.zangho.game.server.repository.chat.UserRoomRepository;
 import com.zangho.game.server.repository.user.*;
 import com.zangho.game.server.service.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.ShallowEtagHeaderFilter;
+
+import java.io.IOException;
 
 @Configuration
 public class SpringConfiguration {
@@ -77,6 +84,14 @@ public class SpringConfiguration {
     @Bean
     public NotificationService NotificationService() {
         return new NotificationService(notificationRepository);
+    }
+
+    @Bean
+    public FilterRegistrationBean shallowEtagHeaderFilter() {
+        var frb = new FilterRegistrationBean();
+        frb.setFilter(new ShallowEtagHeaderFilter());
+        frb.addUrlPatterns("/images/*");
+        return frb;
     }
 
 }

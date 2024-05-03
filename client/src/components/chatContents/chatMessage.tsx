@@ -49,7 +49,7 @@ export default function ChatMessage({data}: ChatMessageProps) {
 
         return (
             <div className={styles.chatUserProfileWrapper}>
-                <img className={styles.chatUserProfile} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`} title={userInfo.nickName} alt={userInfo.nickName} />
+                <img className={styles.chatUserProfile} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} title={userInfo.nickName} alt={userInfo.nickName} />
             </div>
         );
     }, [appConfigs, getOthersUserInfo, user, data]);

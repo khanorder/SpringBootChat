@@ -3,7 +3,7 @@ import {
     useEffect,
     useRef
 } from "react";
-import {NextPageContext} from "next";
+import {GetStaticProps, NextPageContext} from "next";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import {setIsProd} from "@/stores/reducers/appConfigs";
 import dynamic from "next/dynamic";
@@ -13,11 +13,7 @@ const Layout = dynamic(() => import("@/components/layouts"), { ssr: false });
 const DefaultLayout = dynamic(() => import("@/components/layouts/default"), { ssr: false });
 const ChatMain = dynamic(() => import("@/components/chatContents/chatMain"), { ssr: false });
 
-interface MainProps {
-    isProd: boolean;
-}
-
-function Main({isProd}: MainProps) {
+function Main() {
     const firstRender = useRef(true);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
@@ -33,10 +29,11 @@ function Main({isProd}: MainProps) {
     useEffect(() => {
         if (firstRender.current) {
             firstRender.current = false;
-            dispatch(setIsProd(isProd))
+            dispatch(setIsProd(true));
+            // dispatch(setIsProd(isProd));
         }
 
-    }, [firstRender, dispatch, isProd]);
+    }, [firstRender, dispatch]);
     //#endregion
 
     return (
@@ -54,8 +51,14 @@ Main.getLayout = function getLayout(page: ReactElement) {
     );
 }
 
-Main.getInitialProps = ({res, err}: NextPageContext) => {
-    return {isProd: ("production" === process.env.NODE_ENV)};
+export const getStaticProps: GetStaticProps = async (context) => {
+    return {
+        props: {}
+    };
 }
+
+// Main.getInitialProps = ({res, err}: NextPageContext) => {
+//     return {isProd: ("production" === process.env.NODE_ENV)};
+// }
 
 export default Main;

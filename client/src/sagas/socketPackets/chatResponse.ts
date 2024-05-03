@@ -470,7 +470,7 @@ export function* getTokenUserInfoRes(data: Uint8Array) {
             try {
                 const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
                 const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
-                const profileImage = response.haveProfile ? imagePath + `${response.userId}?${(new Date()).getTime()}` : "";
+                const profileImage = response.haveProfile ? imagePath + `${response.userId}` : "";
                 yield put(setNickName(response.nickName));
                 yield put(setHaveProfile(response.haveProfile));
                 yield put(setProfileImageUrl(profileImage));
@@ -508,7 +508,7 @@ export function* getOthersUserInfoRes(data: Uint8Array) {
     const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
     const userState: UserState = yield select((state: RootState) => state.user);
     const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
-    const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
+    const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}` : "";
     response.user.updateProfile(profileImage);
     yield put(addOthers(response.user));
     return response;
@@ -531,7 +531,7 @@ export function* followsRes(data: Uint8Array) {
         const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
 
         for (let i = 0; i < response.users.length; i++) {
-            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
+            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}` : "";
             response.users[i].updateProfile(profileImage);
         }
     }
@@ -557,7 +557,7 @@ export function* followersRes(data: Uint8Array) {
         const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
 
         for (let i = 0; i < response.users.length; i++) {
-            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}?${(new Date()).getTime()}` : "";
+            const profileImage = response.users[i].haveProfile ? imagePath + `${response.users[i].userId}` : "";
             response.users[i].updateProfile(profileImage);
         }
     }
@@ -596,7 +596,7 @@ export function* followRes(data: Uint8Array) {
             if (null != response.user) {
                 const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
                 const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
-                const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
+                const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}` : "";
                 response.user.updateProfile(profileImage);
                 yield put(addFollow(response.user));
             }
@@ -683,7 +683,7 @@ export function* followerRes(data: Uint8Array) {
     if (null != response.user) {
         const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
         const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}`;
-        const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}?${(new Date()).getTime()}` : "";
+        const profileImage = response.user.haveProfile ? imagePath + `${response.user.userId}` : "";
         response.user.updateProfile(profileImage);
         yield put(addFollower(response.user));
     }
@@ -806,7 +806,7 @@ export function* changeUserProfileRes(data: Uint8Array) {
         case Errors.ChangeUserProfile.NONE:
             const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
             const userState: UserState = yield select((state: RootState) => state.user);
-            yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userState.id}?${(new Date()).getTime()}`));
+            yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userState.id}`));
             break;
 
         default:
@@ -829,7 +829,7 @@ export function* noticeUserProfileChangedRes(data: Uint8Array) {
     }
 
     const appConfigs: AppConfigsState = yield select((state: RootState) => state.appConfigs);
-    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${response.userId}?${(new Date()).getTime()}`;
+    const imagePath = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${response.userId}`;
     yield put(updateUsersData({ dataType: "profile", userId: response.userId, userData: imagePath }));
     return response;
 }

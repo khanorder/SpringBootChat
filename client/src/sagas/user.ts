@@ -22,7 +22,7 @@ function* callSignIn() {
     const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos);
 
     if (userInfo.haveProfile) {
-        yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userState.id}?${(new Date()).getTime()}`));
+        yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userState.id}`));
     } else {
         yield put(setProfileImageUrl(Domains.defaultProfileImageUrl));
     }
@@ -37,7 +37,7 @@ function* callUpdateSignIn() {
     const userInfo = Helpers.getUserInfo(userState.id, userState.userInfos);
 
     if (userInfo.haveProfile) {
-        yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userState.id}?${(new Date()).getTime()}`));
+        yield put(setProfileImageUrl(`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userState.id}`));
     } else {
         yield put(setProfileImageUrl(Domains.defaultProfileImageUrl));
     }

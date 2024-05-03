@@ -149,7 +149,7 @@ export default function ChatEditProfile({profileImageInputRef, profileImageMime,
 
     const userProfileImage = useCallback(() => {
         return (
-            <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}?${(new Date()).getTime()}`} alt='내 프로필'/>
+            <img className={styles.userThumbImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}`} alt='내 프로필'/>
         );
     }, [appConfigs, currentUser]);
 
