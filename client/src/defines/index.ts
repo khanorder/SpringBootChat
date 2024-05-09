@@ -149,6 +149,7 @@ export namespace Defines {
         SIGN_UP = 5,
         SIGN_IN = 6,
         IMOJI_INPUT = 7,
+        CHAT_DETAIL = 8,
     }
 
     export enum CenterDialogSize {

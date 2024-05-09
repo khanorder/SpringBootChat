@@ -34,16 +34,18 @@
             .chatRoomEnterButton
                 display: flex
                 align-items: center
-                width: 50vw
                 border: 0
-                padding: 10px 5px
+                padding: 10px 10px 10px 5px
+                width: 100%
                 background: white
+                overflow: hidden
 
                 &:hover
                     cursor: pointer
 
                 .chatRoomNameIcon
                     display: flex
+                    flex: 0 0 auto
                     justify-content: center
                     align-items: center
                     margin-left: 10px
@@ -72,29 +74,54 @@
                         color: #989898
 
                 .chatRoomInfoWrapper
-                    flex: 1 1 auto
+                    flex: 1 0 auto
                     display: flex
                     flex-direction: column
                     margin-left: 10px
+                    width: calc(100% - 60px)
+                    overflow: hidden
 
                     .chatRoomNameWrapper
                         display: flex
+                        width: 100%
                         flex-direction: column
                         justify-content: center
                         align-items: flex-start
 
                         .chatRoomName
                             flex: 0 0 20px
+                            width: 100%
                             height: 20px
                             font-size: 18px
                             line-height: 1em
                             font-weight: 500
+                            text-align: left
+                            overflow: hidden
+                            text-overflow: ellipsis
+                            white-space: nowrap
 
                         .latestMessage
-                            flex: 0 0 20px
+                            display: flex
+                            flex: 0 0 20%
+                            width: 100%
                             height: 20px
                             font-size: 13px
                             font-weight: 400
+                            overflow: hidden
+
+                            .message
+                                flex: 1 0 auto
+                                text-align: left
+                                width: calc(100% - 70px)
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                white-space: nowrap
+
+                            .messageTime
+                                flex: 0 0 auto
+                                font-size: 11px
+                                width: 70px
+                                text-align: right
 
                         //.chatRoomUserCount
                         //    font-size: 11px
@@ -102,12 +129,6 @@
                         //    background: #d9d9d9
                         //    padding: 3px 8px
                         //    border-radius: 15px
-
-                    .chatRoomPreviewWrapper
-                        text-align: left
-
-                        .chatRoomPreview
-                            font-size: 14px
 
                 .chatRoomOpenType
                     flex: 0 0 auto
@@ -136,10 +157,3 @@
         position: fixed
         bottom: 60px
         height: calc(100% - 116px)
-
-        .chatRoomList
-
-            .chatRoomListItem
-
-                .chatRoomEnterButton
-                    width: 100%

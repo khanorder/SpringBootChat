@@ -5,6 +5,7 @@ import {Defines} from "@/defines";
 import isEmpty from "lodash/isEmpty";
 import {enterChatRoomReq, historyChatRoomReq} from "@/stores/reducers/webSocket";
 import {Domains} from "@/domains";
+import {dayjs} from "@/helpers/localizedDayjs";
 
 export interface ChatRoomProps {
     chatRoom: Domains.ChatRoom;
@@ -42,7 +43,7 @@ export default function ChatRoom({ chatRoom, onContextMenu }: ChatRoomProps) {
     }, [webSocket, dispatch]);
     
     const enterButton = useCallback(() => {
-        const latestMessage = 0 < chatRoom.chatDatas.length ? chatRoom.chatDatas[chatRoom.chatDatas.length - 1] : null;
+        const latestMessage = 0 < chatRoom.chatDatas.length ? chatRoom.chatDatas[0] : null;
         let roomNameIconClass = styles.chatRoomNameIcon;
         switch (chatRoom.openType) {
             case Defines.RoomOpenType.PREPARED:
@@ -67,10 +68,28 @@ export default function ChatRoom({ chatRoom, onContextMenu }: ChatRoomProps) {
                 <div className={styles.chatRoomInfoWrapper}>
                     <div className={styles.chatRoomNameWrapper}>
                         <div className={styles.chatRoomName}>{chatRoom.roomName}</div>
-                        <div className={styles.latestMessage}>{latestMessage ? latestMessage.message : ""}</div>
-                    </div>
-                    <div className={styles.chatRoomPreviewWrapper}>
-                        <div className={styles.chatRoomPreview}></div>
+                        <div className={styles.latestMessage}>
+                            {
+                                latestMessage
+                                    ?
+                                    <>
+                                        <div className={styles.message}>
+                                            {latestMessage.message}
+                                        </div>
+                                        <div className={styles.messageTime}>
+                                            {
+                                                0 > dayjs(latestMessage.time).diff(dayjs.utc(), 'day')
+                                                    ?
+                                                    dayjs(latestMessage.time).fromNow(true)
+                                                    :
+                                                    dayjs(latestMessage.time).format("A hh:mm")
+                                            }
+                                        </div>
+                                    </>
+                                    :
+                                    ""
+                            }
+                        </div>
                     </div>
                 </div>
                 {/*<div className={styles.chatRoomOpenType}>{Helpers.getChatRoomOpenTypeName(chatRoom.openType)}</div>*/}

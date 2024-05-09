@@ -895,7 +895,7 @@ public class ReqHandler {
             if (resultAddChatRoom.get()) {
                 resHandler.resCreateChatRoom(session, chatRoom.get());
                 resHandler.resUpdateChatRoom(session, chatRoom.get());
-                lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+                //lineNotifyService.Notify("채팅방 개설 (roomName:" + roomName + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
             }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -1017,7 +1017,7 @@ public class ReqHandler {
             }
 
             //messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 입장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 입장했습니다.");
-            lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+            //lineNotifyService.Notify("채팅방 입장 (roomName:" + existsRoom.get().getRoomName() + ", userId:" + connectedUser.get().getId() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -1050,7 +1050,7 @@ public class ReqHandler {
             resHandler.resExitChatRoom(session, ErrorExitChatRoom.NONE);
 
             //messageService.notifyBrowserUserInRoom(existsRoom.get(), "채팅방 퇴장", "'" + connectedUser.get().getNickName() + "'님이 대화방에 퇴장했습니다.");
-            lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
+            //lineNotifyService.Notify("채팅방 퇴장 (roomName:" + existsRoom.get().getRoomName() + ", nickName:" + connectedUser.get().getNickName() + ", ip: " + Helpers.getSessionIP(session) + ")");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

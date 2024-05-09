@@ -6,7 +6,7 @@ import Image from "next/image";
 import CloseIcon from "public/images/close.svg";
 import stylesCommon from "@/styles/common.module.sass";
 import {
-    setIsActiveAddUser, setIsActiveChangeUser,
+    setIsActiveAddUser, setIsActiveChangeUser, setIsActiveChatDetail,
     setIsActiveChatImageInput,
     setIsActiveCreateChatRoom, setIsActiveImojiInput,
     setIsActiveProfileImageInput, setIsActiveSignIn, setIsActiveSignUp
@@ -67,6 +67,10 @@ export default function LayoutDialogCenter({ type, size, children, buttons }: La
             case Defines.CenterDialogType.IMOJI_INPUT:
                 dispatch(setIsActiveImojiInput(false));
                 break;
+
+            case Defines.CenterDialogType.CHAT_DETAIL:
+                dispatch(setIsActiveChatDetail(false));
+                break;
         }
 
     }, [type, dispatch]);
@@ -123,6 +127,12 @@ export default function LayoutDialogCenter({ type, size, children, buttons }: La
             case Defines.CenterDialogType.IMOJI_INPUT:
                 title = "이모지 입력";
                 if (ui.isActiveImojiInput)
+                    dialogWrapperClass += ` ${styles.active}`;
+                break;
+
+            case Defines.CenterDialogType.CHAT_DETAIL:
+                title = "채팅 상세내용";
+                if (ui.isActiveChatDetail)
                     dialogWrapperClass += ` ${styles.active}`;
                 break;
         }

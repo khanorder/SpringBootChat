@@ -9,7 +9,8 @@ import org.springframework.test.context.web.WebAppConfiguration;
 class ServerApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void test() {
+
 	}
 
 }

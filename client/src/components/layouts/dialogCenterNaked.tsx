@@ -16,9 +16,10 @@ export interface LayoutDialogCenterProps {
     type: Defines.CenterDialogType;
     size?: Defines.CenterDialogSize;
     children: ReactNode;
+    buttons?: ReactNode;
 }
 
-export default function LayoutDialogCenterNaked({ type, size, children }: LayoutDialogCenterProps) {
+export default function LayoutDialogCenterNaked({ type, size, children, buttons }: LayoutDialogCenterProps) {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const user = useAppSelector(state => state.user);
@@ -152,12 +153,21 @@ export default function LayoutDialogCenterNaked({ type, size, children }: Layout
                             </button>
                         </div>
                         {children}
+                        {
+                            "undefined" === typeof buttons
+                                ?
+                                <></>
+                                :
+                                <div className={styles.dialogButtons}>
+                                    {buttons}
+                                </div>
+                        }
                     </div>
                 </div>
                 <div className={styles.dialogPane} onClick={hideDialog}></div>
             </div>
         );
-    }, [type, size, appConfigs, hideDialog, children, ui, user]);
+    }, [type, size, hideDialog, children, ui, user, buttons]);
 
     return dialogLayout();
 }

@@ -60,7 +60,7 @@ public class NotifyController {
 
     @PostMapping(value = "/notify/unsubscription")
     @ResponseBody
-    public void unsubscription(@RequestBody String endpoint) throws Exception {
+    public void unsubscription(@RequestBody String endpoint) {
         messageService.unsubscribe(endpoint);
     }
 }

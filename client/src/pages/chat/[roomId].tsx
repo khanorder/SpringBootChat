@@ -18,6 +18,7 @@ const DialogChatRoomInfo = dynamic(() => import("@/components/dialogs/dialogChat
 const DialogChatImageInput = dynamic(() => import("@/components/dialogs/dialogChatImageInput"), { ssr: false });
 const DialogChatDetailImage = dynamic(() => import("@/components/dialogs/dialogChatDetailImage"), { ssr: false });
 const DialogImojiInput = dynamic(() => import("@/components/dialogs/dialogImojiInput"), { ssr: false });
+const DialogChatDetail = dynamic(() => import("@/components/dialogs/dialogChatDetail"), { ssr: false });
 
 interface ChatRoomProps {
     roomId: string;
@@ -88,8 +89,8 @@ function ChatRoom({roomId, serverHost}: ChatRoomProps) {
 
         return (
             <>
-                <ChatContents />
                 <DialogImojiInput chatMessageInputRef={chatMessageInputRef} message={message} setMessage={setMessage} />
+                <ChatContents />
                 <ChatInput
                     chatImageInputRef={chatImageInputRef}
                     chatMessageInputRef={chatMessageInputRef}
@@ -104,6 +105,7 @@ function ChatRoom({roomId, serverHost}: ChatRoomProps) {
 
     return (
         <>
+            <DialogChatDetail />
             <DialogAddUserChatRoom/>
             <DialogChatRoomInfo/>
             <DialogChatDetailImage />

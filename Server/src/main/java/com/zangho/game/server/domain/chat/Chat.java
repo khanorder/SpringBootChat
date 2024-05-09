@@ -37,7 +37,7 @@ public class Chat {
 
     @Nonnull
     @ColumnDefault("''")
-    @Column(length = 300, nullable = false)
+    @Column(length = 65535, nullable = false)
     String message;
 
     @Nonnull

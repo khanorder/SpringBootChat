@@ -53,8 +53,8 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
             alert('메세지를 입력해 주세요.');
             setMessage(message.trim())
             return;
-        } else if (300 < message.trim().length) {
-            alert(`채팅내용은 300글자 이내로 입력해주세요.`);
+        } else if (65535 < message.trim().length) {
+            alert(`채팅내용은 65535글자 이내로 입력해주세요.`);
             return;
         }
         dispatch(sendMessageReq({id: uuid(), type: Defines.ChatType.TALK, roomId: chat.currentChatRoomId, message: message}));
@@ -64,9 +64,9 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
 
     const changeMessage = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(prev => {
-            if (300 < e.target.value.toString().trim().length) {
-                alert(`채팅내용은 300글자 이내로 입력해주세요.`);
-                return prev.substring(0, 300);
+            if (65535 < e.target.value.toString().trim().length) {
+                alert(`채팅내용은 65535글자 이내로 입력해주세요.`);
+                return prev.substring(0, 65535);
             }
 
             return e.target.value.toString() ?? '';
@@ -137,7 +137,7 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
         return (
             <div className={styles.chatMessageInputArea}>
                 <div className={styles.chatMessageInputTopWrapper}>
-                    <div className={styles.chatMessageLength}>{message.length}/300</div>
+                    <div className={styles.chatMessageLength}>{message.length}/65535</div>
                     <div className={styles.chatImageButtonWrapper}>
                         <label className={`${styles.chatImageButton} ${stylesCommon.button}`} htmlFor='chatImageInput' title='이미지 전송'>
                             <Image src={Picture} alt={'이미지 전송'} width={20} height={20}/>

@@ -66,7 +66,13 @@ export default function ChatUserProfile({ userId }: ChatUserProfileProps) {
         return (
             <div className={styles.latestActive}>
                 <div className={styles.activeTime}>
-                    {dayjs(userInfo.latestActive).fromNow(true)}
+                    {
+                        0 > dayjs(userInfo.latestActive).diff(dayjs.utc(), 'day')
+                            ?
+                            dayjs(userInfo.latestActive).fromNow(true)
+                            :
+                            dayjs(userInfo.latestActive).format("A hh:mm")
+                    }
                 </div>
             </div>
         );

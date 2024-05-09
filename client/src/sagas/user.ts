@@ -5,8 +5,8 @@ import {
     signOut, updateSignIn, UserState
 } from '@/stores/reducers/user';
 import {setNotifications} from "@/stores/reducers/notification";
-import {exitChatRoom, setChatRooms, setChatDetailImageId} from "@/stores/reducers/chat";
-import {initUI} from "@/stores/reducers/ui";
+import {exitChatRoom, setChatRooms} from "@/stores/reducers/chat";
+import {initUI, setChatDetailImageId} from "@/stores/reducers/ui";
 import {RootState} from "@/stores/reducers";
 import {AppConfigsState} from "@/stores/reducers/appConfigs";
 import {Domains} from "@/domains";

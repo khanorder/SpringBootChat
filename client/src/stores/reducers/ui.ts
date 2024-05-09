@@ -1,8 +1,11 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 import isEmpty from "lodash/isEmpty";
 import {Defines} from "@/defines";
+import {Domains} from "@/domains";
 
 interface UIState {
+    chatDetail: Domains.Chat|null;
+    chatDetailImageId: string;
     activeTab: Defines.TabType;
     isActiveProfile: boolean;
     isActiveProfileImageInput: boolean;
@@ -12,6 +15,7 @@ interface UIState {
     isActiveAddUser: boolean;
     isActiveChatImageInput: boolean;
     isActiveChatImageDetail: boolean;
+    isActiveChatDetail: boolean;
     isActiveChangeUser: boolean;
     isActiveSignUp: boolean;
     isActiveSignIn: boolean;
@@ -19,6 +23,8 @@ interface UIState {
 }
 
 const initialState: UIState = {
+    chatDetail: null,
+    chatDetailImageId: "",
     activeTab: Defines.TabType.FOLLOW,
     isActiveProfile: false,
     isActiveProfileImageInput: false,
@@ -28,6 +34,7 @@ const initialState: UIState = {
     isActiveAddUser: false,
     isActiveChatImageInput: false,
     isActiveChatImageDetail: false,
+    isActiveChatDetail: false,
     isActiveChangeUser: false,
     isActiveSignUp: false,
     isActiveSignIn: false,
@@ -38,6 +45,18 @@ const uiSlice = createSlice({
     name: 'UI',
     initialState,
     reducers: {
+        setChatDetail: (state, action: PayloadAction<Domains.Chat|null>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setChatDetail: ${action.payload}`);
+
+            state.chatDetail = action.payload;
+        },
+        setChatDetailImageId: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setChatDetailImageId: ${action.payload}`);
+
+            state.chatDetailImageId = action.payload;
+        },
         initUI: (state) => {
             state.activeTab = Defines.TabType.FOLLOW;
             state.isActiveProfile = false;
@@ -48,6 +67,7 @@ const uiSlice = createSlice({
             state.isActiveAddUser = false;
             state.isActiveChatImageInput = false;
             state.isActiveChatImageDetail = false;
+            state.isActiveChatDetail = false;
             state.isActiveChangeUser = false;
             state.isActiveSignUp = false;
             state.isActiveSignIn = false;
@@ -79,6 +99,9 @@ const uiSlice = createSlice({
         },
         setIsActiveChatImageDetail: (state, action: PayloadAction<boolean>) => {
             state.isActiveChatImageDetail = action.payload;
+        },
+        setIsActiveChatDetail: (state, action: PayloadAction<boolean>) => {
+            state.isActiveChatDetail = action.payload;
         },
         setIsActiveChangeUser: (state, action: PayloadAction<boolean>) => {
             state.isActiveChangeUser = action.payload;
@@ -116,6 +139,9 @@ const uiSlice = createSlice({
         toggleIsActiveChatImageDetail: (state) => {
             state.isActiveChatImageDetail = !state.isActiveChatImageDetail;
         },
+        toggleIsActiveChatDetail: (state) => {
+            state.isActiveChatDetail = !state.isActiveChatDetail;
+        },
         toggleIsActiveChangeUser: (state) => {
             state.isActiveChangeUser = !state.isActiveChangeUser;
         },
@@ -133,6 +159,8 @@ const uiSlice = createSlice({
 
 export type { UIState };
 export const {
+    setChatDetail,
+    setChatDetailImageId,
     initUI,
     setActiveTab,
     setIsActiveProfile,
@@ -143,6 +171,7 @@ export const {
     setIsActiveAddUser,
     setIsActiveChatImageInput,
     setIsActiveChatImageDetail,
+    setIsActiveChatDetail,
     setIsActiveChangeUser,
     setIsActiveSignUp,
     setIsActiveSignIn,
@@ -155,6 +184,7 @@ export const {
     toggleIsActiveAddUser,
     toggleIsActiveChatImageInput,
     toggleIsActiveChatImageDetail,
+    toggleIsActiveChatDetail,
     toggleIsActiveChangeUser,
     toggleIsActiveSignUp,
     toggleIsActiveSignIn,

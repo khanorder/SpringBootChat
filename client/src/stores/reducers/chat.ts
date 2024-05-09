@@ -7,13 +7,11 @@ import {Defines} from "@/defines";
 interface ChatState {
     currentChatRoomId: string;
     chatRooms: Domains.ChatRoom[];
-    chatDetailImageId: string;
 }
 
 const initialState: ChatState = {
     currentChatRoomId: "",
-    chatRooms: [],
-    chatDetailImageId: ""
+    chatRooms: []
 }
 
 const chatSlice = createSlice({
@@ -163,12 +161,6 @@ const chatSlice = createSlice({
             chatRoom.chatDatas = action.payload.chatDatas.sort((a, b) => b.time - a.time);
             state.chatRooms = deepmerge([], state.chatRooms);
         },
-        setChatDetailImageId: (state, action: PayloadAction<string>) => {
-            if ('production' !== process.env.NODE_ENV)
-                console.log(`reducer - setChatDetailImageId: ${action.payload}`);
-
-            state.chatDetailImageId = action.payload;
-        },
     }
 });
 
@@ -210,7 +202,6 @@ export const {
     openPreparedChatRoom,
     addChatData,
     setChatDatas,
-    setChatDetailImageId,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
