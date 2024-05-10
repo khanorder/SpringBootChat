@@ -10,7 +10,6 @@ import {CommonAPI} from "@/apis/commonAPI";
 
 const ChatDisconnected = dynamic(() => import("@/components/chatContents/chatDisconnected"), {ssr: false});
 const ChatHeader = dynamic(() => import("@/components/chatContents/chatHeader"), {ssr: false});
-const DialogProfile = dynamic(() => import("@/components/dialogs/dialogProfile"), {ssr: false});
 const DialogNotification = dynamic(() => import("@/components/dialogs/dialogNotification"), {ssr: false});
 const DialogSignUp = dynamic(() => import("@/components/dialogs/dialogSignUp"), {ssr: false});
 const DialogSignIn = dynamic(() => import("@/components/dialogs/dialogSignIn"), {ssr: false});
@@ -108,7 +107,6 @@ export default function Layout({children}: { children: ReactNode }) {
         return (
             <>
                 <DialogSignUp />
-                <DialogProfile/>
                 <DialogNotification/>
                 <ChatHeader/>
                 {contents}

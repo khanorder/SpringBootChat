@@ -82,7 +82,7 @@ export default function ChatSignIn() {
                             <></>
                     }
                     <button className={`${styles.button} ${styles.existsToken}`} onClick={checkAuthentication} title={`${currentUser.nickName} 계정으로 시작`}>
-                        <Image className={styles.profile} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}`} alt={currentUser.nickName} title={currentUser.nickName} width={80} height={80}/>
+                        <Image className={styles.profile} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}?${(new Date()).getTime()}`} alt={currentUser.nickName} title={currentUser.nickName} width={80} height={80}/>
                     </button>
                 </div>
             );

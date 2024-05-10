@@ -170,9 +170,6 @@ public class SocketHandler extends TextWebSocketHandler {
                     break;
             }
 
-            if (ReqType.REQ_CHECK_CONNECTION != type)
-                connectedUser.ifPresent(userService::updateActiveUser);
-
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }

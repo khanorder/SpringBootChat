@@ -125,7 +125,8 @@ export namespace Defines {
     export enum TabType {
         FOLLOW = 0,
         CHAT = 1,
-        SEARCH = 2
+        SEARCH = 2,
+        SETTING = 3,
     }
 
     export enum NotificationType {

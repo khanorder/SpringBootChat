@@ -76,7 +76,7 @@ export default function DialogChangeUser() {
                 list.push(
                     <div key={i} className={userAccountWrapperClass} onClick={(e) => changeUser(userInfo)}>
                         <div className={styles.userProfileWrapper}>
-                            <Image className={styles.userProfileImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} alt={userInfo.nickName} width={40} height={40} />
+                            <Image className={styles.userProfileImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`} alt={userInfo.nickName} width={40} height={40} />
                         </div>
                         <div className={styles.userInfoWrapper}>
                             <div className={styles.nickName}>{userInfo.nickName}</div>

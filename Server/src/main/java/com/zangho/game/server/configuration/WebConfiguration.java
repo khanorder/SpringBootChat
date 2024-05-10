@@ -25,7 +25,7 @@ public class WebConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        CacheControl cacheControl = CacheControl.maxAge(Duration.ofDays(1));
+        CacheControl cacheControl = CacheControl.maxAge(Duration.ofMinutes(1));
 
         var webContentInterceptor = new WebContentInterceptor();
         webContentInterceptor.addCacheMapping(cacheControl, "/images/**");

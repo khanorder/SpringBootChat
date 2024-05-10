@@ -1,6 +1,7 @@
 package com.zangho.game.server.service;
 
 import com.zangho.game.server.define.AccountType;
+import com.zangho.game.server.define.AllowedImageType;
 import com.zangho.game.server.define.RelationState;
 import com.zangho.game.server.define.RoomOpenType;
 import com.zangho.game.server.domain.chat.*;
@@ -219,6 +220,19 @@ public class UserService implements UserDetailsService {
         if (optExistsUser.isEmpty())
             return;
 
+        optExistsUser.get().setLatestActiveAt(new Date());
+        var existsUser = userRepository.save(optExistsUser.get());
+        //return null != existsUser;
+    }
+
+    @Async
+    public void updateUserProfile(User user, AllowedImageType mime, String fileName) {
+        var optExistsUser = userRepository.findById(user.getId());
+        if (optExistsUser.isEmpty())
+            return;
+
+        optExistsUser.get().setProfileMime(mime);
+        optExistsUser.get().setProfileImage(fileName);
         optExistsUser.get().setLatestActiveAt(new Date());
         var existsUser = userRepository.save(optExistsUser.get());
         //return null != existsUser;

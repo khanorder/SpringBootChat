@@ -77,7 +77,7 @@ export default function ChatNotifications() {
                     <li key={i} className={notificationClass}>
                         <div className={styles.iconWrapper} onClick={(e) => checkNotification(notification)}>
                             <div className={styles.iconThumb}>
-                                <Image className={styles.iconImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`} alt='사용자 프로필' width={40} height={40}/>
+                                <Image className={styles.iconImage} src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`} alt='사용자 프로필' width={40} height={40}/>
                             </div>
                         </div>
                         <div className={styles.infoWrapper} onClick={(e) => checkNotification(notification)}>

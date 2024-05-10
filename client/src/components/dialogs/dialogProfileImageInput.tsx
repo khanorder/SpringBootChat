@@ -123,7 +123,7 @@ export default function DialogProfileImageInput({profileImageInputRef, profileIm
                 </div>
             </LayoutCenterDialog>
         );
-    }, [dialogWrapperClass, profileLargeImage, hideDialog, onSendImage]);
+    }, [profileLargeImage, hideDialog, onSendImage]);
 
     return dialog();
 }

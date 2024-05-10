@@ -766,13 +766,9 @@ public class ReqHandler {
             var existsMime = connectedUser.get().getProfileMime();
             var existsProfile = connectedUser.get().getProfileImage();
 
+            userService.updateUserProfile(connectedUser.get(), optMime.get(), fileName);
             connectedUser.get().setProfileMime(optMime.get());
             connectedUser.get().setProfileImage(fileName);
-            var result = userService.saveUser(connectedUser.get());
-            if (!result) {
-                resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.FAILED_TO_CHANGE);
-                return;
-            }
 
             resHandler.resChangeUserProfile(session, ErrorChangeUserProfile.NONE);
             resHandler.noticeUserProfileChanged(session, connectedUser.get());
@@ -780,8 +776,10 @@ public class ReqHandler {
             if (0 < existsMime.getNumber() && !existsProfile.isEmpty()) {
                 var existsFileName = existsProfile + "." + Helpers.getImageExtension(existsMime);
                 var existsLargeImagePath = Paths.get(profilesLargeDirectoryPath.toString(), existsFileName);
+                logger.info(existsLargeImagePath.toString());
                 Files.deleteIfExists(existsLargeImagePath);
                 var existsSmallImagePath = Paths.get(profilesSmallDirectoryPath.toString(), existsFileName);
+                logger.info(existsSmallImagePath.toString());
                 Files.deleteIfExists(existsSmallImagePath);
             }
         } catch (Exception ex) {
@@ -818,12 +816,7 @@ public class ReqHandler {
         try {
             connectedUser.get().setProfileMime(AllowedImageType.NONE);
             connectedUser.get().setProfileImage("");
-            var result = userService.saveUser(connectedUser.get());
-            if (!result) {
-                resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.FAILED_TO_REMOVE);
-                return;
-            }
-
+            userService.updateUserProfile(connectedUser.get(), AllowedImageType.NONE, "");
             resHandler.resRemoveUserProfile(session, ErrorRemoveUserProfile.NONE);
             resHandler.noticeUserProfileRemoved(session, connectedUser.get());
         } catch (Exception ex) {

@@ -59,7 +59,7 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
                             <></>
                         :
                             <Image className={styles.chatUserProfile}
-                                   src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}`}
+                                   src={`${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`}
                                    title={userInfo.nickName}
                                    alt={userInfo.nickName}
                                    width={40}

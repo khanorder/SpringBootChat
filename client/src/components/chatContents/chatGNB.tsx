@@ -6,6 +6,7 @@ import Image from "next/image";
 import PersonIcon from "public/images/person.svg";
 import ChatIcon from "public/images/chat.svg";
 import SearchIcon from "public/images/search.svg";
+import SettingIcon from "public/images/setting.svg";
 import {setActiveTab} from "@/stores/reducers/ui";
 import {Defines} from "@/defines";
 import {useRouter} from "next/router";
@@ -34,6 +35,10 @@ export default function ChatGNB() {
             case Defines.TabType.CHAT:
                 router.push("/rooms")
                 break;
+
+            case Defines.TabType.SETTING:
+                router.push("/settings")
+                break;
         }
     }, [router]);
 
@@ -60,6 +65,12 @@ export default function ChatGNB() {
                 tabIcon = SearchIcon;
                 wrapperClass += "/search" == router.pathname ? ` ${styles.activeTab}` : '';
                 break;
+
+            case Defines.TabType.SETTING:
+                tabName = "설정";
+                tabIcon = SettingIcon;
+                wrapperClass += "/settings" == router.pathname ? ` ${styles.activeTab}` : '';
+                break;
         }
         return (
             <div className={wrapperClass}>
@@ -76,6 +87,7 @@ export default function ChatGNB() {
             <div className={styles.buttonWrapperEmpty}></div>
             {gnbTabButton(Defines.TabType.FOLLOW)}
             {gnbTabButton(Defines.TabType.CHAT)}
+            {gnbTabButton(Defines.TabType.SETTING)}
             <div className={styles.buttonWrapperEmpty}></div>
         </div>
     );

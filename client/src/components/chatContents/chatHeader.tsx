@@ -77,6 +77,8 @@ export default function ChatHeader() {
                 title = "친구";
             } else if ("/rooms" == router.pathname) {
                 title = "채팅";
+            } else if ("/settings" == router.pathname) {
+                title = "설정";
             } else {
                 title = appConfigs.name;
             }
