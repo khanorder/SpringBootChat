@@ -1715,4 +1715,24 @@ export namespace Domains {
             this.refreshToken = refreshToken;
         }
     }
+
+    export class ChangePasswordRequest {
+        password: string;
+        newPassword: string;
+        newPasswordConfirm: string;
+
+        constructor(password: string, newPassword: string, newPasswordConfirm: string) {
+            this.password = password;
+            this.newPassword = newPassword;
+            this.newPasswordConfirm = newPasswordConfirm;
+        }
+    }
+
+    export class ChangePasswordResponse {
+        result: Errors.ChangePassword;
+
+        constructor(result: Errors.ChangePassword) {
+            this.result = result;
+        }
+    }
 }

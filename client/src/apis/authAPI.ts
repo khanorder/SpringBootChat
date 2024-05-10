@@ -2,6 +2,7 @@ import {Domains} from "@/domains";
 import {Helpers} from "@/helpers";
 import {Errors} from "@/defines/errors";
 import {Defines} from "@/defines";
+import isEmpty from "lodash/isEmpty";
 
 export namespace AuthAPI {
 
@@ -61,6 +62,38 @@ export namespace AuthAPI {
         }
 
         return signInResponse;
+    }
+
+    export async function ChangePasswordAsync(signInRequest: Domains.ChangePasswordRequest): Promise<Domains.ChangePasswordResponse> {
+        const serverHost = Helpers.getCookie("SERVER_HOST") ?? 'localhost:8080';
+        const url = (serverHost.startsWith("localhost") || serverHost.startsWith("192.168") ? 'http://' : 'https://') + serverHost + "/auth/changePassword";
+        const changePasswordResponse = new Domains.ChangePasswordResponse(Errors.ChangePassword.FAILED_TO_CHANGE);
+
+        const userInfo = Helpers.getCurrentUserInfoCookie();
+        if (null == userInfo || isEmpty(userInfo.accessToken))
+            return changePasswordResponse;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userInfo.accessToken}`
+                },
+                credentials: 'include',
+                body: JSON.stringify(signInRequest)
+            });
+
+            if (200 == response.status) {
+                const json = await response.json();
+                changePasswordResponse.result = json.result;
+                return changePasswordResponse;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+
+        return changePasswordResponse;
     }
 
 }

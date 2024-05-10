@@ -23,6 +23,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.*;
@@ -236,6 +237,17 @@ public class UserService implements UserDetailsService {
         optExistsUser.get().setLatestActiveAt(new Date());
         var existsUser = userRepository.save(optExistsUser.get());
         //return null != existsUser;
+    }
+
+    public boolean changePassword(User user, String newCypher) {
+        var optExistsUser = userRepository.findById(user.getId());
+        if (optExistsUser.isEmpty())
+            return false;
+
+        optExistsUser.get().setPassword(newCypher);
+        optExistsUser.get().setLatestActiveAt(new Date());
+        var existsUser = userRepository.save(optExistsUser.get());
+        return null != existsUser;
     }
 
     public ErrorSubscribeNotification saveUserSubscription(String userId, Subscription subscription) {

@@ -45,6 +45,18 @@ export namespace Errors {
         FAILED_TO_SIGN_OUT = 6,
     }
 
+    export enum ChangePassword {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        PASSWORD_REQUIRED = 2,
+        NEW_PASSWORD_REQUIRED = 3,
+        NEW_PASSWORD_CONFIRM_REQUIRED = 4,
+        NEW_PASSWORD_NOT_MATCHED = 5,
+        NOT_FOUND_USER = 6,
+        PASSWORD_NOT_MATCHED = 7,
+        FAILED_TO_CHANGE = 8,
+    }
+
     export enum CheckNotification {
         NONE = 0,
         AUTH_REQUIRED = 1,

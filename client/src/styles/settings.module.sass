@@ -1,0 +1,81 @@
+.settingsWrapper
+    flex: 1 1 auto
+    display: flex
+    flex-direction: column
+    width: 100%
+    overflow-x: hidden
+    overflow-y: auto
+
+    &::-webkit-scrollbar
+        display: block
+        width: 8px
+        background: rgba(255, 255, 255, 0.25)
+
+    &::-webkit-scrollbar-thumb
+        border-radius: 5px
+        background: rgba(200, 200, 200, 0.8)
+
+    &::-webkit-scrollbar-track
+        &:hover
+            background: rgba(255, 255, 255, 0.25)
+
+    .listItem, .itemPanel
+        list-style: none
+
+    .listItem
+        overflow: hidden
+
+        .itemMenu
+            position: relative
+            display: flex
+            padding: 0 10px
+            height: 50px
+            width: 100%
+            justify-content: flex-start
+            align-items: center
+            z-index: 2
+            background: #ffffff
+
+            .listItemIcon
+                position: relative
+                width: 20px
+                height: 20px
+                transition: transform 0.15s
+
+                .listItemIconImage
+                    width: 20px
+                    height: 20px
+
+            .listItemName
+                padding-left: 10px
+
+            &:hover
+                cursor: pointer
+
+        .itemPanel
+            padding: 0
+            height: 0
+            transform: translateY(-999px)
+            opacity: 0
+            transition: height 0.55s, padding 0.55s, transform 0.55s, opacity 0.75s
+            z-index: 1
+
+        &.opened
+            .itemMenu
+                .listItemIcon
+                    transform: rotateZ(90deg)
+                    transition: transform 0.15s
+
+            .itemPanel
+                padding: 15px 0
+                height: auto
+                transform: translateY(0)
+                opacity: 1
+                transition: height 0.55s, padding 0.55s, transform 0.55s, opacity 0.75s
+
+@media (max-width: 700px)
+    .settingsWrapper
+        position: fixed
+        bottom: 60px
+        height: calc(100% - 107px)
+

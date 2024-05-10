@@ -138,6 +138,9 @@ export default function ChatHeader() {
     }, [ui, notification, toggleNotification]);
 
     const createChatRoomButton = useCallback(() => {
+        if (!isEmpty(chat.currentChatRoomId) || "/settings" === router.pathname)
+            return <></>;
+
         return (
             <div className={styles.createChatRoomWrapper}>
                 <div className={styles.createChatRoomButtonWrapper}>
@@ -145,9 +148,12 @@ export default function ChatHeader() {
                 </div>
             </div>
         );
-    }, [toggleCreateChatRoom]);
+    }, [toggleCreateChatRoom, chat, router]);
 
     const addUserButton = useCallback(() => {
+        if (isEmpty(chat.currentChatRoomId))
+            return <></>;
+
         return (
             <div className={styles.addUserWrapper}>
                 <div className={styles.addUserButtonWrapper}>
@@ -155,9 +161,12 @@ export default function ChatHeader() {
                 </div>
             </div>
         );
-    }, [toggleAddUser]);
+    }, [toggleAddUser, chat]);
 
     const chatRoomInfoButton = useCallback(() => {
+        if (isEmpty(chat.currentChatRoomId))
+            return <></>;
+
         let chatRoomInfoButtonWrapperClass = styles.lnbButtonWrapper;
         if (ui.isActiveChatRoomInfo)
             chatRoomInfoButtonWrapperClass += ' ' + styles.active;
@@ -171,7 +180,7 @@ export default function ChatHeader() {
                 </button>
             </div>
         );
-    }, [ui, toggleChatRoomInfo]);
+    }, [ui, toggleChatRoomInfo, chat]);
 
     return (
         <div className={styles.chatHeaderWrapper}>
@@ -179,9 +188,9 @@ export default function ChatHeader() {
                 {leftButtons()}
                 {title()}
                 {notificationButton()}
-                {isEmpty(chat.currentChatRoomId) ? createChatRoomButton() : <></>}
-                {isEmpty(chat.currentChatRoomId) ? <></> : addUserButton()}
-                {isEmpty(chat.currentChatRoomId) ? <></> : chatRoomInfoButton()}
+                {createChatRoomButton()}
+                {addUserButton()}
+                {chatRoomInfoButton()}
             </div>
         </div>
     );

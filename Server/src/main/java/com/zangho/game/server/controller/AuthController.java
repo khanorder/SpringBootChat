@@ -2,10 +2,14 @@ package com.zangho.game.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zangho.game.server.define.AccountType;
+import com.zangho.game.server.domain.request.ReqChangePassword;
 import com.zangho.game.server.domain.request.ReqSignIn;
 import com.zangho.game.server.domain.request.ReqSignUp;
+import com.zangho.game.server.domain.response.ResChangePassword;
 import com.zangho.game.server.domain.response.ResSignIn;
 import com.zangho.game.server.domain.response.ResSignUp;
+import com.zangho.game.server.domain.user.User;
+import com.zangho.game.server.error.ErrorChangePassword;
 import com.zangho.game.server.error.ErrorIssueJWT;
 import com.zangho.game.server.error.ErrorSignIn;
 import com.zangho.game.server.error.ErrorSignUp;
@@ -13,11 +17,14 @@ import com.zangho.game.server.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Optional;
 
 @Controller
 public class AuthController {
@@ -40,7 +47,7 @@ public class AuthController {
 
     @PostMapping(value = "/auth/signIn", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String signUp(@RequestBody ReqSignIn reqSignIn) throws Exception {
+    public String signIn(@RequestBody ReqSignIn reqSignIn) throws Exception {
         var response = new ResSignIn();
         response.setResult(ErrorSignIn.FAILED_TO_SIGN_IN);
 
@@ -184,6 +191,65 @@ public class AuthController {
             response.setResult(ErrorSignUp.NONE);
             return objectMapper.writeValueAsString(response);
         }
+
+        return objectMapper.writeValueAsString(response);
+    }
+
+    @PostMapping(value = "/auth/changePassword", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String changePassword(@RequestBody ReqChangePassword reqChangePassword, Authentication authentication) throws Exception {
+        Optional<User> optUser = Optional.empty();
+        try {
+            optUser = Optional.ofNullable((User)authentication.getPrincipal());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+
+        var response = new ResChangePassword();
+        response.setResult(ErrorChangePassword.FAILED_TO_CHANGE);
+
+        if (optUser.isEmpty()) {
+            response.setResult(ErrorChangePassword.AUTH_REQUIRED);
+            return objectMapper.writeValueAsString(response);
+        }
+
+        var password = reqChangePassword.getPassword().trim();
+        var newPassword = reqChangePassword.getNewPassword().trim();
+        var newPasswordConfirm = reqChangePassword.getNewPasswordConfirm().trim();
+
+        if (password.isEmpty()) {
+            response.setResult(ErrorChangePassword.PASSWORD_REQUIRED);
+            return objectMapper.writeValueAsString(response);
+        }
+
+        if (newPassword.isEmpty()) {
+            response.setResult(ErrorChangePassword.NEW_PASSWORD_REQUIRED);
+            return objectMapper.writeValueAsString(response);
+        }
+
+        if (newPasswordConfirm.isEmpty()) {
+            response.setResult(ErrorChangePassword.NEW_PASSWORD_CONFIRM_REQUIRED);
+            return objectMapper.writeValueAsString(response);
+        }
+
+        if (!newPassword.equals(newPasswordConfirm)) {
+            response.setResult(ErrorChangePassword.NEW_PASSWORD_NOT_MATCHED);
+            return objectMapper.writeValueAsString(response);
+        }
+
+        var existsUser = userService.findUserById(optUser.get().getId());
+        if (existsUser.isEmpty()) {
+            response.setResult(ErrorChangePassword.NOT_FOUND_USER);
+            return objectMapper.writeValueAsString(response);
+        }
+
+        if (!passwordEncoder.matches(password, existsUser.get().getPassword())) {
+            response.setResult(ErrorChangePassword.PASSWORD_NOT_MATCHED);
+            return objectMapper.writeValueAsString(response);
+        }
+
+        if (userService.changePassword(optUser.get(), passwordEncoder.encode(newPassword)))
+            response.setResult(ErrorChangePassword.NONE);
 
         return objectMapper.writeValueAsString(response);
     }

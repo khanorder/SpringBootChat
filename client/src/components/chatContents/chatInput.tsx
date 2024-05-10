@@ -147,13 +147,6 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
                     </div>
                     <div className={styles.emojiWrapper}>
                         <button className={`${styles.emojiToggleButton} ${stylesCommon.button}` + (emojiPickerState ? ' ' + styles.active : '')} onClick={toggleEmojiPicker}>😊</button>
-                        {/*<EmojiPicker*/}
-                        {/*    className={styles.emojiPicker}*/}
-                        {/*    open={emojiPickerState}*/}
-                        {/*    width={320}*/}
-                        {/*    height={300}*/}
-                        {/*    onEmojiClick={(emoji, event) => addEmoji(emoji.emoji)}*/}
-                        {/*/>*/}
                     </div>
                 </div>
                 <div className={styles.chatMessageInputWrapper}>

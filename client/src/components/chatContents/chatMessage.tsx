@@ -104,6 +104,8 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
         const isMine = user.id == data.userId;
         let chatContentsClass = styles.chatContents + (isMine ? ` ${styles.mine}` : '');
         let chatMessageClass = styles.chatMessage + (isMine ? ` ${styles.mine}` : '');
+        if (!isContinually)
+            chatContentsClass += ` ${styles.groupFirst}`;
         
         switch (data.type) {
             case Defines.ChatType.NOTICE:
@@ -128,14 +130,16 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
                         <div className={styles.chatWrapper}>
                             {nickName()}
                             <div className={chatMessageClass}>
-                                <NL2BR text={message} />
-                                {
-                                    data.message.length > message.length
-                                        ?
-                                            <button className={`${stylesCommon.button} ${styles.buttonMore}`} onClick={onShowDetail}>더보기</button>
-                                        :
-                                            <></>
-                                }
+                                <div className={styles.chatMessageBubble}>
+                                    <NL2BR text={message} />
+                                    {
+                                        data.message.length > message.length
+                                            ?
+                                                <button className={`${stylesCommon.button} ${styles.buttonMore}`} onClick={onShowDetail}>더보기</button>
+                                            :
+                                                <></>
+                                    }
+                                </div>
                             </div>
                             {chatTime(data.time)}
                         </div>
@@ -162,7 +166,7 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
                     </li>
                 );
         }
-    }, [user, data, userProfile, nickName, chatTime, appConfigs, openChatImageDetailDialog, isContinually]);
+    }, [user, data, userProfile, nickName, onShowDetail, chatTime, appConfigs.serverProtocol, appConfigs.serverHost, openChatImageDetailDialog]);
 
     return chatElement();
 }

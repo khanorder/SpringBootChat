@@ -202,6 +202,7 @@ export function* signOutRes(data: Uint8Array) {
     switch (response.result) {
         case Errors.SignOut.NONE:
             yield put(signOut());
+            yield put(push("/"));
             break;
 
         case Errors.SignOut.AUTH_REQUIRED:

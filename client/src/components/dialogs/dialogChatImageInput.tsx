@@ -95,8 +95,12 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
         }
 
         const chatId = uuid();
-        await ChatAPI.UploadChatImageAsync({ chatId: chatId, roomId: chat.currentChatRoomId, mime: chatImageMime, base64Large: base64Large, base64Small: base64Small });
-        dispatch(sendMessageReq({ id: chatId, type: Defines.ChatType.IMAGE, roomId: chat.currentChatRoomId, message: '' }));
+        const result = await ChatAPI.UploadChatImageAsync({ chatId: chatId, roomId: chat.currentChatRoomId, mime: chatImageMime, base64Large: base64Large, base64Small: base64Small });
+        if (result) {
+            dispatch(sendMessageReq({ id: chatId, type: Defines.ChatType.IMAGE, roomId: chat.currentChatRoomId, message: '' }));
+        } else {
+            alert("이미지 전송 실패.");
+        }
         hideDialog();
     }, [chat, webSocket, user, chatImageMime, chatSmallImage, chatLargeImage, chatImageInputRef, hideDialog, dispatch]);
 
