@@ -41,8 +41,8 @@ public class AuthController {
         isDevelopment = null == config || !config.equals("production");
         this.userService = userService;
         this.jwtService = jwtService;
-        this.objectMapper = new ObjectMapper();
         this.passwordEncoder = passwordEncoder;
+        this.objectMapper = new ObjectMapper();
     }
 
     @PostMapping(value = "/auth/signIn", produces = MediaType.APPLICATION_JSON_VALUE)

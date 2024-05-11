@@ -1658,15 +1658,39 @@ export namespace Domains {
         chatId: string;
         roomId: string;
         mime: Defines.AllowedImageType;
+        base64Original: string;
         base64Large: string;
         base64Small: string;
 
-        constructor(chatId: string, roomId: string, mime: Defines.AllowedImageType, base64Large: string, base64Small: string) {
+        constructor(chatId: string, roomId: string, mime: Defines.AllowedImageType, base64Original: string, base64Large: string, base64Small: string) {
             this.chatId = chatId;
             this.roomId = roomId;
             this.mime = mime;
+            this.base64Original = base64Original;
             this.base64Large = base64Large;
             this.base64Small = base64Small;
+        }
+    }
+
+    export class DownloadChatImageRequest {
+        chatId: string;
+
+        constructor(chatId: string) {
+            this.chatId = chatId;
+        }
+    }
+
+    export class DownloadChatImageResponse {
+        result: Errors.DownloadChatImage;
+        mime: string;
+        fileBase64: string;
+        fileName: string;
+
+        constructor(result: Errors.DownloadChatImage, mime: string, fileBase64: string, fileName: string) {
+            this.result = result;
+            this.mime = mime;
+            this.fileBase64 = fileBase64;
+            this.fileName = fileName;
         }
     }
 

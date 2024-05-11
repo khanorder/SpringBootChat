@@ -92,7 +92,7 @@ export default function ChatSignIn() {
                     <button className={`${styles.button} ${styles.existsToken} ${stylesCommon.button}`}
                             onClick={checkAuthentication} title={`${currentUser.nickName} 계정으로 시작`}>
                         <span className={styles.name}>{currentUser.nickName}</span>
-                        <span className={styles.startText}>으로 시작</span>
+                        <span className={styles.startText}>계정으로 시작</span>
                     </button>
                 </div>
             );

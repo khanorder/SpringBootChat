@@ -85,8 +85,10 @@ public class ImageController {
 
             var smallDirectoryPath = Paths.get(currentPath, "images", "chat", "small", roomIdBase62);
             var largeDirectoryPath = Paths.get(currentPath, "images", "chat", "large", roomIdBase62);
+            var originalDirectoryPath = Paths.get(currentPath, "images", "chat", "original", roomIdBase62);
 
             Optional<Path> chatImagePath = switch (size) {
+                case ORIGINAL -> Optional.of(originalDirectoryPath);
                 case LARGE -> Optional.of(largeDirectoryPath);
                 default -> Optional.of(smallDirectoryPath);
             };
@@ -112,13 +114,20 @@ public class ImageController {
 
                 case SVG:
                     contentType = "image/svg+xml";
-                    chatImagePath = Optional.of(largeDirectoryPath);
+                    chatImagePath = Optional.of(originalDirectoryPath);
                     break;
             }
 
             var imagePath = Paths.get(chatImagePath.get().toString(), Helpers.getBase62FromUUID(chatImage.getId()) + "." + extension);
-            if (!Files.exists(imagePath))
-                return ResponseEntity.notFound().build();
+            if (!Files.exists(imagePath)) {
+                if (size == SavedImageSize.ORIGINAL) {
+                    return ResponseEntity.notFound().build();
+                } else {
+                    imagePath = Paths.get(originalDirectoryPath.toString(), Helpers.getBase62FromUUID(chatImage.getId()) + "." + extension);
+                    if ( !Files.exists(imagePath))
+                        return ResponseEntity.notFound().build();
+                }
+            }
 
             return ResponseEntity.ok().header("Content-Type", contentType).body(Files.readAllBytes(imagePath));
         } catch (Exception ex) {

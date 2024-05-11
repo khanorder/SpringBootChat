@@ -20,9 +20,10 @@ export interface ChatInputProps {
     setChatImageMime: Dispatch<SetStateAction<Defines.AllowedImageType>>;
     setChatSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     setChatLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
+    setChatOriginalImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
 }
 
-export default function ChatInput ({message, setMessage, chatImageInputRef, chatMessageInputRef, setChatImageMime, setChatSmallImage, setChatLargeImage}: ChatInputProps) {
+export default function ChatInput ({message, setMessage, chatImageInputRef, chatMessageInputRef, setChatImageMime, setChatSmallImage, setChatLargeImage, setChatOriginalImage}: ChatInputProps) {
     const firstRender = useRef(true);
     const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
@@ -118,6 +119,7 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
                         const origDataURL = 'string' == typeof reader.result ? reader.result : '';
                         const smallDataURL = await Helpers.getDataURLResizeImage(origDataURL, 256, 256, file.type);
                         const largeDataURL = await Helpers.getDataURLResizeImage(origDataURL, 1024, 1024, file.type);
+                        setChatOriginalImage(origDataURL);
                         setChatSmallImage(smallDataURL);
                         setChatLargeImage(largeDataURL);
                     }
@@ -125,13 +127,14 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
                 } else {
                     setChatSmallImage("");
                     setChatLargeImage("");
+                    setChatOriginalImage("");
                 }
 
                 setChatImageMime(mime);
             }
             dispatch(setIsActiveChatImageInput(true));
         }
-    }, [chatImageInputRef, setChatImageMime, setChatSmallImage, setChatLargeImage, dispatch]);
+    }, [chatImageInputRef, setChatImageMime, setChatSmallImage, setChatLargeImage, setChatOriginalImage, dispatch]);
     
     const inputContents = useCallback(() => {
         return (

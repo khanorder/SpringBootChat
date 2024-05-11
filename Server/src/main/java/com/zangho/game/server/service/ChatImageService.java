@@ -28,10 +28,7 @@ public class ChatImageService {
         if (1 > reqUploadChatImage.getMime().getNumber())
             return Optional.empty();
 
-        if (reqUploadChatImage.getBase64Large().isEmpty())
-            return Optional.empty();
-
-        if (!reqUploadChatImage.getMime().equals(AllowedImageType.SVG) && reqUploadChatImage.getBase64Small().isEmpty())
+        if (reqUploadChatImage.getBase64Original().isEmpty())
             return Optional.empty();
 
         var uploadedChatImage = new ChatImage(reqUploadChatImage.getChatId(), reqUploadChatImage.getMime());

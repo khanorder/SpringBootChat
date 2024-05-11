@@ -205,4 +205,13 @@ export namespace Errors {
         ALREADY_SUBSCRIBE = 3,
         FAILED_SUBSCRIBE = 4,
     }
+
+    export enum DownloadChatImage {
+        NONE = 0,
+        AUTH_REQUIRED = 1,
+        ID_REQUIRED = 2,
+        NOT_FOUND_DATA = 3,
+        NOT_FOUND_FILE = 4,
+        FAILED_TO_DOWNLOAD = 5,
+    }
 }

@@ -36,6 +36,7 @@ function ChatRoom({roomId, serverHost}: ChatRoomProps) {
     const [message, setMessage] = useState<string>('');
     const chatImageInputRef = createRef<HTMLInputElement>();
     const [chatImageMime, setChatImageMime] = useState<Defines.AllowedImageType>(Defines.AllowedImageType.NONE);
+    const [chatOriginalImage, setChatOriginalImage] = useState<string|ArrayBuffer|null>(null);
     const [chatLargeImage, setChatLargeImage] = useState<string|ArrayBuffer|null>(null);
     const [chatSmallImage, setChatSmallImage] = useState<string|ArrayBuffer|null>(null);
 
@@ -98,7 +99,8 @@ function ChatRoom({roomId, serverHost}: ChatRoomProps) {
                     setMessage={setMessage}
                     setChatImageMime={setChatImageMime}
                     setChatSmallImage={setChatSmallImage}
-                    setChatLargeImage={setChatLargeImage} />
+                    setChatLargeImage={setChatLargeImage}
+                    setChatOriginalImage={setChatOriginalImage} />
             </>
         );
     }, [chat, enterUser, roomId, chatImageInputRef, chatMessageInputRef, message]);
@@ -114,9 +116,11 @@ function ChatRoom({roomId, serverHost}: ChatRoomProps) {
                 setChatImageMime={setChatImageMime}
                 setChatSmallImage={setChatSmallImage}
                 setChatLargeImage={setChatLargeImage}
+                setChatOriginalImage={setChatOriginalImage}
                 chatImageMime={chatImageMime}
                 chatSmallImage={chatSmallImage}
-                chatLargeImage={chatLargeImage} />
+                chatLargeImage={chatLargeImage}
+                chatOriginalImage={chatOriginalImage} />
             {contents()}
         </>
     );
@@ -146,8 +150,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     try {
         roomUUID = Helpers.getUUIDFromBase62(roomId as string ?? '');
     } catch (error) {
-        if (!isProd)
+        if (!isProd) {
+            console.error(`roomId: ` + roomId);
             console.error(error);
+        }
     }
     const serverHost = process.env.SERVER_HOST ?? 'localhost:8080';
     const serverHostProp = ('production' === process.env.NODE_ENV ? 'https://' : 'http://') + serverHost;

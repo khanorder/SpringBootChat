@@ -18,12 +18,14 @@ export interface DialogChatImageInputProps {
     setChatImageMime: Dispatch<SetStateAction<Defines.AllowedImageType>>;
     setChatSmallImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     setChatLargeImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
+    setChatOriginalImage: Dispatch<SetStateAction<string|ArrayBuffer|null>>;
     chatImageMime: Defines.AllowedImageType;
     chatSmallImage: string|ArrayBuffer|null;
     chatLargeImage: string|ArrayBuffer|null;
+    chatOriginalImage: string|ArrayBuffer|null;
 }
 
-export default function DialogChatImageInput({chatImageInputRef, chatImageMime, chatSmallImage, chatLargeImage, setChatImageMime, setChatSmallImage, setChatLargeImage }: DialogChatImageInputProps) {
+export default function DialogChatImageInput({chatImageInputRef, chatImageMime, chatSmallImage, chatLargeImage, chatOriginalImage, setChatImageMime, setChatSmallImage, setChatLargeImage, setChatOriginalImage }: DialogChatImageInputProps) {
     const firstRender = useRef(true);
     const webSocket = useAppSelector(state => state.webSocket);
     const chat = useAppSelector(state => state.chat);
@@ -54,11 +56,12 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
     const hideDialog = useCallback(() => {
         dispatch(setIsActiveChatImageInput(false));
         setChatImageMime(Defines.AllowedImageType.NONE);
-        setChatSmallImage('');
-        setChatLargeImage('');
+        setChatSmallImage("");
+        setChatLargeImage("");
+        setChatOriginalImage("");
         if (chatImageInputRef.current)
-            chatImageInputRef.current.value = '';
-    }, [dispatch, setChatImageMime, setChatSmallImage, setChatLargeImage, chatImageInputRef]);
+            chatImageInputRef.current.value = "";
+    }, [dispatch, setChatImageMime, setChatSmallImage, setChatLargeImage, setChatOriginalImage, chatImageInputRef]);
 
     const onSendImage = useCallback(async () => {
         if (!webSocket.socket) {
@@ -70,41 +73,50 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
         } else if (!chat || isEmpty(chat.currentChatRoomId)) {
             alert('채팅방에 입장해 주세요.');
             return;
-        } else if (isEmpty(chatSmallImage) || isEmpty(chatLargeImage)) {
+        } else if (isEmpty(chatOriginalImage) && isEmpty(chatLargeImage) && isEmpty(chatSmallImage)) {
             alert('이미지를 선택해 주세요.');
             hideDialog();
             return;
         } else if (!chatImageInputRef.current || !chatImageInputRef.current.files || 1 > chatImageInputRef.current.files.length) {
             alert(`전송할 이미지를 선택해주세요.`);
             return;
-        } else if (10485760 < chatImageInputRef.current.files[0].size) {
-            alert(`파일크기 10MB 이하의 이미지만 전송 가능합니다.`);
+        } else if (20971520 < chatImageInputRef.current.files[0].size) {
+            alert(`파일크기 20MB 이하의 이미지만 전송 가능합니다.`);
             return;
         }
 
+        let base64Original = "";
         let base64Large = "";
         let base64Small = "";
         switch (chatImageMime) {
             case Defines.AllowedImageType.SVG:
-                base64Large = Helpers.encodeBase64(new Uint8Array(await chatImageInputRef.current.files[0].arrayBuffer()));
+                base64Original = Helpers.encodeBase64(new Uint8Array(await chatImageInputRef.current.files[0].arrayBuffer()));
                 break;
 
             default:
+                base64Original = await Helpers.getDataURItoBase64((chatOriginalImage ? (chatOriginalImage as string) : ""));
                 base64Large = await Helpers.getDataURItoBase64((chatLargeImage ? (chatLargeImage as string) : ""));
                 base64Small = await Helpers.getDataURItoBase64((chatSmallImage ? (chatSmallImage as string) : ""));
         }
 
         const chatId = uuid();
-        const result = await ChatAPI.UploadChatImageAsync({ chatId: chatId, roomId: chat.currentChatRoomId, mime: chatImageMime, base64Large: base64Large, base64Small: base64Small });
+        const result = await ChatAPI.UploadChatImageAsync({ chatId: chatId, roomId: chat.currentChatRoomId, mime: chatImageMime, base64Original: base64Original, base64Large: base64Large, base64Small: base64Small });
         if (result) {
             dispatch(sendMessageReq({ id: chatId, type: Defines.ChatType.IMAGE, roomId: chat.currentChatRoomId, message: '' }));
         } else {
             alert("이미지 전송 실패.");
         }
         hideDialog();
-    }, [chat, webSocket, user, chatImageMime, chatSmallImage, chatLargeImage, chatImageInputRef, hideDialog, dispatch]);
+    }, [chat, webSocket, user, chatImageMime, chatSmallImage, chatLargeImage, chatOriginalImage, chatImageInputRef, hideDialog, dispatch]);
 
     const dialog = useCallback(() =>  {
+        let previewImage = chatOriginalImage;
+        if (chatLargeImage)
+            previewImage = chatLargeImage;
+
+        if (chatSmallImage)
+            previewImage = chatSmallImage;
+
         return (
             <LayoutCenterDialog
                 type={Defines.CenterDialogType.CHAT_IMAGE_INPUT}
@@ -117,13 +129,7 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
                 }>
                 <div className={styles.chatImageInputWrapper}>
                     <div className={styles.inputForm}>
-                        {
-                            chatLargeImage
-                                ?
-                                <img className={styles.chatImageThumb} src={'string' == typeof chatLargeImage ? chatLargeImage : Picture} alt='업로드 이미지' />
-                                :
-                                <></>
-                        }
+                        <img className={styles.chatImageThumb} src={'string' == typeof previewImage ? previewImage : Picture} alt='업로드 이미지' />
                     </div>
                 </div>
             </LayoutCenterDialog>

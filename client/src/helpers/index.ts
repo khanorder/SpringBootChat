@@ -196,6 +196,7 @@ export namespace Helpers {
             const bytes = base62.decode(base62String);
             return getUUIDFromByteArray(bytes);
         } catch (error) {
+            console.error(`base62: ` + base62String);
             console.error(error);
             return '';
         }
@@ -255,17 +256,24 @@ export namespace Helpers {
 
     export async function getDataURLResizeImage(origDataURL: string, maxWidth: number, maxHeight: number, fileType?: string): Promise<string> {
         if (!document)
-            return '';
+            return "";
 
         const img = document.createElement("img");
         img.src = origDataURL;
 
         return new Promise((resolve) => {
             img.onload = async () => {
+                if (img.width < maxWidth && img.height < maxHeight) {
+                    resolve("");
+                    return;
+                }
+
                 const origCanvas = document.createElement('canvas');
                 const origCtx = origCanvas.getContext('2d');
-                if (!origCtx)
+                if (!origCtx) {
+                    resolve("");
                     return;
+                }
 
                 origCtx.drawImage(img, 0, 0, img.width, img.height);
 
@@ -286,8 +294,10 @@ export namespace Helpers {
                 const canvas = document.createElement('canvas')
 
                 const ctx = canvas.getContext('2d');
-                if (!ctx)
-                    return '';
+                if (!ctx) {
+                    resolve("");
+                    return;
+                }
 
                 canvas.width = width;
                 canvas.height = height;
@@ -684,5 +694,22 @@ export namespace Helpers {
             console.error(error);
         }
         return empty;
+    }
+
+    export function getPostposition(name: string, onlyPostPosition?: boolean): string {
+        //name의 마지막 음절의 유니코드(UTF-16)
+        const charCode = name.charCodeAt(name.length - 1);
+
+        //유니코드의 한글 범위 내에서 해당 코드의 받침 확인
+        const consonantCode = (charCode - 44032) % 28;
+
+        console.log(`${name}: ${consonantCode}`);
+
+        if (consonantCode === 0 || (7 < consonantCode && 16 > consonantCode)){
+            //0또는 ㄹ받침이면
+            return `${onlyPostPosition ? "" : name}로`;
+        }
+        //ㄹ 이외의 받침이면
+        return `${onlyPostPosition ? "" : name}으로`;
     }
 }

@@ -34,6 +34,7 @@
     "deepmerge": "^4.3.1",
     "dompurify": "^3.0.11",
     "dotenv": "^16.4.5",
+    "downloadjs": "^1.4.7",
     "emoji-picker-react": "^4.9.2",
     "express": "^4.18.3",
     "jwt-decode": "^4.0.0",
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "@types/dompurify": "^3.0.5",
+    "@types/downloadjs": "^1.4.6",
     "@types/express": "^4.17.21",
     "@types/node": "^20",
     "@types/react": "^18",
