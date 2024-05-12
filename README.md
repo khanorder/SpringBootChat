@@ -1,5 +1,8 @@
 # Sample
   [https://chat.baejangho.com](https://chat.baejangho.com)
+
+# ScreenShot
+  ![image](https://raw.githubusercontent.com/khanorder/SpringBootChat/master/screenshot.png)
   
 # 언어 및 프레임워크 정보  
 ## Server
