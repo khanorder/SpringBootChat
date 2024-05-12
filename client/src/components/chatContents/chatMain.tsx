@@ -3,7 +3,7 @@ import {useAppDispatch, useAppSelector} from "@/hooks";
 import dynamic from "next/dynamic";
 const ChatUsers = dynamic(() => import("@/components/chatContents/chatUsers"), { ssr: false });
 const DialogCreateChatRoom = dynamic(() => import("@/components/dialogs/dialogCreateChatRoom"), { ssr: false });
-const DialogProfile = dynamic(() => import("@/components/dialogs/dialogProfile"), {ssr: false});
+const DialogMyProfile = dynamic(() => import("@/components/dialogs/dialogMyProfile"), {ssr: false});
 
 export default function ChatMain() {
     const firstRender = useRef(true);
@@ -20,7 +20,7 @@ export default function ChatMain() {
     return (
         <>
             <DialogCreateChatRoom/>
-            <DialogProfile/>
+            <DialogMyProfile/>
             <ChatUsers />
         </>
     );

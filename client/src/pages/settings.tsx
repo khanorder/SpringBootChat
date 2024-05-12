@@ -75,7 +75,7 @@ function Settings() {
                 }
             </ul>
         );
-    }, [currentUser, isOpenItemPassword, isOpenItemProfile, profileImageInputRef, profileImageMime, profileLargeImage, profileSmallImage]);
+    }, [currentUser, isOpenItemPassword, isOpenItemProfile, profileImageInputRef, profileImageMime, profileLargeImage, profileSmallImage, isOpenItemSignUp]);
 
     return (
         <>

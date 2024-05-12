@@ -94,36 +94,37 @@ export default function DialogChatDetailImage () {
     }, [dispatch]);
 
     const dialog = useCallback(() => {
+        let detailImageUrl = Picture;
+        if (ui.chatDetailImageId)
+            detailImageUrl = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${chatImageUrlPrefix}${ui.chatDetailImageId}?${(new Date()).getTime()}`;
+
         return (
             <div className={dialogWrapperClass}>
                 <div className={styles.dialog}>
                     <div className={styles.dialogContent}>
+                        <div className={styles.contentsEmpty} onClick={hideDialog}>&nbsp;</div>
                         <div className={styles.closeButtonWrapper}>
+                            <div className={styles.contentsEmpty} onClick={hideDialog}>&nbsp;</div>
                             <button className={styles.closeButton} onClick={hideDialog} title='닫기'>
-                                <Image className={styles.closeButtonIcon} src={CloseIcon} alt='닫기' fill={true} priority={true}/>
+                                <Image className={styles.closeButtonIcon} src={CloseIcon} alt='닫기' fill={true}
+                                       priority={true}/>
                             </button>
                         </div>
                         <div className={styles.chatImageDetailWrapper}>
-
-                            {
-                                ui.chatDetailImageId
-                                    ?
-                                    <img className={styles.chatImageDetail}
-                                         src={(ui.chatDetailImageId ? `${appConfigs.serverProtocol}://${appConfigs.serverHost}${chatImageUrlPrefix}${ui.chatDetailImageId}` : Picture)}
-                                         alt='상세 이미지'/>
-                                    :
-                                    <></>
-                            }
-
+                            <Image className={styles.chatImageDetail} src={detailImageUrl} alt='상세 이미지' fill={true}
+                                   priority={true}/>
                         </div>
                         <div className={styles.dialogButtons}>
+                            <div className={styles.contentsEmpty} onClick={hideDialog}>&nbsp;</div>
                             <button className={`${styles.button} ${stylesCommon.button} ${stylesCommon.primaryButton}`}
                                     onClick={onDownload} title="원본">원본
                             </button>
                             <button className={`${styles.button} ${stylesCommon.button}`} onClick={hideDialog}
                                     title="닫기">닫기
                             </button>
+                            <div className={styles.contentsEmpty} onClick={hideDialog}>&nbsp;</div>
                         </div>
+                        <div className={styles.contentsEmpty} onClick={hideDialog}>&nbsp;</div>
                     </div>
                 </div>
                 <div className={styles.dialogPane} onClick={hideDialog}></div>

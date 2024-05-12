@@ -180,7 +180,7 @@ export default function LayoutDialogCenter({ type, size, children, buttons }: La
                 <div className={styles.dialogPane} onClick={hideDialog}></div>
             </div>
         );
-    }, [type, size, appConfigs, hideDialog, children, buttons, ui, user]);
+    }, [type, size, hideDialog, children, buttons, ui, user]);
 
     return dialogLayout();
 }

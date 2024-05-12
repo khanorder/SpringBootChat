@@ -6,7 +6,9 @@ import {Domains} from "@/domains";
 interface UIState {
     chatDetail: Domains.Chat|null;
     chatDetailImageId: string;
+    profileDetailUserId: string;
     activeTab: Defines.TabType;
+    isActiveMyProfile: boolean;
     isActiveProfile: boolean;
     isActiveProfileImageInput: boolean;
     isActiveNotification: boolean;
@@ -25,7 +27,9 @@ interface UIState {
 const initialState: UIState = {
     chatDetail: null,
     chatDetailImageId: "",
+    profileDetailUserId: "",
     activeTab: Defines.TabType.FOLLOW,
+    isActiveMyProfile: false,
     isActiveProfile: false,
     isActiveProfileImageInput: false,
     isActiveNotification: false,
@@ -57,9 +61,15 @@ const uiSlice = createSlice({
 
             state.chatDetailImageId = action.payload;
         },
+        setProfileDetailUserId: (state, action: PayloadAction<string>) => {
+            if ('production' !== process.env.NODE_ENV)
+                console.log(`reducer - setProfileDetailUserId: ${action.payload}`);
+
+            state.profileDetailUserId = action.payload;
+        },
         initUI: (state) => {
             state.activeTab = Defines.TabType.FOLLOW;
-            state.isActiveProfile = false;
+            state.isActiveMyProfile = false;
             state.isActiveProfileImageInput = false;
             state.isActiveNotification = false;
             state.isActiveChatRoomInfo = false;
@@ -75,6 +85,9 @@ const uiSlice = createSlice({
         },
         setActiveTab: (state, action: PayloadAction<Defines.TabType>) => {
             state.activeTab = action.payload;
+        },
+        setIsActiveMyProfile: (state, action: PayloadAction<boolean>) => {
+            state.isActiveMyProfile = action.payload;
         },
         setIsActiveProfile: (state, action: PayloadAction<boolean>) => {
             state.isActiveProfile = action.payload;
@@ -114,6 +127,9 @@ const uiSlice = createSlice({
         },
         setIsActiveImojiInput: (state, action: PayloadAction<boolean>) => {
             state.isActiveImojiInput = action.payload;
+        },
+        toggleIsActiveMyProfile: (state) => {
+            state.isActiveMyProfile = !state.isActiveMyProfile;
         },
         toggleIsActiveProfile: (state) => {
             state.isActiveProfile = !state.isActiveProfile;
@@ -161,8 +177,10 @@ export type { UIState };
 export const {
     setChatDetail,
     setChatDetailImageId,
+    setProfileDetailUserId,
     initUI,
     setActiveTab,
+    setIsActiveMyProfile,
     setIsActiveProfile,
     setIsActiveProfileImageInput,
     setIsActiveNotification,
@@ -177,6 +195,7 @@ export const {
     setIsActiveSignIn,
     setIsActiveImojiInput,
     toggleIsActiveNotification,
+    toggleIsActiveMyProfile,
     toggleIsActiveProfile,
     toggleIsActiveProfileImageInput,
     toggleIsActiveChatRoomInfo,

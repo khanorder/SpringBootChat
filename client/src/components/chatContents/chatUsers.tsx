@@ -11,6 +11,7 @@ import ChatIcon from "public/images/chat.svg";
 import CloseIcon from "public/images/close.svg";
 import 'react-contexify/ReactContexify.css';
 import dynamic from "next/dynamic";
+import {setIsActiveProfile, setProfileDetailUserId} from "@/stores/reducers/ui";
 const ChatMyProfile = dynamic(() => import("@/components/chatContents/chatMyProfile"), { ssr: false });
 const ChatUserProfile = dynamic(() => import("@/components/chatContents/chatUserProfile"), { ssr: false });
 
@@ -97,6 +98,11 @@ export default function ChatUsers() {
         }
     }, [dispatch]);
 
+    const openUserProfile = useCallback((userId: string) => {
+        dispatch(setProfileDetailUserId(userId));
+        dispatch(setIsActiveProfile(true));
+    }, [dispatch])
+
     const userList = useCallback((state: UserListType, userDatas: Domains.User[]) => {
         const list: ReactElement[] = [];
 
@@ -107,7 +113,7 @@ export default function ChatUsers() {
 
             list.push(
                 <li key={i} className={styles.user}
-                    onClick={(e) => { handleContextMenu(e, state, userData) }}
+                    onClick={(e) => { openUserProfile(userData.userId) }}
                     onContextMenu={(e) => { handleContextMenu(e, state, userData) }}>
                     <ChatUserProfile userId={userData.userId} />
                 </li>
@@ -115,7 +121,7 @@ export default function ChatUsers() {
         }
 
         return list;
-    }, [handleContextMenu, user]);
+    }, [handleContextMenu, openUserProfile, user]);
 
     const userGroupName = useCallback((state: UserListType) => {
         switch (state) {

@@ -64,7 +64,7 @@ export default function ChatHeader() {
         }
 
         //await CommonAPI.SubscribeChatRoom(chat.currentChatRoomId ?? '', user.id);
-    }, [chat, user]);
+    }, [chat]);
 
     const title = useCallback(() => {
         let title = appConfigs.isProd ? appConfigs.name : "";

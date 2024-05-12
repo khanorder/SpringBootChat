@@ -87,7 +87,7 @@ export default function ChatRooms() {
 
             return list;
         }
-    }, [appConfigs, chat]);
+    }, [appConfigs, chat, handleContextMenu]);
 
     const nonePublicMenu = useCallback(() => {
         return (

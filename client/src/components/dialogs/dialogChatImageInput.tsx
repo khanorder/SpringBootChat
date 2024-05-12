@@ -11,6 +11,7 @@ import {setIsActiveChatImageInput} from "@/stores/reducers/ui";
 import {Helpers} from "@/helpers";
 import stylesCommon from "@/styles/common.module.sass";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 
 export interface DialogChatImageInputProps {
@@ -129,12 +130,12 @@ export default function DialogChatImageInput({chatImageInputRef, chatImageMime, 
                 }>
                 <div className={styles.chatImageInputWrapper}>
                     <div className={styles.inputForm}>
-                        <img className={styles.chatImageThumb} src={'string' == typeof previewImage ? previewImage : Picture} alt='업로드 이미지' />
+                        <Image className={styles.chatImageThumb} src={'string' == typeof previewImage ? previewImage : Picture} alt='업로드 이미지' fill={true} priority={true} />
                     </div>
                 </div>
             </LayoutCenterDialog>
         );
-    }, [chatLargeImage, hideDialog, onSendImage]);
+    }, [hideDialog, onSendImage, chatOriginalImage, chatLargeImage, chatSmallImage]);
 
     return dialog();
 }

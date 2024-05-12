@@ -165,7 +165,7 @@ export default function ChatInput ({message, setMessage, chatImageInputRef, chat
                 </div>
             </div>
         );
-    }, [appConfigs, addEmoji, changeMessage, chatImageInputRef, chatMessageInputRef, emojiPickerState, message, onChangeChatImageFile, onKeyUpMessage, sendMessage, toggleEmojiPicker]);
+    }, [appConfigs, changeMessage, chatImageInputRef, chatMessageInputRef, emojiPickerState, message, onChangeChatImageFile, onKeyUpMessage, sendMessage, toggleEmojiPicker]);
 
     return inputContents();
 }

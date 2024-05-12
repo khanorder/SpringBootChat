@@ -1,0 +1,85 @@
+.userProfileWrapper
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-items: center
+    width: 100%
+    height: 100%
+
+    .userThumb
+        position: relative
+        width: 120px
+        height: 120px
+
+        .profileImageWrapper
+            flex: 0 0 auto
+            position: relative
+            overflow: hidden
+            display: flex
+            justify-content: center
+            align-items: center
+            border-radius: 60px
+            width: 120px
+            height: 120px
+            background: #ffffff
+            box-shadow: 0 0 20px #acacac
+
+            .userThumbImage
+                object-fit: cover
+                width: 120px
+
+    .userInfo
+        flex: 0 0 auto
+        width: 100%
+        display: flex
+        flex-direction: column
+        justify-content: center
+        align-items: center
+        margin-top: 25px
+
+        .nickName
+            position: relative
+            width: 50%
+            height: 40px
+
+            .currentNickName
+                position: absolute
+                top: 0
+                left: 0
+                width: 100%
+                font-size: 1.5em
+                text-align: center
+                overflow: hidden
+                white-space: nowrap
+                text-overflow: ellipsis
+
+        .separator
+            border-top: 1px solid #d9d9d9
+            margin: 10px 0
+            width: 50px
+            height: 0
+
+        .userMessage
+            position: relative
+            width: 80%
+            height: 40px
+
+            .currentUserMessage
+                position: absolute
+                top: 0
+                left: 0
+                width: 100%
+                font-size: 0.8em
+                text-align: center
+                color: #797979
+                overflow: hidden
+                white-space: nowrap
+                text-overflow: ellipsis
+
+
+    .buttons
+        .button
+            padding: 5px 10px
+
+    &:first-child
+        border-top: 0

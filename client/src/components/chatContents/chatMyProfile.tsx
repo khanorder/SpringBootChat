@@ -4,7 +4,7 @@ import Image from "next/image";
 import ModifyIcon from "public/images/modify-icon.svg";
 import styles from "@/styles/chatMyProfile.module.sass";
 import stylesCommon from "@/styles/common.module.sass";
-import {setIsActiveProfile, setIsActiveSignUp} from "@/stores/reducers/ui";
+import {setIsActiveMyProfile, setIsActiveSignUp} from "@/stores/reducers/ui";
 import isEmpty from "lodash/isEmpty";
 import useCurrentUser from "@/components/common/useCurrentUser";
 import {Defines} from "@/defines";
@@ -27,7 +27,7 @@ export default function ChatMyProfile() {
     //#endregion
 
     const editProfile = useCallback(() => {
-        dispatch(setIsActiveProfile(true));
+        dispatch(setIsActiveMyProfile(true));
     }, [dispatch]);
 
     const signUp = useCallback(() => {

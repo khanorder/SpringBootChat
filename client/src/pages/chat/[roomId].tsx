@@ -151,7 +151,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         roomUUID = Helpers.getUUIDFromBase62(roomId as string ?? '');
     } catch (error) {
         if (!isProd) {
-            console.error(`roomId: ` + roomId);
+            console.error(`roomId: ` + roomId as string);
             console.error(error);
         }
     }

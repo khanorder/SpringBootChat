@@ -5,7 +5,12 @@ import styles from "@/styles/chatDialogSlide.module.sass";
 import Image from "next/image";
 import CloseIcon from "public/images/close.svg";
 import stylesCommon from "@/styles/common.module.sass";
-import {setIsActiveChatRoomInfo, setIsActiveNotification, setIsActiveProfile} from "@/stores/reducers/ui";
+import {
+    setIsActiveChatRoomInfo, setIsActiveMyProfile,
+    setIsActiveNotification,
+    setIsActiveProfile,
+    setProfileDetailUserId
+} from "@/stores/reducers/ui";
 
 export interface LayoutDialogSlideProps {
     type: Defines.SlideDialogType;
@@ -28,8 +33,13 @@ export default function LayoutDialogSlide({ type, children }: LayoutDialogSlideP
 
     const hideDialog = useCallback(() => {
         switch (type) {
+            case Defines.SlideDialogType.MY_PROFILE:
+                dispatch(setIsActiveMyProfile(false));
+                break;
+
             case Defines.SlideDialogType.PROFILE:
                 dispatch(setIsActiveProfile(false));
+                setTimeout(() => dispatch(setProfileDetailUserId("")), 50);
                 break;
 
             case Defines.SlideDialogType.NOTIFICATION:
@@ -47,6 +57,12 @@ export default function LayoutDialogSlide({ type, children }: LayoutDialogSlideP
         let title = "";
         let dialogWrapperClass = `${styles.dialogWrapper}`;
         switch (type) {
+            case Defines.SlideDialogType.MY_PROFILE:
+                title = "내 프로필";
+                if (ui.isActiveMyProfile)
+                    dialogWrapperClass += ` ${styles.active}`;
+                break;
+
             case Defines.SlideDialogType.PROFILE:
                 title = "프로필";
                 if (ui.isActiveProfile)
@@ -87,7 +103,7 @@ export default function LayoutDialogSlide({ type, children }: LayoutDialogSlideP
                 <div className={styles.dialogPane} onClick={hideDialog}></div>
             </div>
         );
-    }, [type, children, hideDialog, appConfigs, ui]);
+    }, [type, children, hideDialog, ui]);
 
     return dialogLayout();
 }

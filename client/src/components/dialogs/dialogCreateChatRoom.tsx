@@ -189,7 +189,7 @@ export default function DialogCreateChatRoom() {
                 </div>
             </LayoutCenterDialog>
         );
-    }, [appConfigs, changeChatRoomName, chatRoomName, chatRoomOpenType, onChangeChatRoomOpenType, onKeyUpChatRoomName, selectedUsers, setSelectedUsers]);
+    }, [appConfigs, changeChatRoomName, chatRoomName, chatRoomOpenType, createChatRoom, hideDialog, onChangeChatRoomOpenType, onKeyUpChatRoomName, onSelectUser, selectedUserChips, selectedUsers]);
 
     return dialog();
 }

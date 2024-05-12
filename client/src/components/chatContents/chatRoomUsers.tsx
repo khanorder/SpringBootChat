@@ -1,17 +1,22 @@
 import {ReactElement, useCallback, useEffect, useRef} from "react";
-import {useAppSelector} from "@/hooks";
+import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
 import styles from "@/styles/chatRoomUsers.module.sass";
 import {Domains} from "@/domains";
 import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import useCurrentUser from "@/components/common/useCurrentUser";
+import Image from "next/image";
+import profileImageSmallUrlPrefix = Domains.profileImageSmallUrlPrefix;
+import {setIsActiveChatRoomInfo, setIsActiveProfile, setProfileDetailUserId} from "@/stores/reducers/ui";
 
 export default function ChatRoomUsers() {
     const firstRender = useRef(true);
+    const appConfigs = useAppSelector(state => state.appConfigs);
     const chat = useAppSelector(state => state.chat);
     const user = useAppSelector(state => state.user);
     const [currentUser] = useCurrentUser();
     const [getOthersUserInfo] = useOthersUserInfo();
+    const dispatch = useAppDispatch();
 
     //#region OnRender
     useEffect(() => {
@@ -21,16 +26,28 @@ export default function ChatRoomUsers() {
     }, [firstRender]);
     //#endregion
 
+    const openUserProfile = useCallback((userId: string) => {
+        dispatch(setIsActiveChatRoomInfo(false));
+        dispatch(setProfileDetailUserId(userId));
+        dispatch(setIsActiveProfile(true));
+    }, [dispatch])
+
     const userProfile = useCallback((userId: string) => {
         const isMine = user.id == userId;
         const userInfo = getOthersUserInfo(userId);
+        let imgUrl = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${userInfo.userId}?${(new Date()).getTime()}`;
+        let nickName = userInfo.nickName;
+        if (isMine) {
+            imgUrl = `${appConfigs.serverProtocol}://${appConfigs.serverHost}${profileImageSmallUrlPrefix}${currentUser.userId}?${(new Date()).getTime()}`;
+            nickName = currentUser.nickName;
+        }
 
         return (
             <div className={styles.chatRoomUserProfileWrapper}>
-                <img className={styles.chatRoomUserProfile} src={isMine ? currentUser.profileImageUrl : userInfo.profileImageUrl} title={isMine ? currentUser.nickName : userInfo.nickName} alt={isMine ? currentUser.nickName : userInfo.nickName} />
+                <Image className={styles.chatRoomUserProfile} src={imgUrl} title={nickName} alt={nickName} fill={true} priority={true} />
             </div>
         );
-    }, [user, getOthersUserInfo, currentUser]);
+    }, [appConfigs, user, getOthersUserInfo, currentUser]);
 
     const nickName = useCallback((userId: string) => {
         const isMine = user.id == userId;
@@ -64,7 +81,7 @@ export default function ChatRoomUsers() {
                     chatRoomUserClass += ' ' + styles.mine;
 
                 users.push(
-                    <li key={i} className={chatRoomUserClass}>
+                    <li key={i} className={chatRoomUserClass} onClick={() => openUserProfile(chatRoomUsers[i].userId)}>
                         {userProfile(chatRoomUsers[i].userId)}
                         {nickName(chatRoomUsers[i].userId)}
                     </li>
@@ -77,7 +94,7 @@ export default function ChatRoomUsers() {
                 {users}
             </ul>
         );
-    }, [chat, user, userProfile, nickName]);
+    }, [chat, user, userProfile, nickName, openUserProfile]);
 
     return (
         <div className={styles.chatRoomUserListWrapper}>

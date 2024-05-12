@@ -9,6 +9,7 @@ import {Helpers} from "@/helpers";
 import {Defines} from "@/defines";
 import stylesCommon from "@/styles/common.module.sass";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 const LayoutCenterDialog = dynamic(() => import("@/components/layouts/dialogCenter"), { ssr: false });
 
 export interface ChatImageInputDialogProps {
@@ -112,13 +113,7 @@ export default function DialogProfileImageInput({profileImageInputRef, profileIm
                 }>
                 <div className={styles.chatImageInputWrapper}>
                     <div className={styles.inputForm}>
-                        {
-                            profileLargeImage
-                                ?
-                                <img className={styles.chatImageThumb} src={'string' == typeof profileLargeImage ? profileLargeImage : Picture} alt='업로드 이미지' />
-                                :
-                                <></>
-                        }
+                        <Image className={styles.chatImageThumb} src={'string' == typeof profileLargeImage ? profileLargeImage : Picture} alt='업로드 이미지' fill={true} priority={true} />
                     </div>
                 </div>
             </LayoutCenterDialog>

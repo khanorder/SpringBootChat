@@ -74,7 +74,13 @@ export default function ChatRoom({ chatRoom, onContextMenu }: ChatRoomProps) {
                                     ?
                                     <>
                                         <div className={styles.message}>
-                                            {latestMessage.message}
+                                            {
+                                                Defines.ChatType.IMAGE === latestMessage.type
+                                                    ?
+                                                    "사진을 보냈습니다."
+                                                    :
+                                                    latestMessage.message
+                                            }
                                         </div>
                                         <div className={styles.messageTime}>
                                             {

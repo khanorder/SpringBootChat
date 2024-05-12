@@ -131,7 +131,7 @@ export default function ChatSignIn() {
         );
 
         return buttons;
-    }, [appConfigs, currentUser, userInfos, dispatch, changeUser, checkAuthentication, startGuest]);
+    }, [appConfigs, currentUser, userInfos, changeUser, checkAuthentication, startGuest, signIn, signUp]);
 
     return (
         <div className={styles.chatSignInWrapper}>

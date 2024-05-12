@@ -80,7 +80,7 @@ export default function ChatGNB() {
                 </button>
             </div>
         );
-    }, [ui, onChangeTab, router]);
+    }, [onChangeTab, router]);
 
     return (
         <div className={styles.chatGNBWrapper}>

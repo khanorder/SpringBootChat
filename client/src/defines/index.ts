@@ -136,9 +136,10 @@ export namespace Defines {
     }
 
     export enum SlideDialogType {
-        PROFILE = 0,
-        NOTIFICATION = 1,
-        CHAT_ROOM_INFO = 2,
+        MY_PROFILE = 0,
+        PROFILE = 1,
+        NOTIFICATION = 2,
+        CHAT_ROOM_INFO = 3,
     }
 
     export enum CenterDialogType {

@@ -111,7 +111,7 @@ export default function PanelChangePassword({ isOpenItem, className }: ChangePas
                 alert("비밀번호 변경 실패.");
                 break;
         }
-    }, [password, newPassword, newPasswordConfirm, setPassword, setNewPassword, setNewPasswordConfirm, dispatch]);
+    }, [password, newPassword, newPasswordConfirm, setPassword, setNewPassword, setNewPasswordConfirm]);
 
     const onChangePassword = useCallback((e: ChangeEvent<HTMLInputElement>, changeType: ChangeType) => {
         let inputText = e.target?.value ? e.target.value.trim() : "";
@@ -180,7 +180,7 @@ export default function PanelChangePassword({ isOpenItem, className }: ChangePas
                 </div>
             </div>
         );
-    }, [isOpenItem, className, password, newPassword, newPasswordConfirm, onKeyUp, onChangePassword]);
+    }, [isOpenItem, className, password, newPassword, newPasswordConfirm, onKeyUp, onChangePassword, onSubmit]);
 
     return panel();
 }

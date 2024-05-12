@@ -102,7 +102,7 @@ export default function ChatNotifications() {
         }
 
         return list;
-    }, [notificationState, getOthersUserInfo, checkNotification, removeNotification]);
+    }, [appConfigs, notificationState, getOthersUserInfo, checkNotification, removeNotification]);
 
     return (
         <div className={styles.chatNotificationsWrapper}>

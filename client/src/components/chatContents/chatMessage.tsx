@@ -7,7 +7,12 @@ import {Domains} from "@/domains";
 import dynamic from "next/dynamic";
 import {useAppDispatch, useAppSelector} from "@/hooks";
 import isEmpty from "lodash/isEmpty";
-import {setIsActiveChatDetail, setIsActiveChatImageDetail} from "@/stores/reducers/ui";
+import {
+    setIsActiveChatDetail,
+    setIsActiveChatImageDetail,
+    setIsActiveChatRoomInfo, setIsActiveProfile,
+    setProfileDetailUserId
+} from "@/stores/reducers/ui";
 import {setChatDetail, setChatDetailImageId} from "@/stores/reducers/ui";
 import useOthersUserInfo from "@/components/common/useOthersUserInfo";
 import chatImageSmallUrlPrefix = Domains.chatImageSmallUrlPrefix;
@@ -36,6 +41,11 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
     }, [firstRender]);
     //#endregion
 
+    const openUserProfile = useCallback(() => {
+        dispatch(setProfileDetailUserId(data.userId));
+        dispatch(setIsActiveProfile(true));
+    }, [dispatch, data])
+
     const openChatImageDetailDialog = useCallback(() => {
         if (isEmpty(data.id))
             return;
@@ -52,7 +62,7 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
         const userInfo = getOthersUserInfo(data.userId);
 
         return (
-            <div className={styles.chatUserProfileWrapper}>
+            <div className={styles.chatUserProfileWrapper} onClick={openUserProfile}>
                 {
                     isContinually
                         ?
@@ -67,7 +77,7 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
                 }
             </div>
         );
-    }, [appConfigs, getOthersUserInfo, user, data, isContinually]);
+    }, [appConfigs, getOthersUserInfo, openUserProfile, user, data, isContinually]);
 
     const nickName = useCallback(() => {
         const isMine = user.id == data.userId;
@@ -166,7 +176,7 @@ export default function ChatMessage({data, isContinually, isContinuallyLast}: Ch
                     </li>
                 );
         }
-    }, [user, data, userProfile, nickName, onShowDetail, chatTime, appConfigs.serverProtocol, appConfigs.serverHost, openChatImageDetailDialog]);
+    }, [user, data, userProfile, nickName, onShowDetail, chatTime, appConfigs.serverProtocol, appConfigs.serverHost, openChatImageDetailDialog, isContinually]);
 
     return chatElement();
 }

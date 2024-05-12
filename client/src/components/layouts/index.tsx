@@ -18,6 +18,7 @@ const ChatGNB = dynamic(() => import("@/components/chatContents/chatGNB"), {ssr:
 const Loading = dynamic(() => import("@/components/common/loading"), {ssr: false});
 const AlreadySignIn = dynamic(() => import("@/components/common/alreadySignIn"), {ssr: false});
 const ChatSignIn = dynamic(() => import("@/components/chatContents/chatSignIn"), {ssr: false});
+const DialogProfile = dynamic(() => import("@/components/dialogs/dialogProfile"), {ssr: false});
 
 export default function Layout({children}: { children: ReactNode }) {
     const firstRender = useRef(true);
@@ -106,6 +107,7 @@ export default function Layout({children}: { children: ReactNode }) {
 
         return (
             <>
+                <DialogProfile />
                 <DialogSignUp />
                 <DialogNotification/>
                 <ChatHeader/>
