@@ -13,11 +13,11 @@
 
 ## Client
   * Node.js
-    * version: 16
+    * version: 18
   * Typescript
     * version: 5
   * Next.js
-    * version: 13
+    * version: 14
   * Express
     * version: 4
 
