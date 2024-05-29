@@ -1,0 +1,26 @@
+server:
+    hostname: http://127.0.0.1
+    port: 80
+    version:
+        main: 0
+        update: 1
+        maintenance: 1
+
+    servlet:
+        session:
+            cookie:
+                name: CHAT_SESSION_ID
+
+    cors:
+        allowed_origins:
+            http://127.0.0.1
+
+client:
+    version:
+        main: 0
+        update: 1
+        maintenance: 2
+
+logging:
+    level:
+        org.springframework.security: trace

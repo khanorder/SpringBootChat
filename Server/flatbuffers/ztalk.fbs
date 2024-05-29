@@ -1,0 +1,146 @@
+namespace com.zangho.game.flatbuffers;
+
+// Enums
+enum ReqType: uint8 {
+  REQ_NONE = 0,
+  REQ_CHECK_CONNECTION = 1,
+  REQ_CHECK_AUTHENTICATION = 2,
+  REQ_SIGN_IN = 3,
+  REQ_SIGN_OUT = 4,
+  REQ_CHECK_NOTIFICATION = 5,
+  REQ_REMOVE_NOTIFICATION = 6,
+  REQ_CONNECTED_USERS = 7,
+  REQ_GET_TOKEN_USER_INFO = 8,
+  REQ_GET_OTHERS_USER_INFO = 9,
+  REQ_FOLLOW = 10,
+  REQ_UNFOLLOW = 11,
+  REQ_START_CHAT = 12,
+  REQ_CHANGE_NICK_NAME = 13,
+  REQ_CHANGE_USER_MESSAGE = 14,
+  REQ_CHANGE_USER_PROFILE = 15,
+  REQ_REMOVE_USER_PROFILE = 16,
+  REQ_CREATE_CHAT_ROOM = 17,
+  REQ_ADD_USER_CHAT_ROOM = 18,
+  REQ_REMOVE_CHAT_ROOM = 19,
+  REQ_ENTER_CHAT_ROOM = 20,
+  REQ_EXIT_CHAT_ROOM = 21,
+  REQ_TALK_CHAT_ROOM = 22,
+  REQ_HISTORY_CHAT_ROOM = 23,
+  REQ_TEST = 255
+}
+
+enum ResType: uint8 {
+  RES_NONE = 0,
+  RES_CHECK_CONNECTION = 1,
+  RES_CHECK_AUTHENTICATION = 2,
+  RES_SIGN_IN = 3,
+  RES_SIGN_OUT = 4,
+  RES_DEMAND_REFRESH_TOKEN = 5,
+  RES_ACCESS_TOKEN_EXPIRED = 6,
+  RES_REFRESH_TOKEN_EXPIRED = 7,
+  RES_NOTIFICATION = 8,
+  RES_NOTIFICATIONS_START_CHAT = 9,
+  RES_NOTIFICATIONS_FOLLOWER = 10,
+  RES_CHECK_NOTIFICATION = 11,
+  RES_REMOVE_NOTIFICATION = 12,
+  RES_LATEST_ACTIVE_USERS = 13,
+  RES_CONNECTED_USERS = 14,
+  RES_NOTICE_CONNECTED_USER = 15,
+  RES_NOTICE_DISCONNECTED_USER = 16,
+  RES_GET_TOKEN_USER_INFO = 17,
+  RES_GET_OTHERS_USER_INFO = 18,
+  RES_FOLLOWS = 19,
+  RES_FOLLOWERS = 20,
+  RES_CHAT_ROOMS = 21,
+  RES_FOLLOW = 22,
+  RES_UNFOLLOW = 23,
+  RES_FOLLOWER = 24,
+  RES_UNFOLLOWER = 25,
+  RES_START_CHAT = 26,
+  RES_OPEN_PREPARED_CHAT_ROOM = 27,
+  RES_CHANGE_NICK_NAME = 28,
+  RES_NOTICE_NICK_NAME_CHANGED = 29,
+  RES_CHANGE_USER_MESSAGE = 30,
+  RES_NOTICE_USER_MESSAGE_CHANGED = 31,
+  RES_CHANGE_USER_PROFILE = 32,
+  RES_NOTICE_USER_PROFILE_CHANGED = 33,
+  RES_REMOVE_USER_PROFILE = 34,
+  RES_NOTICE_USER_PROFILE_REMOVED = 35,
+  RES_CREATE_CHAT_ROOM = 36,
+  RES_ADD_USER_CHAT_ROOM = 37,
+  RES_ADD_CHAT_ROOM = 38,
+  RES_REMOTE_CHAT_ROOM = 39,
+  RES_ENTER_CHAT_ROOM = 40,
+  RES_EXIT_CHAT_ROOM = 41,
+  RES_UPDATE_CHAT_ROOM = 42,
+  RES_NOTICE_ADD_CHAT_ROOM_USER = 43,
+  RES_NOTICE_REMOVE_CHAT_ROOM_USER = 44,
+  RES_NOTICE_ENTER_CHAT_ROOM = 45,
+  RES_NOTICE_EXIT_CHAT_ROOM = 46,
+  RES_NOTICE_CHANGE_NICK_NAME_CHAT_ROOM = 47,
+  RES_NOTICE_CHAT_ROOM = 48,
+  RES_TALK_CHAT_ROOM = 49,
+  RES_HISTORY_CHAT_ROOM = 50,
+  RES_TEST = 255
+}
+
+enum ErrorCheckConnection: uint8 {
+  NONE = 0,
+  UPDATE_REQUIRED = 1,
+  FAILED_TO_CHECK = 2
+}
+
+enum ErrorCheckAuth: uint8 {
+  NONE = 0,
+  NOT_VALID_TOKEN = 1,
+  TOKEN_IS_EMPTY = 2,
+  AUTH_EXPIRED = 3,
+  ALREADY_SIGN_IN_USER = 4,
+  FAILED_TO_CREATE_USER = 5,
+  FAILED_TO_ISSUE_TOKEN = 6,
+  FAILED_TO_AUTH = 7
+}
+
+// Packets
+table CheckConnectionResponse {
+  result: ErrorCheckConnection;
+  serverVersionMain: uint16;
+  serverVersionUpdate: uint16;
+  serverVersionMaintenance: uint16;
+}
+
+table CheckAuthenticationResponse {
+  result: ErrorCheckAuth;
+  haveProfile: bool;
+  latestActive: uint32;
+  nickName: string;
+  userMessage: string;
+  token: string;
+  refreshToken: string;
+}
+
+// Models
+table HealthCheck {
+  serverVersion: string;
+  clientVersion: string;
+}
+
+table User {
+  userId: string;
+  name: string;
+  message: string;
+}
+
+table Client {
+  clientVersionMain: uint16;
+  clientVersionUpdate: uint16;
+  clientVersionMaintenance: uint16;
+}
+
+table Server {
+  protocol: string;
+  host: string;
+  serverVersionMain: uint16;
+  serverVersionUpdate: uint16;
+  serverVersionMaintenance: uint16;
+}

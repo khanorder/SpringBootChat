@@ -1,0 +1,32 @@
+rds:
+    visit:
+        datasource:
+            driver-class-name: org.mariadb.jdbc.Driver
+            jdbc-url: jdbc:mariadb://127.0.0.1:3306/chat_visit
+            username:
+            password:
+
+    chat:
+        datasource:
+            driver-class-name: org.mariadb.jdbc.Driver
+            jdbc-url: jdbc:mariadb://127.0.0.1:3306/chat
+            username:
+            password:
+
+    user:
+        datasource:
+            driver-class-name: org.mariadb.jdbc.Driver
+            jdbc-url: jdbc:mariadb://127.0.0.1:3306/chat_user
+            username:
+            password:
+
+    jpa:
+        hibernate:
+            hbm2ddl.auto: update
+            show_sql: false
+            format_sql: false
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.MySQLDialect
+        database: mysql
+        database-platform: org.hibernate.dialect.MySQLDialect

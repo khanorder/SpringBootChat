@@ -1,0 +1,8 @@
+jwt:
+    secret_key:
+    valid_issuer: http://192.168.100.4:8080
+    valid_audiences:
+        localhost: http://localhost:3000
+    refresh_minutes: 58
+    access_expire_minutes: 60
+    refresh_expire_day: 365
