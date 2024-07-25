@@ -1,0 +1,48 @@
+﻿{
+  "Config": {
+    "IsProgrammer": true,
+    "ServerList": [
+      {
+        "Uid": "ede8f2e8-5259-4aaa-8a4c-7f230e7d6977",
+        "OS": "Linux",
+        "ServiceType": "Native",
+        "ProjectType": "NodeJS",
+        "DisplayName": "[Client] 채팅 서비스",
+        "Name": "SpringBootChatClient",
+        "ServiceName": "SPBChatClient",
+        "ExcuteFileName": "app.js",
+        "Host": "192.168.100.3",
+        "Port": 5659,
+        "User": "www",
+        "Pass": "dnpq_1307",
+        "SSHPort": 0,
+        "SshHostKeyFingerprint": "",
+        "FTPPort": 21,
+        "UploadPath": "/private/Compress",
+        "ProjectPath": "D:\\work\\00-private\\Java\\SpringBoot\\SpringBootChat\\client"
+      },
+      {
+        "Uid": "1fbbab7a-be6e-4483-8b33-aa860872fdb3",
+        "OS": "Linux",
+        "ServiceType": "Native",
+        "ProjectType": "DotNet",
+        //"ProjectType": "SpringBoot",
+        "LanguageVersion": "8",
+        "DisplayName": "[Server] 채팅 서비스",
+        "Name": "SpringBootChatServer",
+        "ServiceName": "SPBChatServer",
+        "ExcuteFileName": "Server",
+        "Host": "192.168.100.3",
+        "Port": 5659,
+        "User": "www",
+        "Pass": "dnpq_1307",
+        "SSHPort": 0,
+        "SshHostKeyFingerprint": "",
+        "FTPPort": 21,
+        "UploadPath": "/private/Compress",
+        //"ProjectPath": "D:\\work\\00-private\\Java\\SpringBoot\\SpringBootChat\\Server"
+        "ProjectPath": "D:\\work\\00-private\\Java\\SpringBoot\\SpringBootChat\\SupervisorServer"
+      }
+    ]
+  }
+}
