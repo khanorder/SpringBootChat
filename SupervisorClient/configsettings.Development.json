@@ -25,9 +25,7 @@
         "Uid": "1fbbab7a-be6e-4483-8b33-aa860872fdb3",
         "OS": "Linux",
         "ServiceType": "Native",
-        "ProjectType": "DotNet",
-        //"ProjectType": "SpringBoot",
-        "LanguageVersion": "8",
+        "ProjectType": "SpringBoot",
         "DisplayName": "[Server] 채팅 서비스",
         "Name": "SpringBootChatServer",
         "ServiceName": "SPBChatServer",
@@ -40,8 +38,7 @@
         "SshHostKeyFingerprint": "",
         "FTPPort": 21,
         "UploadPath": "/private/Compress",
-        //"ProjectPath": "D:\\work\\00-private\\Java\\SpringBoot\\SpringBootChat\\Server"
-        "ProjectPath": "D:\\work\\00-private\\Java\\SpringBoot\\SpringBootChat\\SupervisorServer"
+        "ProjectPath": "D:\\work\\00-private\\Java\\SpringBoot\\SpringBootChat\\Server"
       }
     ]
   }

@@ -18,6 +18,32 @@ namespace Supervisor.Client.Services
             _logger = logger;
         }
 
+        public void CreateFromFile(
+            string sourceFilePath,
+            string destinationArchiveFileName,
+            CompressionLevel compressionLevel
+        )
+        {
+            if (string.IsNullOrEmpty(sourceFilePath))
+                throw new ArgumentNullException("sourceFileName");
+
+            if (string.IsNullOrEmpty(destinationArchiveFileName))
+                throw new ArgumentNullException("destinationArchiveFileName");
+
+            if (false == File.Exists(sourceFilePath))
+                throw new ArgumentException("notFoundSourceFile");
+
+            var fileInfo = new FileInfo(sourceFilePath);
+
+            using (var zipFileStream = new FileStream(destinationArchiveFileName, FileMode.Create))
+            {
+                using (var archive = new ZipArchive(zipFileStream, ZipArchiveMode.Create))
+                {
+                    archive.CreateEntryFromFile(sourceFilePath, fileInfo.Name, compressionLevel);
+                }
+            }
+        }
+
         public void CreateFromDirectory(
             string sourceDirectoryName, 
             string destinationArchiveFileName, 

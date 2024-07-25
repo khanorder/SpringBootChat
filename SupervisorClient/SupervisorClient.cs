@@ -859,7 +859,21 @@ namespace Supervisor.Client
                         _zipHelper.CreateFromDirectoryOnly(_selectedServer.ProjectPath, _compressFilePath, CompressionLevel.Optimal, false, (file) => GetOnlyIncludeAudios(file), FileMode.OpenOrCreate, ZipArchiveMode.Update);
                         _zipHelper.CreateFromDirectoryOnly(_selectedServer.ProjectPath, _compressFilePath, CompressionLevel.Optimal, false, (file) => GetOnlyIncludeFonts(file), FileMode.OpenOrCreate, ZipArchiveMode.Update);
                     }
+                    break;
 
+                case ProjectType.SpringBoot:
+                    if (0 < IncludeFolderCheckedListBox.CheckedItems.Count)
+                    {
+                    }
+                    else
+                    {
+                        source = Path.Combine(_selectedServer.ProjectPath, "build", "libs", _selectedServer.ExcuteFileName + ".jar");
+                        if (false == File.Exists(source))
+                        {
+                            return ErrorZip.NotFoundSourcePath;
+                        }
+                        _zipHelper.CreateFromFile(source, _compressFilePath, CompressionLevel.Optimal);
+                    }
                     break;
             }
 
@@ -927,6 +941,10 @@ namespace Supervisor.Client
                         IncludeFolderCheckedListBox.Items.Add(IncludeFolder.videos);
                         IncludeFolderCheckedListBox.Items.Add(IncludeFolder.audios);
                         IncludeFolderCheckedListBox.Items.Add(IncludeFolder.fonts);
+                        break;
+
+                    case ProjectType.SpringBoot:
+                        IncludeFolderCheckedListBox.Items.Add(IncludeFolder.images);
                         break;
                 }
             }

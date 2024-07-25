@@ -239,8 +239,16 @@ namespace Supervisor.Server.Services
                 var logPath = Path.Combine(serverPath, "logs");
                 var modulePath = Path.Combine(serverPath, "node_modules");
                 var wwwrootPath = Path.Combine(serverPath, "wwwroot");
-                if (ProjectType.NodeJS == reqData.ProjectType)
-                    wwwrootPath = Path.Combine(serverPath, "public");
+                switch (reqData.ProjectType)
+                {
+                    case ProjectType.NodeJS:
+                        wwwrootPath = Path.Combine(serverPath, "public");
+                        break;
+
+                    case ProjectType.SpringBoot:
+                        wwwrootPath = Path.Combine(serverPath, "resources");
+                        break;
+                }
                 var cssPath = Path.Combine(wwwrootPath, "css");
                 var filesPath = Path.Combine(wwwrootPath, "files");
                 var imagesPath = Path.Combine(wwwrootPath, "images");
@@ -249,9 +257,11 @@ namespace Supervisor.Server.Services
                 var fontsPath = Path.Combine(wwwrootPath, "fonts");
                 var jsPath = Path.Combine(wwwrootPath, "js");
                 var libPath = Path.Combine(wwwrootPath, "lib");
+                var scriptsPath = Path.Combine(serverPath, "scripts");
+                var configsPath = Path.Combine(serverPath, "configs");
+                var uploadImagePath = Path.Combine(serverPath, "images");
+
                 var dirs = Directory.GetDirectories(serverPath);
-                var ngelPath = Path.Combine(serverPath, "ngel");
-                var scriptsPath = Path.Combine(serverPath, "ngel", "scripts");
                 // var dbSettingsRegex = new Regex(@"(\\|/)\.dbSettings\.json", RegexOptions.IgnoreCase);
                 var jsonConfigRegex = new Regex(@"(\\|/)(?!(navmenu|jwt))([a-z])+(settings)([a-z\.])*\.json", RegexOptions.IgnoreCase);
                 var navMenuSettingsRegex = new Regex(@"(\\|/)(navmenusettings)([a-z\.])*\.json", RegexOptions.IgnoreCase);
@@ -264,25 +274,17 @@ namespace Supervisor.Server.Services
                     foreach (var dir in dirs)
                     {
                         var dirPath = Path.Combine(serverPath, dir);
-                        if (reqData.includeFolders.Contains(IncludeFolder.scripts) && dirPath == ngelPath)
+                        if (reqData.includeFolders.Contains(IncludeFolder.scripts) && dirPath == scriptsPath)
                         {
-                            var ngelDirs = Directory.GetDirectories(dirPath);
-                            foreach (string ngelDir in ngelDirs)
+                            if (Directory.Exists(dirPath))
                             {
-                                var ngelDirPath = Path.Combine(dirPath, ngelDir);
-                                if (ngelDirPath != scriptsPath)
-                                    continue;
-
-                                if (Directory.Exists(ngelDirPath))
+                                try
                                 {
-                                    try
-                                    {
-                                        Directory.Delete(ngelDirPath, true);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogError(ex.Message);
-                                    }
+                                    Directory.Delete(dirPath, true);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError(ex.Message);
                                 }
                             }
                         }
@@ -395,6 +397,12 @@ namespace Supervisor.Server.Services
                             continue;
 
                         if (dirPath == modulePath)
+                            continue;
+
+                        if (dirPath == configsPath)
+                            continue;
+
+                        if (dirPath == uploadImagePath)
                             continue;
 
                         if (dirPath == wwwrootPath)

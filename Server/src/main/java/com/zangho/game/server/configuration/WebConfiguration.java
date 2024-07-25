@@ -10,6 +10,8 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.mvc.WebContentInterceptor;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
@@ -32,5 +34,17 @@ public class WebConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(webContentInterceptor);
 
         WebMvcConfigurer.super.addInterceptors(registry);
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        var currentPath = System.getProperty("user.dir");
+        var resourcePath = Paths.get(currentPath, "resources");
+        System.out.println(resourcePath);
+        registry.addResourceHandler("/**")
+            .addResourceLocations("file:" + resourcePath.toString() + File.separator)
+            .setCachePeriod(30);
+
+        WebMvcConfigurer.super.addResourceHandlers(registry);
     }
 }
