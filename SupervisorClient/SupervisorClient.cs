@@ -725,6 +725,16 @@ namespace Supervisor.Client
             return include;
         }
 
+        private bool GetOnlyIncludeSpringBootImages(string fileName)
+        {
+            var include = false;
+
+            var imageRegex = new Regex(@"(\\|/)resources(\\|/)images(\\|/).*$", RegexOptions.IgnoreCase);
+            include = imageRegex.IsMatch(fileName);
+
+            return include;
+        }
+
         private bool GetOnlyIncludeVideos(string fileName)
         {
             var include = false;
@@ -775,6 +785,9 @@ namespace Supervisor.Client
             switch (_selectedServer.ProjectType)
             {
                 case ProjectType.DotNet:
+                    if (false == _config.IsProgrammer)
+                        return ErrorZip.None;
+
                     source = Path.Combine(_selectedServer.ProjectPath, "bin", "Release", $"net{_selectedServer.LanguageVersion.ToString("#.0")}", "publish");
                     if (false == Directory.Exists(source))
                     {
@@ -862,8 +875,24 @@ namespace Supervisor.Client
                     break;
 
                 case ProjectType.SpringBoot:
+                    if (false == _config.IsProgrammer)
+                        return ErrorZip.None;
+
                     if (0 < IncludeFolderCheckedListBox.CheckedItems.Count)
                     {
+                        foreach (var item in IncludeFolderCheckedListBox.CheckedItems)
+                        {
+                            switch (item.ToString())
+                            {
+                                case "images":
+                                    if (false == Directory.Exists(_selectedServer.ProjectPath))
+                                    {
+                                        return ErrorZip.NotFoundSourcePath;
+                                    }
+                                    _zipHelper.CreateFromDirectoryOnly(_selectedServer.ProjectPath, _compressFilePath, CompressionLevel.Optimal, false, (file) => GetOnlyIncludeSpringBootImages(file), FileMode.OpenOrCreate, ZipArchiveMode.Update);
+                                    break;
+                            }
+                        }
                     }
                     else
                     {

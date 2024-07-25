@@ -274,67 +274,80 @@ namespace Supervisor.Server.Services
                     foreach (var dir in dirs)
                     {
                         var dirPath = Path.Combine(serverPath, dir);
+
+                        if (dirPath == wwwrootPath)
+                        {
+                            var staticDirs = Directory.GetDirectories(dirPath);
+                            foreach (string staticDir in staticDirs)
+                            {
+                                var staticDirPath = Path.Combine(dirPath, staticDir);
+
+                                if (staticDirPath == filesPath)
+                                    continue;
+
+                                if (reqData.includeFolders.Contains(IncludeFolder.images) && staticDirPath == imagesPath)
+                                {
+                                    if (Directory.Exists(staticDirPath))
+                                    {
+                                        try
+                                        {
+                                            Directory.Delete(staticDirPath, true);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex.Message);
+                                        }
+                                    }
+                                }
+
+                                if (reqData.includeFolders.Contains(IncludeFolder.videos) && staticDirPath == videosPath)
+                                {
+                                    if (Directory.Exists(staticDirPath))
+                                    {
+                                        try
+                                        {
+                                            Directory.Delete(staticDirPath, true);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex.Message);
+                                        }
+                                    }
+                                }
+
+                                if (reqData.includeFolders.Contains(IncludeFolder.audios) && staticDirPath == audiosPath)
+                                {
+                                    if (Directory.Exists(staticDirPath))
+                                    {
+                                        try
+                                        {
+                                            Directory.Delete(staticDirPath, true);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex.Message);
+                                        }
+                                    }
+                                }
+
+                                if (reqData.includeFolders.Contains(IncludeFolder.fonts) && staticDirPath == fontsPath)
+                                {
+                                    if (Directory.Exists(staticDirPath))
+                                    {
+                                        try
+                                        {
+                                            Directory.Delete(staticDirPath, true);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogError(ex.Message);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         if (reqData.includeFolders.Contains(IncludeFolder.scripts) && dirPath == scriptsPath)
-                        {
-                            if (Directory.Exists(dirPath))
-                            {
-                                try
-                                {
-                                    Directory.Delete(dirPath, true);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex.Message);
-                                }
-                            }
-                        }
-
-                        if (reqData.includeFolders.Contains(IncludeFolder.images) && dirPath == imagesPath)
-                        {
-                            if (Directory.Exists(dirPath))
-                            {
-                                try
-                                {
-                                    Directory.Delete(dirPath, true);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex.Message);
-                                }
-                            }
-                        }
-
-                        if (reqData.includeFolders.Contains(IncludeFolder.videos) && dirPath == videosPath)
-                        {
-                            if (Directory.Exists(dirPath))
-                            {
-                                try
-                                {
-                                    Directory.Delete(dirPath, true);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex.Message);
-                                }
-                            }
-                        }
-
-                        if (reqData.includeFolders.Contains(IncludeFolder.audios) && dirPath == audiosPath)
-                        {
-                            if (Directory.Exists(dirPath))
-                            {
-                                try
-                                {
-                                    Directory.Delete(dirPath, true);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex.Message);
-                                }
-                            }
-                        }
-
-                        if (reqData.includeFolders.Contains(IncludeFolder.fonts) && dirPath == fontsPath)
                         {
                             if (Directory.Exists(dirPath))
                             {
